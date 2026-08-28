@@ -16,6 +16,32 @@ class ADBEngine:
     def __init__(self, custom_adb_path: Optional[str] = None):
         self.adb_path = custom_adb_path or self._find_adb()
         self.connected_device = None
+        self._ensure_vendor_ids()
+
+    def _ensure_vendor_ids(self):
+        """Ensures Transsion (Tecno/Infinix) and MediaTek VIDs exist in adb_usb.ini."""
+        try:
+            home = os.path.expanduser("~")
+            android_dir = os.path.join(home, ".android")
+            os.makedirs(android_dir, exist_ok=True)
+            ini_path = os.path.join(android_dir, "adb_usb.ini")
+            existing = ""
+            if os.path.isfile(ini_path):
+                with open(ini_path, "r", encoding="utf-8", errors="ignore") as f:
+                    existing = f.read()
+
+            vids_to_add = ["0x2e04", "0x0e8d", "0x18d1", "0x04e8", "0x2717"]
+            added = False
+            for vid in vids_to_add:
+                if vid not in existing:
+                    existing += f"\n{vid}"
+                    added = True
+
+            if added:
+                with open(ini_path, "w", encoding="utf-8") as f:
+                    f.write(existing.strip() + "\n")
+        except Exception:
+            pass
 
     def _find_adb(self) -> str:
         # Check bundled bin folder first

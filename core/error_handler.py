@@ -34,6 +34,39 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "5. If Windows 11 blocks it: Run 'install_drivers.bat' as Administrator to register official Google signed drivers."
         )
     },
+    "TECNO_TRANSSION_NOT_DETECTED": {
+        "title": "Tecno / Infinix / Transsion (Camon 50 Pro) Not Detected",
+        "symptoms": [
+            "Samsung / Xiaomi devices are detected fine, but Tecno Camon 50 Pro shows 'No device found'",
+            "Phone is charging via USB but no 'Allow USB Debugging' popup appears on screen",
+            "Windows Device Manager shows 'TECNO-CL8' under Other Devices with a yellow exclamation mark (!)",
+            "Device connects for 2 seconds and disconnects (MTK Preloader)"
+        ],
+        "cause": (
+            "1. HiOS Default USB Mode: Transsion HiOS defaults strictly to 'Charge only', physically powering off the ADB USB interface.\n"
+            "2. Missing Transsion VID (0x2E04): Windows lacks the Transsion Holdings WinUSB driver mapping.\n"
+            "3. Missing adb_usb.ini entry: ADB server does not probe Transsion VID 0x2E04 by default.\n"
+            "4. AMD Ryzen / USB 3.0 Handshake Drop: Dimensity 7400 SoCs drop packets on blue USB 3.1/3.2 ports."
+        ),
+        "win11_fix": (
+            "STEP 1 (ON PHONE - CRITICAL):\n"
+            "- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)' or 'MIDI'.\n"
+            "- Go to Settings -> System -> Developer options -> tap 'Revoke USB debugging authorizations'.\n"
+            "- Toggle 'USB Debugging' OFF, wait 3 seconds, then toggle back ON.\n\n"
+            "STEP 2 (ON PC - TRANSSION DRIVER FIX):\n"
+            "- Open CMD as Administrator and add Transsion VID to ADB:\n"
+            "  echo 0x2e04 >> %USERPROFILE%\\.android\\adb_usb.ini\n"
+            "  echo 0x0e8d >> %USERPROFILE%\\.android\\adb_usb.ini\n"
+            "  adb kill-server\n"
+            "  adb start-server\n\n"
+            "STEP 3 (DEVICE MANAGER FIX):\n"
+            "- Press Win + X -> Device Manager -> check under 'Other devices' for 'TECNO-CL8'.\n"
+            "- Right-click 'TECNO-CL8' -> Update driver -> 'Browse my computer' -> 'Let me pick from a list' -> select 'Android Device' -> choose 'Android Composite ADB Interface'.\n\n"
+            "STEP 4 (HARDWARE PORT):\n"
+            "- Plug the USB cable into a black USB 2.0 port on the back of PC (avoid blue/red USB 3.0 ports).\n"
+            "- If phone is powered OFF, hold Vol Up + Vol Down while plugging in to access the MTK MT6878 Preloader port."
+        )
+    },
     "FASTBOOT_AMD_USB3_BUG": {
         "title": "Fastboot Freeze / Command Hangs on Windows 11 (AMD Ryzen / USB 3.0)",
         "symptoms": ["Fastboot hangs on <waiting for any device>", "Flashing stops midway through large partition"],

@@ -55,6 +55,29 @@ pnputil /add-driver "%~dp0bin\drivers\ssudmdm.inf" /install
 if %errorlevel% equ 0 (echo  [OK] Samsung Mobile Driver installed.) else (echo  [INFO] Samsung Driver verified.)
 
 echo.
+echo [5/5] Registering Transsion (Tecno / Infinix) & MediaTek VIDs into ADB...
+if not exist "%USERPROFILE%\.android" mkdir "%USERPROFILE%\.android"
+findstr /C:"0x2e04" "%USERPROFILE%\.android\adb_usb.ini" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo 0x2e04>> "%USERPROFILE%\.android\adb_usb.ini"
+    echo  [OK] Registered Transsion Holdings Vendor ID (0x2E04).
+)
+findstr /C:"0x0e8d" "%USERPROFILE%\.android\adb_usb.ini" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo 0x0e8d>> "%USERPROFILE%\.android\adb_usb.ini"
+    echo  [OK] Registered MediaTek Vendor ID (0x0E8D).
+)
+findstr /C:"0x18d1" "%USERPROFILE%\.android\adb_usb.ini" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo 0x18d1>> "%USERPROFILE%\.android\adb_usb.ini"
+)
+
+:: Restart ADB daemon to apply new VIDs
+"%~dp0bin\adb.exe" kill-server >nul 2>&1
+"%~dp0bin\adb.exe" start-server >nul 2>&1
+echo  [OK] ADB daemon restarted with Tecno / Transsion vendor support.
+
+echo.
 echo ==========================================================
 echo [SUCCESS] Driver registration completed for Windows 11!
 echo.

@@ -13,7 +13,6 @@ added_files = [
     ('core', 'core')
 ]
 
-# If on Linux or Mac during cross-inspection, include standard unix binaries as fallback
 if os.path.isfile('bin/adb'):
     added_files.append(('bin/adb', 'bin'))
 if os.path.isfile('bin/fastboot'):
@@ -29,11 +28,20 @@ a = Analysis(
         'tkinter.ttk',
         'tkinter.messagebox',
         'tkinter.filedialog',
+        'core',
         'core.adb_engine',
         'core.fastboot_engine',
         'core.frp_engine',
+        'core.mtk_engine',
+        'core.qualcomm_engine',
+        'core.samsung_modem',
+        'core.root_engine',
+        'core.efs_engine',
+        'core.error_handler',
+        'core.device_matrix',
         'core.device_profiles',
-        'core.downloader'
+        'core.downloader',
+        'core.workflow_guide'
     ],
     hookspath=[],
     hooksconfig={},
@@ -58,10 +66,10 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False, # Disable UPX compression to avoid antivirus false positives and packaging errors
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # Windowed GUI application (no command prompt window popping up)
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

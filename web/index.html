@@ -644,6 +644,7 @@
               <option value="BOOTLOADER_UNLOCK_COMPLETE">3. Bootloader Unlocked (flashing unlock)</option>
               <option value="ROOT_FLASH_COMPLETE">4. Magisk / KernelSU Root Image Flashed</option>
               <option value="DEBLOAT_COMPLETE">5. System Bloatware & HiOS Cleaned</option>
+              <option value="TECNO_ADMIN_PLUGIN_REMOVAL">6. Admin App Security Plugin Removed (Tecno CN5c)</option>
             </select>
 
             <div class="action-card" style="margin-top:10px;">
@@ -744,6 +745,7 @@
             <select id="win11ErrorSelect" onchange="showWin11Fix()" style="width:100%;">
               <option value="DEVICE_UNAUTHORIZED">Device Unauthorized in ADB (No popup on phone)</option>
               <option value="DEVICE_NOT_FOUND">Device Not Detected (Yellow triangle in Device Manager)</option>
+              <option value="TECNO_TRANSSION_NOT_DETECTED">Tecno Camon 50 Pro (CN5c) Shows 'No Device Found' / Locked Screen</option>
               <option value="FASTBOOT_AMD_USB3_BUG">Fastboot Hangs on Windows 11 (AMD Ryzen / USB 3.0)</option>
               <option value="WIN11_CORE_ISOLATION_BLOCK">Driver Blocked by Windows 11 Core Isolation (HVCI)</option>
               <option value="FASTBOOT_DYNAMIC_PARTITION_ERROR">Fastboot Flash Error: Unknown Partition (Android 10-16 Super)</option>
@@ -1514,7 +1516,8 @@ build.bat</div>
         "FRP_BYPASS_COMPLETE": { text: "Go to Reboot Tab", tab: "tab-reboot" },
         "BOOTLOADER_UNLOCK_COMPLETE": { text: "Go to Root Tab", tab: "tab-root" },
         "ROOT_FLASH_COMPLETE": { text: "Verify Root Status", tab: "tab-root" },
-        "DEBLOAT_COMPLETE": { text: "Check Diagnostics", tab: "tab-diagnostics" }
+        "DEBLOAT_COMPLETE": { text: "Check Diagnostics", tab: "tab-diagnostics" },
+        "TECNO_ADMIN_PLUGIN_REMOVAL": { text: "Go to Camon 50 Suite", tab: "tab-camon50" }
       };
 
       const j = jumpMap[key] || { text: "Go To Next Tab", tab: "tab-diagnostics" };

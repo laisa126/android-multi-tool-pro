@@ -199,7 +199,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "reboot":
             mode = req.get("mode", "")
             if mock_state["simulated"]:
-                time.sleep(0.5)
+                time.sleep(0.15)
                 self.send_json_response({"success": True, "message": f"Simulated reboot to '{mode or 'normal system'}' executed successfully."})
             else:
                 ok, msg = adb.reboot(mode)
@@ -209,7 +209,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
         elif action == "frp_fastboot":
             if mock_state["simulated"]:
-                time.sleep(0.8)
+                time.sleep(0.15)
                 self.send_json_response({
                     "success": True,
                     "workflow": "FRP_BYPASS_COMPLETE",
@@ -228,7 +228,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
         elif action == "frp_samsung":
             if mock_state["simulated"]:
-                time.sleep(1.2)
+                time.sleep(0.15)
                 self.send_json_response({
                     "success": True,
                     "workflow": "FRP_BYPASS_COMPLETE",
@@ -264,11 +264,11 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 f"Writing zero blocks to UFS storage... OKAY [0.15s]",
                 f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!"
             ]
-            time.sleep(1.2)
+            time.sleep(0.15)
             self.send_json_response({"success": True, "workflow": wf, "logs": logs})
 
         elif action == "extract_payload":
-            time.sleep(1)
+            time.sleep(0.15)
             self.send_json_response({
                 "success": True,
                 "logs": [
@@ -283,7 +283,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             })
 
         elif action == "transsion_mdm":
-            time.sleep(1)
+            time.sleep(0.15)
             self.send_json_response({
                 "success": True,
                 "workflow": "DEBLOAT_COMPLETE",
@@ -302,7 +302,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "neutralize_security_plugin":
             pkg = req.get("package", "com.android.security.plugin").strip() or "com.android.security.plugin"
             if mock_state["simulated"]:
-                time.sleep(1.2)
+                time.sleep(0.15)
                 logs = [
                     f"Detecting Admin App Security Plugin: '{pkg}'...",
                     f"[OK] Querying active device admin receivers: {pkg}/.AdminReceiver found",
@@ -337,7 +337,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
         elif action == "remove_device_owner":
             if mock_state["simulated"]:
-                time.sleep(1)
+                time.sleep(0.15)
                 self.send_json_response({
                     "success": True,
                     "logs": [
@@ -355,7 +355,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
         elif action == "efs_backup":
             part = req.get("partition", "nvram")
-            time.sleep(1)
+            time.sleep(0.15)
             self.send_json_response({
                 "success": True,
                 "logs": [
@@ -387,7 +387,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
             elif sub == "flash_magisk_boot":
                 part = req.get("partition", "init_boot")
-                time.sleep(1)
+                time.sleep(0.15)
                 self.send_json_response({
                     "success": True,
                     "workflow": "ROOT_FLASH_COMPLETE",
@@ -401,7 +401,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 })
 
             elif sub == "flash_vbmeta_disabled":
-                time.sleep(0.8)
+                time.sleep(0.15)
                 self.send_json_response({
                     "success": True,
                     "workflow": "ROOT_FLASH_COMPLETE",
@@ -417,7 +417,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "flash_partition":
             part = req.get("partition", "boot")
             img = req.get("filename", "boot.img")
-            time.sleep(1)
+            time.sleep(0.15)
             self.send_json_response({
                 "success": True,
                 "message": f"Flashed '{part}' with '{img}' successfully.",
@@ -429,7 +429,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             })
 
         elif action == "unlock_bootloader":
-            time.sleep(1)
+            time.sleep(0.15)
             self.send_json_response({
                 "success": True,
                 "workflow": "BOOTLOADER_UNLOCK_COMPLETE",

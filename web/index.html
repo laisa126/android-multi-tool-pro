@@ -188,6 +188,7 @@
     /* Workspace */
     .main-workspace {
       flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -337,11 +338,15 @@
 
     /* Terminal Console Drawer */
     .terminal-container {
-      height: 170px;
+      height: 160px;
+      min-height: 160px;
+      max-height: 160px;
+      flex-shrink: 0;
       background: var(--c1-black);
       border-top: 1px solid var(--c5-border);
       display: flex;
       flex-direction: column;
+      z-index: 10;
     }
 
     .terminal-header {
@@ -484,23 +489,26 @@
           <button class="btn-dark" style="padding:4px 8px; font-size:10px;" onclick="prevWizardStep()">← Prev Step</button>
           <button class="btn-white" style="padding:4px 12px; font-size:10px;" id="btnWizardAction" onclick="executeCurrentWizardStep()">Execute Step 1</button>
           <button class="btn-dark" style="padding:4px 8px; font-size:10px;" onclick="nextWizardStep()">Next Step →</button>
+          <button class="btn-dark" style="padding:4px 8px; font-size:10px;" onclick="toggleWizardCard()" id="btnToggleWizard">Hide Guide</button>
         </div>
       </div>
 
-      <!-- Step Badges 1 to 6 (Strictly Monochrome) -->
-      <div id="wizardStepDots" style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-        <!-- Filled by JS -->
-      </div>
-
-      <!-- Dual Instruction Cards -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <div style="background:var(--c3-subcard); padding:10px; border:1px solid var(--c5-border); border-radius:3px;">
-          <div style="font-size:10px; font-weight:700; color:var(--c8-white); margin-bottom:4px; text-transform:uppercase;">📱 What To Do On Phone Display:</div>
-          <div id="wizardPhoneText" style="font-size:11px; color:var(--c7-lightgray); line-height:1.4;">Check phone screen: Tap "Always allow from this computer" on the USB Debugging popup, then tap "Allow". Keep screen unlocked.</div>
+      <div id="guidedWizardBody">
+        <!-- Step Badges 1 to 6 (Strictly Monochrome) -->
+        <div id="wizardStepDots" style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+          <!-- Filled by JS -->
         </div>
-        <div style="background:var(--c3-subcard); padding:10px; border:1px solid var(--c5-border); border-radius:3px;">
-          <div style="font-size:10px; font-weight:700; color:var(--c8-white); margin-bottom:4px; text-transform:uppercase;">🛠️ What To Do In AMT Tool:</div>
-          <div id="wizardToolText" style="font-size:11px; color:var(--c7-lightgray); line-height:1.4;">Click "Execute Step 1" to perform hardware handshake and verify ADB communication with Tecno Camon 50 Pro.</div>
+
+        <!-- Dual Instruction Cards -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div style="background:var(--c3-subcard); padding:10px; border:1px solid var(--c5-border); border-radius:3px;">
+            <div style="font-size:10px; font-weight:700; color:var(--c8-white); margin-bottom:4px; text-transform:uppercase;">📱 What To Do On Phone Display:</div>
+            <div id="wizardPhoneText" style="font-size:11px; color:var(--c7-lightgray); line-height:1.4;">Check phone screen: Tap "Always allow from this computer" on the USB Debugging popup, then tap "Allow". Keep screen unlocked.</div>
+          </div>
+          <div style="background:var(--c3-subcard); padding:10px; border:1px solid var(--c5-border); border-radius:3px;">
+            <div style="font-size:10px; font-weight:700; color:var(--c8-white); margin-bottom:4px; text-transform:uppercase;">🛠️ What To Do In AMT Tool:</div>
+            <div id="wizardToolText" style="font-size:11px; color:var(--c7-lightgray); line-height:1.4;">Click "Execute Step 1" to perform hardware handshake and verify ADB communication with Tecno Camon 50 Pro.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1140,9 +1148,513 @@ build.bat</div>
   </div>
 
   <script>
-    let cachedCatalog = [];
-    let cachedWin11Errors = {};
-    let cachedWorkflows = {};
+    let cachedCatalog = [
+  {
+    "brand": "Tecno",
+    "series": "Camon Pro Series (Flagship Camera Line)",
+    "models": [
+      "Tecno Camon 50 Pro 5G (CN5c) / Camon 50 Pro",
+      "Tecno Camon 50 / Camon 50 Premier",
+      "Tecno Camon 30 / 30 Pro 5G / 30 Premier",
+      "Tecno Camon 20 / 20 Pro / 20 Premier 5G",
+      "Tecno Camon 19 / 19 Pro / 19 Neo",
+      "Tecno Camon 18 / 18 Premier / 18P"
+    ],
+    "chipset": "MediaTek Dimensity 7400 Ultimate / Dimensity 8200 / Helio G200 / G99 Ultimate (MT6878/MT6897/MT6789)",
+    "supported_ops": [
+      "1-Click MTK BROM / Preloader FRP Wipe",
+      "Userdata Hard Format (Screen PIN/Pattern Removal)",
+      "HiOS 14/15/16 Bloatware Auto-Cleaner",
+      "Fastbootd Dynamic 'super' Partition Flasher",
+      "Android 14/15/16 init_boot KernelSU & Magisk Root",
+      "VBMeta AVB Disabler (--disable-verity)",
+      "NVRAM & NVDATA Baseband / Radio Calibration Backup",
+      "OEM Bootloader Unlock (fastboot flashing unlock)"
+    ]
+  },
+  {
+    "brand": "Tecno",
+    "series": "Spark & Pova Series",
+    "models": [
+      "Spark 20 / 20 Pro / 20 Pro+",
+      "Spark 10 / 10 Pro / 10C",
+      "Spark 9 / 8 / 7",
+      "Pova 6 / 6 Pro 5G",
+      "Pova 5 / 5 Pro / Neo 3"
+    ],
+    "chipset": "MediaTek Helio G85 / G88 / G99 & Dimensity 6080 / 7020",
+    "supported_ops": [
+      "MTK BROM FRP Reset",
+      "Userdata Wipe",
+      "Preloader VCOM Connect",
+      "Fastboot Flasher",
+      "HiOS Telemetry Removal"
+    ]
+  },
+  {
+    "brand": "Infinix",
+    "series": "Hot, Note & Zero Series",
+    "models": [
+      "Hot 40 / 40 Pro",
+      "Hot 30 / 20 / 12",
+      "Note 40 / 40 Pro 5G",
+      "Note 30 / 30 Pro",
+      "Zero 30 5G / Zero Ultra"
+    ],
+    "chipset": "MediaTek Helio G99 / Dimensity 7020 / Dimensity 8020",
+    "supported_ops": [
+      "MTK Preloader Format",
+      "XOS Bloatware Cleaner",
+      "FRP Reset",
+      "Fastbootd Flasher",
+      "Magisk Root"
+    ]
+  },
+  {
+    "brand": "Samsung",
+    "series": "Galaxy S Series",
+    "models": [
+      "Galaxy S24 / S24+ / S24 Ultra",
+      "Galaxy S23 / S23+ / S23 Ultra",
+      "Galaxy S22 / S22+ / S22 Ultra",
+      "Galaxy S21 / S21 FE",
+      "Galaxy S20 / S20 FE"
+    ],
+    "chipset": "Snapdragon 8 Gen 1/2/3 & Exynos 2100/2200/2400",
+    "supported_ops": [
+      "ADB Diagnostics",
+      "AT *#0*# Test Mode FRP",
+      "Odin Download Mode",
+      "CSC Switch",
+      "Knox Telemetry",
+      "OneUI Debloat"
+    ]
+  },
+  {
+    "brand": "Samsung",
+    "series": "Galaxy A & M Series (MediaTek)",
+    "models": [
+      "Galaxy A02 / A03s / A04 / A04e",
+      "Galaxy A12 (SM-A125F)",
+      "Galaxy A13 (SM-A137F)",
+      "Galaxy A14 5G",
+      "Galaxy A22 / A22 5G",
+      "Galaxy A32 / A34 5G",
+      "Galaxy M12 / M22"
+    ],
+    "chipset": "MediaTek Helio P35 / G80 / Dimensity 700 / 1080",
+    "supported_ops": [
+      "MTK BootROM 1-Click FRP",
+      "Direct Userdata Wipe",
+      "Samsung Test Mode",
+      "Odin Download Mode",
+      "Fastboot Flash"
+    ]
+  },
+  {
+    "brand": "Samsung",
+    "series": "Galaxy A & M Series (Qualcomm & Exynos)",
+    "models": [
+      "Galaxy A52 / A52s / A53 5G",
+      "Galaxy A54 5G",
+      "Galaxy A71 / A72 / A73 5G",
+      "Galaxy M51 / M52 5G"
+    ],
+    "chipset": "Snapdragon 720G / 750G / 778G & Exynos 1280 / 1380",
+    "supported_ops": [
+      "ADB Diagnostics",
+      "Samsung Test Mode FRP",
+      "EDL 9008 Test Point",
+      "Odin Flashing",
+      "EFS Backup"
+    ]
+  },
+  {
+    "brand": "Xiaomi",
+    "series": "Redmi Note Series",
+    "models": [
+      "Redmi Note 13 / 13 Pro 5G",
+      "Redmi Note 12 / 12 Pro / 12 Turbo",
+      "Redmi Note 11 / 11S / 11 Pro",
+      "Redmi Note 10 / 10 Pro / 10S",
+      "Redmi Note 9 / 9S / 9 Pro",
+      "Redmi Note 8 / 8 Pro / 8T"
+    ],
+    "chipset": "Qualcomm Snapdragon & MediaTek Helio / Dimensity",
+    "supported_ops": [
+      "Fastboot Flasher",
+      "Fastbootd Super Dynamic Parts",
+      "EDL 9008 Firehose",
+      "MTK BROM Bypass",
+      "Mi Cloud Persist Format",
+      "MIUI/HyperOS Debloat",
+      "OEM Unlock"
+    ]
+  },
+  {
+    "brand": "Xiaomi",
+    "series": "Redmi Number & POCO Series",
+    "models": [
+      "Redmi 9 / 9A / 9C",
+      "Redmi 10 / 10A / 10C",
+      "Redmi 12 / 12C / 13C",
+      "POCO X3 NFC / X3 Pro",
+      "POCO X4 / X5 / X6 Pro",
+      "POCO F3 / F4 / F5",
+      "POCO M3 / M4 / M5"
+    ],
+    "chipset": "Snapdragon 860/778G/870 & MediaTek Helio G25/G35/G85/G99",
+    "supported_ops": [
+      "Fastboot Partition Flash",
+      "EDL 9008 Partition Erase",
+      "MTK SLA/DAA Auth Skip",
+      "Anti-Rollback Check",
+      "SafetyNet Pass Helper"
+    ]
+  },
+  {
+    "brand": "BBK",
+    "series": "Realme Number & C Series",
+    "models": [
+      "Realme C11 / C12 / C15 / C21 / C33 / C55",
+      "Realme 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 Pro"
+    ],
+    "chipset": "MediaTek Helio G-Series, Snapdragon 665 / 720G & Unisoc T612/T616",
+    "supported_ops": [
+      "MTK SLA Auth Skip",
+      "Fastboot flashing unlock",
+      "EDL 9008 Service",
+      "ColorOS/RealmeUI Debloat",
+      "Deep-Testing APK Push"
+    ]
+  },
+  {
+    "brand": "BBK",
+    "series": "Oppo A, Reno & Find Series",
+    "models": [
+      "Oppo A15 / A16 / A17 / A53 / A54 / A74 / A96",
+      "Reno 4 / 5 / 6 / 7 / 8 / 10 / 11"
+    ],
+    "chipset": "Snapdragon 662/680/765G & MediaTek Dimensity 7050/8100",
+    "supported_ops": [
+      "EDL 9008 Test Point",
+      "MTK Preloader Format",
+      "ColorOS Safe Debloat",
+      "Full ADB Diagnostic Dump"
+    ]
+  },
+  {
+    "brand": "BBK",
+    "series": "Vivo Y, V & iQOO Series",
+    "models": [
+      "Vivo Y11 / Y12 / Y15 / Y20 / Y21 / Y33s / Y50 / Y53s",
+      "Vivo V20 / V21 / V23 / V27 / V29",
+      "iQOO Z6 / Z7 / Neo 6 / Neo 7"
+    ],
+    "chipset": "Snapdragon 460/665/720G & MediaTek Helio P35/G80",
+    "supported_ops": [
+      "EDL 9008 Test Point",
+      "MTK BROM Wipe",
+      "Fastboot Flasher",
+      "FuntouchOS Bloatware Removal"
+    ]
+  },
+  {
+    "brand": "OnePlus",
+    "series": "OnePlus Flagship & Nord Series",
+    "models": [
+      "OnePlus 7 / 8 / 9 / 10 / 11 / 12",
+      "OnePlus Nord / Nord CE / Nord 2 / Nord 3"
+    ],
+    "chipset": "Qualcomm Snapdragon 855 / 865 / 888 / 8 Gen 1/2/3 & Dimensity 9000",
+    "supported_ops": [
+      "Fastboot Flashing Unlock (Instant)",
+      "MSMDownloadTool EDL Helper",
+      "Fastbootd Super Dynamic Flasher",
+      "Magisk Boot Root"
+    ]
+  },
+  {
+    "brand": "Motorola",
+    "series": "Moto G, E & Edge Series",
+    "models": [
+      "Moto G9 / G10 / G30 / G50 / G60 / G82 / G84",
+      "Moto Edge 20 / 30 / 40 / 50 Pro",
+      "Moto E7 / E20 / E32 / E40"
+    ],
+    "chipset": "Snapdragon 480/695/778G & Unisoc T606/T700",
+    "supported_ops": [
+      "Fastboot Sparse Chunk Flasher",
+      "Fastboot Universal FRP Erase",
+      "Motorola OEM Unlock",
+      "Blankflash EDL Unbrick"
+    ]
+  },
+  {
+    "brand": "Google",
+    "series": "Google Pixel Series",
+    "models": [
+      "Pixel 4 / 4a / 5 / 5a",
+      "Pixel 6 / 6a / 6 Pro",
+      "Pixel 7 / 7a / 7 Pro",
+      "Pixel 8 / 8a / 8 Pro"
+    ],
+    "chipset": "Google Tensor G1 / G2 / G3 & Snapdragon 765G",
+    "supported_ops": [
+      "Standard Android Fastboot Flasher",
+      "OEM Bootloader Unlock",
+      "Direct Factory Image Sideload",
+      "Systemless Magisk / KernelSU Root"
+    ]
+  },
+  {
+    "brand": "Unisoc (SPD)",
+    "series": "Entry-level smartphones & tablets",
+    "models": [
+      "Realme C30 / C33",
+      "Infinix Smart 7 / 8",
+      "Tecno Pop 5 / 6 / 7",
+      "Nokia C20 / C30 / G11 / G21",
+      "itel A58 / A60 / S18"
+    ],
+    "chipset": "Unisoc SC9863A / T606 / T610 / T612 / T616 / T700",
+    "supported_ops": [
+      "SPD Diag Port Reader",
+      "Universal Fastboot Erase FRP",
+      "PAC Firmware Flasher",
+      "Userdata Wipe"
+    ]
+  }
+];
+    let cachedWin11Errors = {
+  "DEVICE_UNAUTHORIZED": {
+    "title": "Device Unauthorized (ADB)",
+    "symptoms": [
+      "adb devices shows 'xxxxxx unauthorized'",
+      "RSA fingerprint dialog does not appear"
+    ],
+    "cause": "The device's ADB security key does not match the PC's adbkey.pub, or the prompt was missed.",
+    "win11_fix": "1. On phone: Go to Developer Options -> Revoke USB debugging authorizations.\n2. Toggle USB Debugging OFF and then ON.\n3. On Windows 11 PC: Open CMD and run:\n   adb kill-server\n   del %USERPROFILE%\\.android\\adbkey*\n   adb start-server\n4. Re-plug the USB cable into a USB 2.0 port. Check phone display and tap 'Always allow from this computer'."
+  },
+  "DEVICE_NOT_FOUND": {
+    "title": "Waiting for Any Device / Device Not Detected",
+    "symptoms": [
+      "Tool says 'No device detected'",
+      "Device Manager shows yellow exclamation mark under Other Devices"
+    ],
+    "cause": "Windows 11 missing WinUSB/ADB driver or driver was blocked by Windows 11 Memory Integrity.",
+    "win11_fix": "1. Press Win + X and select 'Device Manager'.\n2. Look for 'Android' or 'Unknown Device' with a yellow warning triangle.\n3. Right-click -> Update driver -> 'Browse my computer for drivers' -> 'Let me pick from a list of available drivers'.\n4. Select 'Android Device' -> choose 'Android Composite ADB Interface'.\n5. If Windows 11 blocks it: Run 'install_drivers.bat' as Administrator to register official Google signed drivers."
+  },
+  "TECNO_TRANSSION_NOT_DETECTED": {
+    "title": "Tecno / Infinix / Transsion (Camon 50 Pro) Not Detected",
+    "symptoms": [
+      "Samsung / Xiaomi devices are detected fine, but Tecno Camon 50 Pro (CN5c) shows 'No device found'",
+      "Phone is charging via USB but no 'Allow USB Debugging' popup appears on screen",
+      "Windows Device Manager shows 'TECNO-CN5c' or 'Android' under Other Devices with a yellow exclamation mark (!)",
+      "Device connects for 2 seconds and disconnects (MTK Preloader)"
+    ],
+    "cause": "1. Phone is Locked: If screen is locked by PIN or Admin Plugin, Android cuts off USB data lines (Charge only).\n2. HiOS Default USB Mode: Transsion HiOS defaults to 'Charge only', powering off the ADB interface.\n3. Missing Transsion VID (0x2E04): Windows lacks the Transsion Holdings WinUSB driver mapping.\n4. Missing adb_usb.ini entry: ADB server does not probe Transsion VID 0x2E04 by default.\n5. AMD Ryzen / USB 3.0 Handshake Drop: Dimensity 7400 SoCs drop packets on blue USB 3.1/3.2 ports.",
+    "win11_fix": "IF PHONE IS LOCKED (CANNOT ENABLE ADB):\n- Do not use ADB. Use MediaTek BROM mode instead!\n- Power off CN5c completely (hold Power + Vol Down 10s if screen is frozen).\n- Hold Volume Up + Volume Down together and connect USB cable.\n- Tool will detect MediaTek Preloader COM Port and format userdata/frp directly.\n\nIF PHONE CAN BE UNLOCKED (ADB MODE):\n- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)'.\n- Go to Settings -> Developer options -> tap 'Revoke USB debugging authorizations' -> toggle 'USB Debugging' OFF and ON.\n\nON PC (TRANSSION DRIVER FIX):\n- Run install_drivers.bat as Administrator (auto-adds 0x2e04 and restarts ADB).\n- In Device Manager -> check 'TECNO-CN5c' -> update driver to 'Android Composite ADB Interface'."
+  },
+  "FASTBOOT_AMD_USB3_BUG": {
+    "title": "Fastboot Freeze / Command Hangs on Windows 11 (AMD Ryzen / USB 3.0)",
+    "symptoms": [
+      "Fastboot hangs on <waiting for any device>",
+      "Flashing stops midway through large partition"
+    ],
+    "cause": "Well-documented Windows 11 xHCI USB 3.1/3.2 bug on AMD AM4/AM5 chipsets communicating with Fastboot.",
+    "win11_fix": "1. Connect the phone to an older USB 2.0 port (black ports on motherboard I/O backplate, NOT blue/red ports).\n2. Alternatively, plug a cheap unpowered USB 2.0 hub between your PC and phone.\n3. In Windows 11 Device Manager -> Universal Serial Bus controllers -> USB Root Hub -> Properties -> Power Management -> Uncheck 'Allow the computer to turn off this device to save power'."
+  },
+  "WIN11_CORE_ISOLATION_BLOCK": {
+    "title": "MediaTek / Qualcomm Driver Blocked by Windows 11 Core Isolation (HVCI)",
+    "symptoms": [
+      "Windows 11 displays: 'A driver cannot load on this device (libusb0.sys / qcser.sys)'",
+      "Error Code 39 in Device Manager"
+    ],
+    "cause": "Windows 11 Memory Integrity / Hypervisor-Enforced Code Integrity (HVCI) blocks legacy unsigned GSM drivers.",
+    "win11_fix": "1. Click Start -> Search 'Core Isolation'.\n2. Temporarily toggle 'Memory Integrity' to OFF.\n3. Restart Windows 11.\n4. Run 'install_drivers.bat' as Administrator.\n5. After servicing is complete, you can toggle Memory Integrity back ON."
+  },
+  "FASTBOOT_DYNAMIC_PARTITION_ERROR": {
+    "title": "Fastboot Flashing Error: 'Partition not found' or 'No such partition'",
+    "symptoms": [
+      "fastboot flash system system.img fails on Android 10/11/12/13/14"
+    ],
+    "cause": "Modern Android devices use dynamic 'super' partitions. System, vendor, and product partitions cannot be flashed in bootloader.",
+    "win11_fix": "1. Reboot device into Fastbootd mode:\n   adb reboot fastboot  (OR in fastboot: fastboot reboot fastboot)\n2. Screen should display: 'Fastbootd' on device display.\n3. Now flash the partition normally: fastboot flash system system.img."
+  },
+  "MTK_HANDSHAKE_TIMEOUT": {
+    "title": "MediaTek BROM Handshake Disconnecting Immediately",
+    "symptoms": [
+      "Phone connects as 'MediaTek USB Port' for 2 seconds and reboots",
+      "COM port vanishes"
+    ],
+    "cause": "Missing LibUSB-Win32 filter driver or Watchdog Timer reset triggered.",
+    "win11_fix": "1. Open Device Manager on Windows 11.\n2. Hold Vol Up + Vol Down and connect USB.\n3. As soon as 'MediaTek USB Port' appears under Ports (COM & LPT), ensure driver says 'MediaTek Inc.'.\n4. Use a high-quality USB-C data cable (not a charge-only cable)."
+  }
+};
+    let cachedWorkflows = {
+  "TECNO_ADMIN_PLUGIN_REMOVAL": {
+    "title": "Step-by-Step: Removing Admin App Security Plugin (Tecno Camon 50 Pro)",
+    "current_status": "USB Cable Plugged In -> Interactive Step-by-Step Guided Wizard Active.",
+    "next_steps": [
+      {
+        "step": 1,
+        "title": "Authorize USB Debugging",
+        "action": "On phone: Tap 'Always allow from this computer' on the USB debugging popup. In tool: Click 'Identify Device'."
+      },
+      {
+        "step": 2,
+        "title": "Scan Active Device Admins",
+        "action": "Click 'Scan Admins' in Camon 50 Suite to detect the exact component package name controlling the device."
+      },
+      {
+        "step": 3,
+        "title": "Neutralize AppOps Overlay Rights",
+        "action": "Click 'Neutralize Plugin' to revoke SYSTEM_ALERT_WINDOW. This kills the overlay lockscreen immediately."
+      },
+      {
+        "step": 4,
+        "title": "Unregister Admin & Clear Data",
+        "action": "Tool issues 'dpm remove-active-admin' and 'pm clear' to wipe tokens."
+      },
+      {
+        "step": 5,
+        "title": "Freeze HiOS MDM Enrollment",
+        "action": "Click 'Freeze HiOS MDM & PayJoy' to lock global device_provisioned = 1 and user_setup_complete = 1."
+      },
+      {
+        "step": 6,
+        "title": "Reboot & Connect Network",
+        "action": "Reboot device. Connect Wi-Fi and insert SIM. Device is permanently clean and unlocked."
+      }
+    ]
+  },
+  "FACTORY_RESET_COMPLETE": {
+    "title": "Operation Finished: Factory Reset / Userdata Wipe",
+    "current_status": "All personal data, pattern/PIN screen locks, and app cache have been wiped.",
+    "next_steps": [
+      {
+        "step": 1,
+        "title": "First Boot Time Warning",
+        "action": "Allow the phone 2 to 4 minutes to rebuild the Dalvik cache and encrypt userdata on first boot. Do not unplug battery or force shutdown."
+      },
+      {
+        "step": 2,
+        "title": "Setup Wizard Walkthrough",
+        "action": "Select your language and region. Connect to Wi-Fi. If prompted for an old Google Account, use the 'FRP & Screen Lock' tab to bypass."
+      },
+      {
+        "step": 3,
+        "title": "Re-Enable Technician Access",
+        "action": "Once on the home screen: Go to Settings -> About Phone -> Tap 'Build Number' 7 times -> Go to Developer Options -> Turn ON 'USB Debugging'."
+      },
+      {
+        "step": 4,
+        "title": "Recommended Next Action in Tool",
+        "action": "Switch to the 'Debloat HiOS / Apps' tab to clean out pre-installed bloatware (PalmPay, AHA games) while the phone is fresh."
+      }
+    ]
+  },
+  "FRP_BYPASS_COMPLETE": {
+    "title": "Operation Finished: FRP (Google Account) Bypass",
+    "current_status": "Persistent Google Account Lock has been cleared from config/frp blocks.",
+    "next_steps": [
+      {
+        "step": 1,
+        "title": "Device Clean Reboot",
+        "action": "Click 'Reboot System' in the Reboot tab (or hold Power on phone for 5 seconds)."
+      },
+      {
+        "step": 2,
+        "title": "Skip Account Screen",
+        "action": "On the initial Welcome setup screen, tap 'Skip' when asked to sign in with Google or connect to Wi-Fi."
+      },
+      {
+        "step": 3,
+        "title": "Bind Your Own Account",
+        "action": "Once on the Home launcher, go to Settings -> Accounts -> Add your personal Google Account to register new cloud backup tokens."
+      },
+      {
+        "step": 4,
+        "title": "Set New Screen Security",
+        "action": "Go to Settings -> Security -> Set a new PIN or Fingerprint to re-initialize Android Keystore."
+      }
+    ]
+  },
+  "BOOTLOADER_UNLOCK_COMPLETE": {
+    "title": "Operation Finished: Bootloader Unlocked (flashing unlock)",
+    "current_status": "Bootloader security verification is disengaged. Custom kernels & recoveries can now be flashed.",
+    "next_steps": [
+      {
+        "step": 1,
+        "title": "Data Wipe Automatic Trigger",
+        "action": "The phone screen will display an orange warning: 'Your device software cannot be checked for corruption'. Press Power to proceed. Android will automatically wipe userdata for security."
+      },
+      {
+        "step": 2,
+        "title": "Initial Setup & Developer Re-activation",
+        "action": "Walk through setup wizard quickly. Go to Settings -> About Phone -> Tap Build Number 7 times -> Re-enable USB Debugging."
+      },
+      {
+        "step": 3,
+        "title": "Next Technician Action: Rooting or Custom ROM",
+        "action": "Switch to the 'Root & Magisk' tab to flash Magisk/KernelSU patched init_boot.img, OR switch to 'Fastboot Flasher' to flash TWRP/OrangeFox."
+      }
+    ]
+  },
+  "ROOT_FLASH_COMPLETE": {
+    "title": "Operation Finished: Magisk / KernelSU Root Image Flashed",
+    "current_status": "Patched init_boot kernel and disabled vbmeta verification written to storage.",
+    "next_steps": [
+      {
+        "step": 1,
+        "title": "Boot System Normally",
+        "action": "Execute 'fastboot reboot' or click 'Reboot System' in tool. Phone will boot into Android OS."
+      },
+      {
+        "step": 2,
+        "title": "Open or Install Magisk App",
+        "action": "If Magisk app is not visible on homescreen: Click 'Install Magisk Manager APK' in the Root tab. Open the Magisk app on phone."
+      },
+      {
+        "step": 3,
+        "title": "Perform Magisk 'Additional Setup'",
+        "action": "Magisk will prompt: 'Requires Additional Setup. Do you want to proceed?'. Tap 'OK'. The phone will reboot in 5 seconds."
+      },
+      {
+        "step": 4,
+        "title": "Verify Superuser in Multi-Tool",
+        "action": "Once rebooted, click 'Check Root Status' in the Root tab. Tool should confirm: 'Device is Rooted (uid=0)'."
+      },
+      {
+        "step": 5,
+        "title": "SafetyNet / Play Integrity Fix",
+        "action": "In Magisk settings, enable 'Zygisk' and configure 'Enforce DenyList' for banking apps."
+      }
+    ]
+  },
+  "DEBLOAT_COMPLETE": {
+    "title": "Operation Finished: OEM Bloatware Cleaned",
+    "current_status": "Unwanted preloaded background telemetry apps disabled/uninstalled for user 0.",
+    "next_steps": [
+      {
+        "step": 1,
+        "title": "Quick Reboot to Clear Memory",
+        "action": "Restart the device once so the Android system clears stale background services from RAM."
+      },
+      {
+        "step": 2,
+        "title": "Check Core Functions",
+        "action": "Test that the Camera, Phone Dialer, and Default SMS app function normally."
+      },
+      {
+        "step": 3,
+        "title": "Enjoy Optimized Performance",
+        "action": "RAM usage drops by 1.2 GB to 2 GB, and background battery drain is reduced."
+      }
+    ]
+  }
+};
     let currentWorkflowKey = "FACTORY_RESET_COMPLETE";
 
     function logLine(text, cssClass = "log-white") {
@@ -1155,6 +1667,18 @@ build.bat</div>
       out.scrollTop = out.scrollHeight;
     }
 
+    function toggleWizardCard() {
+      const body = document.getElementById("guidedWizardBody");
+      const btn = document.getElementById("btnToggleWizard");
+      if (body.style.display === "none") {
+        body.style.display = "block";
+        btn.textContent = "Hide Guide";
+      } else {
+        body.style.display = "none";
+        btn.textContent = "Show Guide";
+      }
+    }
+
     function clearTerminal() {
       document.getElementById("termOutput").innerHTML = "";
     }
@@ -1162,7 +1686,11 @@ build.bat</div>
     function switchTab(tabId, btn) {
       document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
       document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
-      document.getElementById(tabId).classList.add("active");
+      const target = document.getElementById(tabId);
+      if (target) {
+        target.classList.add("active");
+        target.scrollTop = 0;
+      }
       if (btn) {
         btn.classList.add("active");
       } else {
@@ -1172,6 +1700,12 @@ build.bat</div>
           }
         });
       }
+      // Guarantee instant rendering so tabs are never blank
+      if (tabId === "tab-win11") showWin11Fix();
+      if (tabId === "tab-tutorials") renderSelectedTutorial();
+      if (tabId === "tab-catalog") renderCatalog(cachedCatalog);
+      const tabName = tabId.replace("tab-", "").toUpperCase();
+      logLine(`>> Navigation: Active View switched to [${tabName}]`, "log-white");
     }
 
     let deferredInstallPrompt = null;

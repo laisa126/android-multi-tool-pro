@@ -455,18 +455,18 @@
 
   <!-- Monochromatic Navigation Tabs -->
   <div class="tabs-bar">
-    <button class="tab-btn active" onclick="switchTab('tab-diagnostics', this)">Diagnostics</button>
-    <button class="tab-btn" onclick="switchTab('tab-camon50', this)">Tecno Camon 50 Suite</button>
+    <button class="tab-btn active" onclick="switchTab('tab-camon50', this)">Tecno Camon 50 Suite</button>
+    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚡ MTK BROM Flasher</button>
+    <button class="tab-btn" onclick="switchTab('tab-diagnostics', this)">Diagnostics</button>
+    <button class="tab-btn" onclick="switchTab('tab-frp', this)">FRP & MDM Bypass</button>
+    <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">Fastboot Flasher</button>
     <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">Process Tutorials</button>
-    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">Supported Devices</button>
-    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">MTK BROM Flasher</button>
     <button class="tab-btn" onclick="switchTab('tab-win11', this)">Windows 11 Fixer</button>
     <button class="tab-btn" onclick="switchTab('tab-reboot', this)">Reboot Modes</button>
-    <button class="tab-btn" onclick="switchTab('tab-frp', this)">FRP & MDM Bypass</button>
     <button class="tab-btn" onclick="switchTab('tab-root', this)">Root & Magisk</button>
     <button class="tab-btn" onclick="switchTab('tab-efs', this)">EFS & NVRAM</button>
-    <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">Fastboot Flasher</button>
     <button class="tab-btn" onclick="switchTab('tab-debloat', this)">HiOS Debloat</button>
+    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">Supported Devices</button>
   </div>
 
   <!-- Workspace -->
@@ -480,6 +480,7 @@
           <span id="wizardStepNumber" style="font-size:12px; font-weight:700; color:var(--c8-white);">STEP 1 OF 6: USB PLUGGED IN & AUTHORIZED</span>
         </div>
         <div style="display:flex; gap:6px;">
+          <button class="btn-dark" style="padding:4px 10px; font-size:10px; border:1px solid var(--c8-white);" onclick="switchTab('tab-mtk')">⚡ Phone Locked? MTK BROM</button>
           <button class="btn-dark" style="padding:4px 8px; font-size:10px;" onclick="prevWizardStep()">← Prev Step</button>
           <button class="btn-white" style="padding:4px 12px; font-size:10px;" id="btnWizardAction" onclick="executeCurrentWizardStep()">Execute Step 1</button>
           <button class="btn-dark" style="padding:4px 8px; font-size:10px;" onclick="nextWizardStep()">Next Step →</button>
@@ -505,7 +506,7 @@
     </div>
 
     <!-- TAB 1: Diagnostics -->
-    <div id="tab-diagnostics" class="tab-content active">
+    <div id="tab-diagnostics" class="tab-content">
       <div class="grid-2">
         <div class="card">
           <div class="card-title">Connected Device Parameters</div>
@@ -560,10 +561,19 @@
     </div>
 
     <!-- TAB 2: Tecno Camon 50 Pro Dedicated Suite -->
-    <div id="tab-camon50" class="tab-content">
+    <div id="tab-camon50" class="tab-content active">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">Tecno Camon 50 Pro Special Service Tools</div>
+          <div class="card-title">Tecno Camon 50 Pro Special Service Tools (CN5c)</div>
+          
+          <div class="action-card" style="border: 1px solid var(--c8-white); background: var(--c3-card); margin-bottom: 12px;">
+            <div class="action-info">
+              <h4 style="color: var(--c8-white); font-size: 12px;">⚡ MediaTek BROM / Preloader Mode (For Locked Phone)</h4>
+              <p>Phone locked or screen frozen? Power OFF phone -> Hold Vol Up + Vol Down -> Connect USB. No ADB needed!</p>
+            </div>
+            <button class="btn-white" onclick="switchTab('tab-mtk')">Open MTK BROM</button>
+          </div>
+
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">

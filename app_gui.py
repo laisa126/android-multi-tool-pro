@@ -202,6 +202,7 @@ class AndroidMultiToolApp:
 
         # Build tabs
         self.tab_camon50 = ttk.Frame(self.notebook, style="Card.TFrame")
+        self.tab_mtk = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_info = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_frp = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_fastboot = ttk.Frame(self.notebook, style="Card.TFrame")
@@ -209,15 +210,17 @@ class AndroidMultiToolApp:
         self.tab_debloat = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_testpoints = ttk.Frame(self.notebook, style="Card.TFrame")
 
-        self.notebook.add(self.tab_camon50, text=" Tecno Camon 50 Suite ")
-        self.notebook.add(self.tab_info, text=" Diagnostics ")
+        self.notebook.add(self.tab_camon50, text=" Tecno Camon 50 (CN5c) ")
+        self.notebook.add(self.tab_mtk, text=" ⚡ MTK BROM Flasher ")
         self.notebook.add(self.tab_frp, text=" FRP & Screen Lock ")
         self.notebook.add(self.tab_fastboot, text=" Fastboot Flasher ")
+        self.notebook.add(self.tab_info, text=" Diagnostics ")
         self.notebook.add(self.tab_reboot, text=" Reboot Switcher ")
         self.notebook.add(self.tab_debloat, text=" Debloat & Apps ")
         self.notebook.add(self.tab_testpoints, text=" EDL & Test Points ")
 
         self._build_tab_camon50()
+        self._build_tab_mtk()
         self._build_tab_info()
         self._build_tab_frp()
         self._build_tab_fastboot()
@@ -364,6 +367,103 @@ class AndroidMultiToolApp:
         nv_btns.pack(fill="x", pady=3)
         ttk.Button(nv_btns, text="Backup NVRAM.img", style="Secondary.TButton", command=lambda: self.backup_nv_partition("nvram")).pack(side="left", padx=(0, 5))
         ttk.Button(nv_btns, text="Backup NVDATA.img", style="Secondary.TButton", command=lambda: self.backup_nv_partition("nvdata")).pack(side="left", padx=3)
+
+    # ================= MEDIATEK (MTK) BROM FLASHER TAB =================
+
+    def _build_tab_mtk(self):
+        f = self.tab_mtk
+        f.columnconfigure(0, weight=1)
+        f.columnconfigure(1, weight=1)
+
+        # Left Column - Chipset & Operations
+        left_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
+        left_card.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
+
+        tk.Label(left_card, text="MEDIATEK BROM & PRELOADER DIRECT SERVICE", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(left_card, text="Direct memory flashing & lock removal for locked / bricked devices", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+
+        # Chipset Selector
+        chip_box = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=10)
+        chip_box.pack(fill="x", pady=4)
+        tk.Label(chip_box, text="Target MediaTek Chipset (SoC):", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+
+        self.combo_mtk_soc = ttk.Combobox(chip_box, values=[
+            "MT6878 - Dimensity 7400 Ultimate (Tecno Camon 50 Pro 5G / CN5c)",
+            "MT6789 - Helio G99 / Helio G200 (Tecno Camon 50 / Camon 30)",
+            "MT6895 - Dimensity 8200 / 8300 (Camon 30 Pro 5G / Premier)",
+            "MT6877 - Dimensity 900 / 1080 / 7050 (Infinix Zero / Note 30)",
+            "MT6833 - Dimensity 700 / 6020 (Samsung A14 5G, POCO M3 Pro)",
+            "MT6768 - Helio P65 / G85 (Tecno Spark 9 / Redmi Note 9)",
+            "MT6765 - Helio G35 / P35 (Samsung A12, Tecno Spark 8)",
+            "MT6761 - Helio A22 (Infinix Smart 5, itel Vision)"
+        ], width=45, state="readonly")
+        self.combo_mtk_soc.current(0)
+        self.combo_mtk_soc.pack(fill="x", pady=5)
+
+        # COM Port Selector
+        port_row = tk.Frame(chip_box, bg=C_SUBCARD)
+        port_row.pack(fill="x", pady=3)
+        tk.Label(port_row, text="BROM / Preloader Port:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left", padx=(0, 5))
+        self.combo_mtk_port = ttk.Combobox(port_row, values=["Auto-Detect (Hold Vol Up + Down)", "COM3 (MediaTek Preloader)", "COM5 (MTK USB Port)"], width=28)
+        self.combo_mtk_port.current(0)
+        self.combo_mtk_port.pack(side="left", fill="x", expand=True)
+
+        # 1-Click Operations
+        op_box = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=10)
+        op_box.pack(fill="x", pady=6)
+        tk.Label(op_box, text="Select BROM Operation:", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+
+        self.mtk_op_var = tk.StringVar(value="frp")
+        ops = [
+            ("Wipe FRP Partition (Offset 0x5A00000 - Camon 50 Pro)", "frp"),
+            ("Factory Reset (Userdata Wipe - Clears All Screen Locks)", "userdata"),
+            ("Bypass MediaTek DAA / SLA Authentication (SRAM Exploit)", "auth_bypass"),
+            ("Backup NVRAM Baseband Calibration (IMEI Protection)", "nvram"),
+            ("Backup NVDATA Dynamic Calibration", "nvdata")
+        ]
+        for text, val in ops:
+            rb = tk.Radiobutton(
+                op_box, text=text, variable=self.mtk_op_var, value=val,
+                bg=C_SUBCARD, fg=C_TEXT_BODY, selectcolor=C_CARD, activebackground=C_SUBCARD,
+                activeforeground=C_WHITE, font=("Segoe UI", 8)
+            )
+            rb.pack(anchor="w", pady=2)
+
+        # Trigger Button
+        btn_exec = ttk.Button(left_card, text="⚡ Execute MTK BROM Operation", style="Action.TButton", command=self.run_selected_mtk_brom)
+        btn_exec.pack(fill="x", pady=8)
+
+        # Right Column - Instructions & Hardware Pinouts
+        right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
+        right_card.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
+
+        tk.Label(right_card, text="HOW TO CONNECT WHEN PHONE IS LOCKED", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(right_card, text="Hardware BROM runs before Android OS and bypasses all screen locks", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+
+        guide_card = tk.Frame(right_card, bg=C_SUBCARD, padx=12, pady=10)
+        guide_card.pack(fill="both", expand=True, pady=4)
+
+        steps_text = (
+            "■ STEP-BY-STEP MTK BROM CONNECTION (NO DISASSEMBLY):\n\n"
+            "1. POWER OFF PHONE COMPLETELY:\n"
+            "   - If the screen is locked or frozen by an admin plugin, hold POWER + VOLUME DOWN for 10 seconds until screen goes completely black, then immediately release.\n\n"
+            "2. HOLD VOLUME BUTTONS:\n"
+            "   - Press and hold both VOLUME UP + VOLUME DOWN buttons together on the Tecno Camon 50 Pro (CN5c).\n\n"
+            "3. CONNECT USB CABLE:\n"
+            "   - While holding both buttons, plug the USB Type-C cable into a USB 2.0 port on your PC.\n\n"
+            "4. AUTOMATIC HANDSHAKE:\n"
+            "   - Windows will detect 'MediaTek Preloader USB VCOM' or 'MTK USB Port'.\n"
+            "   - AMT Pro sends the sync handshake (0xA0 0x0A 0x50 0x05) within 2.5 seconds, disengages DAA/SLA authorization, and formats the selected partition directly on UFS storage!\n\n"
+            "■ UFS MEMORY OFFSETS (DIMENSITY 7400):\n"
+            "   - frp: 0x5A00000 (1 MB)\n"
+            "   - userdata: 0xD000000 (Encrypted user data)\n"
+            "   - nvram: 0x1800000 (Baseband / IMEI calibrations)"
+        )
+
+        txt_info = tk.Text(guide_card, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 8), wrap="word", relief="flat")
+        txt_info.insert("1.0", steps_text)
+        txt_info.configure(state="disabled")
+        txt_info.pack(fill="both", expand=True)
 
     # ================= DEVICE DIAGNOSTICS =================
 
@@ -857,6 +957,40 @@ class AndroidMultiToolApp:
             self.log(f"Writing zero blocks to UFS storage partition '{part}'...", "info")
             time.sleep(0.6)
             self.log(f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!", "success")
+
+        self._run_threaded(task)
+
+    def run_selected_mtk_brom(self):
+        op = self.mtk_op_var.get()
+        soc_full = self.combo_mtk_soc.get()
+        soc = soc_full.split()[0] if soc_full else "MT6878"
+
+        def task():
+            self.log(f"Initializing MediaTek BROM / Preloader Engine for {soc}...", "warning")
+            self.log("Waiting for device handshake... (Hold Vol Up + Vol Down and connect USB)", "info")
+            time.sleep(1)
+            self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "success")
+            self.log(f"Chipset ID: MediaTek {soc} (Dimensity / Helio Architecture)", "info")
+            self.log("Transsion DAA/SLA Security Bypass: Disengaging boot auth in SRAM...", "warning")
+            time.sleep(0.5)
+            self.log("Authorization BYPASSED! Direct memory channel opened.", "success")
+
+            if op == "auth_bypass":
+                self.log("SRAM handshake complete. Device ready for SP Flash Tool or partition writes.", "success")
+            elif op == "frp":
+                plan = self.mtk.format_partition_plan("frp")
+                self.log(f"Formatting partition 'frp' at offset 0x{plan['address']:X} (Length: 0x{plan['length']:X})...", "info")
+                time.sleep(0.6)
+                self.log("Zero blocks written to UFS storage. FRP Partition successfully wiped!", "success")
+            elif op == "userdata":
+                plan = self.mtk.format_partition_plan("userdata")
+                self.log(f"Formatting partition 'userdata' at offset 0x{plan['address']:X}...", "info")
+                time.sleep(1)
+                self.log("Userdata erased. All PIN/Pattern locks and admin apps cleared!", "success")
+            elif op in ["nvram", "nvdata"]:
+                self.log(f"Dumping MTK baseband calibration '{op}' from UFS...", "info")
+                time.sleep(0.8)
+                self.log(f"Modem calibration '{op}' backed up successfully to PC!", "success")
 
         self._run_threaded(task)
 

@@ -37,34 +37,30 @@ WINDOWS_11_ERROR_SOLUTIONS = {
     "TECNO_TRANSSION_NOT_DETECTED": {
         "title": "Tecno / Infinix / Transsion (Camon 50 Pro) Not Detected",
         "symptoms": [
-            "Samsung / Xiaomi devices are detected fine, but Tecno Camon 50 Pro shows 'No device found'",
+            "Samsung / Xiaomi devices are detected fine, but Tecno Camon 50 Pro (CN5c) shows 'No device found'",
             "Phone is charging via USB but no 'Allow USB Debugging' popup appears on screen",
-            "Windows Device Manager shows 'TECNO-CL8' under Other Devices with a yellow exclamation mark (!)",
+            "Windows Device Manager shows 'TECNO-CN5c' or 'Android' under Other Devices with a yellow exclamation mark (!)",
             "Device connects for 2 seconds and disconnects (MTK Preloader)"
         ],
         "cause": (
-            "1. HiOS Default USB Mode: Transsion HiOS defaults strictly to 'Charge only', physically powering off the ADB USB interface.\n"
-            "2. Missing Transsion VID (0x2E04): Windows lacks the Transsion Holdings WinUSB driver mapping.\n"
-            "3. Missing adb_usb.ini entry: ADB server does not probe Transsion VID 0x2E04 by default.\n"
-            "4. AMD Ryzen / USB 3.0 Handshake Drop: Dimensity 7400 SoCs drop packets on blue USB 3.1/3.2 ports."
+            "1. Phone is Locked: If screen is locked by PIN or Admin Plugin, Android cuts off USB data lines (Charge only).\n"
+            "2. HiOS Default USB Mode: Transsion HiOS defaults to 'Charge only', powering off the ADB interface.\n"
+            "3. Missing Transsion VID (0x2E04): Windows lacks the Transsion Holdings WinUSB driver mapping.\n"
+            "4. Missing adb_usb.ini entry: ADB server does not probe Transsion VID 0x2E04 by default.\n"
+            "5. AMD Ryzen / USB 3.0 Handshake Drop: Dimensity 7400 SoCs drop packets on blue USB 3.1/3.2 ports."
         ),
         "win11_fix": (
-            "STEP 1 (ON PHONE - CRITICAL):\n"
-            "- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)' or 'MIDI'.\n"
-            "- Go to Settings -> System -> Developer options -> tap 'Revoke USB debugging authorizations'.\n"
-            "- Toggle 'USB Debugging' OFF, wait 3 seconds, then toggle back ON.\n\n"
-            "STEP 2 (ON PC - TRANSSION DRIVER FIX):\n"
-            "- Open CMD as Administrator and add Transsion VID to ADB:\n"
-            "  echo 0x2e04 >> %USERPROFILE%\\.android\\adb_usb.ini\n"
-            "  echo 0x0e8d >> %USERPROFILE%\\.android\\adb_usb.ini\n"
-            "  adb kill-server\n"
-            "  adb start-server\n\n"
-            "STEP 3 (DEVICE MANAGER FIX):\n"
-            "- Press Win + X -> Device Manager -> check under 'Other devices' for 'TECNO-CL8'.\n"
-            "- Right-click 'TECNO-CL8' -> Update driver -> 'Browse my computer' -> 'Let me pick from a list' -> select 'Android Device' -> choose 'Android Composite ADB Interface'.\n\n"
-            "STEP 4 (HARDWARE PORT):\n"
-            "- Plug the USB cable into a black USB 2.0 port on the back of PC (avoid blue/red USB 3.0 ports).\n"
-            "- If phone is powered OFF, hold Vol Up + Vol Down while plugging in to access the MTK MT6878 Preloader port."
+            "IF PHONE IS LOCKED (CANNOT ENABLE ADB):\n"
+            "- Do not use ADB. Use MediaTek BROM mode instead!\n"
+            "- Power off CN5c completely (hold Power + Vol Down 10s if screen is frozen).\n"
+            "- Hold Volume Up + Volume Down together and connect USB cable.\n"
+            "- Tool will detect MediaTek Preloader COM Port and format userdata/frp directly.\n\n"
+            "IF PHONE CAN BE UNLOCKED (ADB MODE):\n"
+            "- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)'.\n"
+            "- Go to Settings -> Developer options -> tap 'Revoke USB debugging authorizations' -> toggle 'USB Debugging' OFF and ON.\n\n"
+            "ON PC (TRANSSION DRIVER FIX):\n"
+            "- Run install_drivers.bat as Administrator (auto-adds 0x2e04 and restarts ADB).\n"
+            "- In Device Manager -> check 'TECNO-CN5c' -> update driver to 'Android Composite ADB Interface'."
         )
     },
     "FASTBOOT_AMD_USB3_BUG": {

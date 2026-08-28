@@ -290,7 +290,7 @@ class AndroidMultiToolApp:
         # MediaTek Scatter Map Frame
         s_box = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=10)
         s_box.pack(fill="both", expand=True, pady=6)
-        tk.Label(s_box, text="MediaTek UFS Partition Map (Tecno-CL8)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(s_box, text="MediaTek UFS Partition Map (TECNO-CN5c)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         cols = ("Partition", "Target", "File")
         self.tree_scatter = ttk.Treeview(s_box, columns=cols, show="headings", height=6)
@@ -884,11 +884,11 @@ class AndroidMultiToolApp:
                 time.sleep(0.6)
                 info = {
                     "brand": "Tecno Mobile (Transsion)",
-                    "model": "Camon 50 Pro 5G (Tecno-CL8)",
-                    "device": "TECNO-CL8",
+                    "model": "Camon 50 Pro 5G (TECNO-CN5c)",
+                    "device": "TECNO-CN5c",
                     "android_version": "16 (HiOS 16)",
                     "sdk_level": "36",
-                    "build_id": "CL8-H932A-U-GL-260315V120",
+                    "build_id": "CN5c-H932A-U-GL-260315V120",
                     "security_patch": "2026-04-05",
                     "cpu_abi": "arm64-v8a (MediaTek Dimensity 7400 Ultimate 4nm)",
                     "battery_level": "96% (6500 mAh)",
@@ -911,11 +911,11 @@ class AndroidMultiToolApp:
             if self.simulated_mode.get():
                 time.sleep(0.6)
                 vars_dict = {
-                    "product": "TECNO-CL8",
+                    "product": "TECNO-CN5c",
                     "unlocked": "no",
                     "secure": "yes",
                     "soc-id": "MT6878",
-                    "version-bootloader": "CL8-H932A-U-GL-260315V120",
+                    "version-bootloader": "CN5c-H932A-U-GL-260315V120",
                     "slot-count": "2",
                     "battery-voltage": "4280mV"
                 }

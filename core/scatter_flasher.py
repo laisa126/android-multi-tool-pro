@@ -49,9 +49,9 @@ class ScatterFlasher:
             return False, [], f"Scatter parse error: {e}"
 
     def build_tecno_camon50_partition_map(self) -> List[Dict[str, str]]:
-        """Default hardware partition map for Tecno Camon 50 Pro (UFS)."""
+        """Default hardware partition map for Tecno Camon 50 Pro (TECNO CN5c - UFS Storage)."""
         return [
-            {"partition": "preloader", "file": "preloader_tecno_cl8.bin", "target": "UFS Boot1"},
+            {"partition": "preloader", "file": "preloader_tecno_cn5c.bin", "target": "UFS Boot1"},
             {"partition": "init_boot", "file": "init_boot.img", "target": "Android 15/16 Kernel Ramdisk"},
             {"partition": "boot", "file": "boot.img", "target": "Kernel & Drivers"},
             {"partition": "vbmeta", "file": "vbmeta.img", "target": "AVB 2.0 Security Header"},

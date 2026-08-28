@@ -12,7 +12,7 @@ SUPPORTED_DEVICE_CATALOG = [
         "brand": "Tecno",
         "series": "Camon Pro Series (Flagship Camera Line)",
         "models": [
-            "Tecno Camon 50 Pro / Camon 50 Pro 5G",
+            "Tecno Camon 50 Pro 5G (CN5c) / Camon 50 Pro",
             "Tecno Camon 50 / Camon 50 Premier",
             "Tecno Camon 30 / 30 Pro 5G / 30 Premier",
             "Tecno Camon 20 / 20 Pro / 20 Premier 5G",

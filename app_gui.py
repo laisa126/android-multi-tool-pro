@@ -315,14 +315,33 @@ class AndroidMultiToolApp:
 
         # Transsion MDM Bypass Box
         mdm_box = tk.Frame(right_card, bg=C_SUBCARD, padx=10, pady=10)
-        mdm_box.pack(fill="x", pady=6)
+        mdm_box.pack(fill="x", pady=4)
         tk.Label(mdm_box, text="Transsion MDM & Financing Lock Remover", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(mdm_box, text="Disables Carlcare MDM, PalmPay Framework, PayJoy and locks setup completion state", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+        tk.Label(mdm_box, text="Disables Carlcare MDM, PalmPay Framework, PayJoy and locks setup completion state", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 4))
 
         m_btns = tk.Frame(mdm_box, bg=C_SUBCARD)
-        m_btns.pack(fill="x", pady=4)
+        m_btns.pack(fill="x", pady=2)
         ttk.Button(m_btns, text="Freeze HiOS MDM & PayJoy", style="Action.TButton", command=self.bypass_transsion_mdm).pack(side="left", padx=(0, 5))
         ttk.Button(m_btns, text="Lock Provisioning Intent", style="Secondary.TButton", command=self.lock_provisioning).pack(side="left")
+
+        # Admin App Security Plugin Box
+        plugin_box = tk.Frame(right_card, bg=C_SUBCARD, padx=10, pady=10)
+        plugin_box.pack(fill="x", pady=4)
+        tk.Label(plugin_box, text="Admin App Security Plugin Remover", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(plugin_box, text="Neutralizes SYSTEM_ALERT_WINDOW overlay, unregisters DPM admin & forces disable", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 4))
+
+        p_input_row = tk.Frame(plugin_box, bg=C_SUBCARD)
+        p_input_row.pack(fill="x", pady=2)
+        tk.Label(p_input_row, text="Package:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left", padx=(0, 4))
+        self.entry_security_plugin = ttk.Entry(p_input_row, width=28)
+        self.entry_security_plugin.insert(0, "com.android.security.plugin")
+        self.entry_security_plugin.pack(side="left", fill="x", expand=True, padx=(0, 4))
+
+        p_btn_row = tk.Frame(plugin_box, bg=C_SUBCARD)
+        p_btn_row.pack(fill="x", pady=3)
+        ttk.Button(p_btn_row, text="Neutralize Plugin", style="Danger.TButton", command=self.neutralize_security_plugin).pack(side="left", padx=(0, 5))
+        ttk.Button(p_btn_row, text="Scan Admins", style="Secondary.TButton", command=self.scan_device_admins).pack(side="left", padx=3)
+        ttk.Button(p_btn_row, text="Purge Device Owner (Root)", style="Secondary.TButton", command=self.purge_device_owner).pack(side="left", padx=3)
 
         # MTK Preloader DAA / SLA Direct Format Box
         brom_box = tk.Frame(right_card, bg=C_SUBCARD, padx=10, pady=10)
@@ -751,6 +770,77 @@ class AndroidMultiToolApp:
             self.log("user_setup_complete set to 1", "success")
             self.log("device_provisioned set to 1", "success")
             self.log("Provisioning state locked. Device will skip initial setup wizard on boot.", "success")
+
+        self._run_threaded(task)
+
+    def scan_device_admins(self):
+        def task():
+            self.log("Querying active Device Policy Manager administrators via ADB...", "info")
+            if self.simulated_mode.get():
+                time.sleep(0.6)
+                admins = [
+                    "com.android.security.plugin/.AdminReceiver",
+                    "com.payjoy.access/.receiver.AdminReceiver",
+                    "com.transsion.carlcare/.receiver.DeviceAdminReceiver"
+                ]
+            else:
+                admins = self.transsion_mdm.list_active_device_admins()
+
+            if admins:
+                self.log(f"Detected {len(admins)} active device admin components:", "warning")
+                for a in admins:
+                    self.log(f"  [ACTIVE ADMIN] {a}", "info")
+                # Pre-fill package field
+                pkg = admins[0].split("/")[0]
+                self.entry_security_plugin.delete(0, tk.END)
+                self.entry_security_plugin.insert(0, pkg)
+            else:
+                self.log("No active device admin components found.", "success")
+
+        self._run_threaded(task)
+
+    def neutralize_security_plugin(self):
+        pkg = self.entry_security_plugin.get().strip() or "com.android.security.plugin"
+        if not messagebox.askyesno("Confirm Neutralization", f"Neutralize Admin App Security Plugin for '{pkg}'?\nThis will strip overlay rights, kill background process, and disable the package."):
+            return
+
+        def task():
+            self.log(f"Neutralizing Admin App Security Plugin: {pkg}...", "warning")
+            if self.simulated_mode.get():
+                time.sleep(1)
+                self.log(f"[OK] dpm remove-active-admin {pkg}/.AdminReceiver", "success")
+                self.log(f"[OK] Revoked AppOps SYSTEM_ALERT_WINDOW (Lockscreen overlay killed)", "success")
+                self.log(f"[OK] Revoked AppOps RUN_IN_BACKGROUND & START_FOREGROUND", "success")
+                self.log(f"[OK] Revoked AppOps BIND_ACCESSIBILITY_SERVICE", "success")
+                self.log(f"[OK] Terminated running process 'am force-stop {pkg}'", "success")
+                self.log(f"[OK] Cleared package credentials & local cache via 'pm clear {pkg}'", "success")
+                self.log(f"[OK] Package disabled for user 0: {pkg}", "success")
+                self.log("Admin App Security Plugin has been completely neutralized!", "success")
+            else:
+                logs = self.transsion_mdm.neutralize_admin_security_plugin(pkg)
+                for l in logs:
+                    lvl = "success" if l.startswith("[OK]") else ("warning" if l.startswith("[WARN]") else "info")
+                    self.log(l, lvl)
+
+        self._run_threaded(task)
+
+    def purge_device_owner(self):
+        if not messagebox.askyesno("Confirm Device Owner Purge", "Purging Device Owner XML files requires Root / Magisk or TWRP shell.\nProceed?"):
+            return
+
+        def task():
+            self.log("Purging /data/system/device_owner_2.xml and device_policies.xml...", "warning")
+            if self.simulated_mode.get():
+                time.sleep(0.8)
+                self.log("[OK] Deleted /data/system/device_owner_2.xml", "success")
+                self.log("[OK] Deleted /data/system/device_policies.xml", "success")
+                self.log("[OK] Deleted /data/system/users/0/device_policies.xml", "success")
+                self.log("All Device Owner & Admin restrictions permanently purged! Reboot phone.", "success")
+            else:
+                logs = self.transsion_mdm.remove_device_owner_rooted()
+                for l in logs:
+                    lvl = "success" if l.startswith("[OK]") else "error"
+                    self.log(l, lvl)
 
         self._run_threaded(task)
 

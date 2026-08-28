@@ -275,6 +275,60 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 ]
             })
 
+        elif action == "neutralize_security_plugin":
+            pkg = req.get("package", "com.android.security.plugin").strip() or "com.android.security.plugin"
+            if mock_state["simulated"]:
+                time.sleep(1.2)
+                logs = [
+                    f"Detecting Admin App Security Plugin: '{pkg}'...",
+                    f"[OK] Querying active device admin receivers: {pkg}/.AdminReceiver found",
+                    f"[OK] Attempting dpm remove-active-admin {pkg}/.AdminReceiver",
+                    f"[OK] Revoked AppOps SYSTEM_ALERT_WINDOW (Overlay lockscreen neutralized)",
+                    f"[OK] Revoked AppOps RUN_IN_BACKGROUND & START_FOREGROUND",
+                    f"[OK] Revoked AppOps BIND_ACCESSIBILITY_SERVICE (UI hijacking disabled)",
+                    f"[OK] Revoked permissions: RECEIVE_BOOT_COMPLETED, POST_NOTIFICATIONS, INTERNET",
+                    f"[OK] Terminated background process via 'am force-stop {pkg}'",
+                    f"[OK] Cleared package credentials & local cache via 'pm clear {pkg}'",
+                    f"[OK] Package disabled for user 0: {pkg}",
+                    "Admin App Security Plugin has been completely neutralized and deactivated!"
+                ]
+                self.send_json_response({"success": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
+            else:
+                logs = transsion_mdm.neutralize_admin_security_plugin(pkg)
+                self.send_json_response({"success": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
+
+        elif action == "list_admins":
+            if mock_state["simulated"]:
+                self.send_json_response({
+                    "success": True,
+                    "admins": [
+                        "com.android.security.plugin/.AdminReceiver",
+                        "com.payjoy.access/.receiver.AdminReceiver",
+                        "com.transsion.carlcare/.receiver.DeviceAdminReceiver"
+                    ]
+                })
+            else:
+                admins = transsion_mdm.list_active_device_admins()
+                self.send_json_response({"success": True, "admins": admins})
+
+        elif action == "remove_device_owner":
+            if mock_state["simulated"]:
+                time.sleep(1)
+                self.send_json_response({
+                    "success": True,
+                    "logs": [
+                        "Attempting root-level Device Owner XML deletion...",
+                        "[OK] Deleted /data/system/device_owner_2.xml",
+                        "[OK] Deleted /data/system/device_policies.xml",
+                        "[OK] Deleted /data/system/users/0/device_policies.xml",
+                        "All Device Owner & Admin restrictions permanently purged!",
+                        "Reboot phone now to finalize complete deactivation."
+                    ]
+                })
+            else:
+                logs = transsion_mdm.remove_device_owner_rooted()
+                self.send_json_response({"success": True, "logs": logs})
+
         elif action == "efs_backup":
             part = req.get("partition", "nvram")
             time.sleep(1)

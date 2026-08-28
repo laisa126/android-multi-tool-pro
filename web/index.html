@@ -548,6 +548,25 @@
 
             <div class="action-card">
               <div class="action-info">
+                <h4>Admin App Security Plugin Remover</h4>
+                <p>Revokes SYSTEM_ALERT_WINDOW overlays, unregisters DPM admin, and forces package deactivation.</p>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-danger" onclick="neutralizeSecurityPlugin()">Neutralize Plugin</button>
+                <button class="btn-dark" onclick="detectAdmins()">Scan Admins</button>
+              </div>
+            </div>
+
+            <div class="action-card">
+              <div class="action-info">
+                <h4>Purge Device Owner XML (Root / TWRP)</h4>
+                <p>Deletes device_owner_2.xml & device_policies.xml to completely erase all admin rights.</p>
+              </div>
+              <button class="btn-danger" onclick="removeDeviceOwner()">Purge XML</button>
+            </div>
+
+            <div class="action-card">
+              <div class="action-info">
                 <h4>Stock ROM Payload.bin Extractor</h4>
                 <p>Unpacks init_boot.img, vbmeta.img, and boot.img from official OTA.</p>
               </div>
@@ -1243,6 +1262,51 @@ build.bat</div>
         if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("MDM freeze failed: " + err, "log-red");
+      }
+    }
+
+    async function detectAdmins() {
+      logLine("Querying active Device Policy Manager administrators via ADB...", "log-white");
+      try {
+        const res = await fetch("/api/list_admins", { method: "POST" });
+        const data = await res.json();
+        if (data.admins && data.admins.length > 0) {
+          logLine("Found " + data.admins.length + " active admin components:", "log-green");
+          data.admins.forEach(a => logLine("  [ADMIN] " + a, "log-white"));
+        } else {
+          logLine("No active device admin components detected.", "log-green");
+        }
+      } catch (err) {
+        logLine("Admin detection failed: " + err, "log-red");
+      }
+    }
+
+    async function neutralizeSecurityPlugin() {
+      const pkg = prompt("Enter the package name of the Admin App / Security Plugin to neutralize:", "com.android.security.plugin") || "com.android.security.plugin";
+      logLine("Neutralizing Admin App Security Plugin: " + pkg + "...", "log-white");
+      try {
+        const res = await fetch("/api/neutralize_security_plugin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ package: pkg })
+        });
+        const data = await res.json();
+        data.logs.forEach(l => logLine(l, "log-green"));
+        if (data.workflow) promptWorkflow(data.workflow);
+      } catch (err) {
+        logLine("Plugin neutralization failed: " + err, "log-red");
+      }
+    }
+
+    async function removeDeviceOwner() {
+      if (!confirm("Remove Device Owner XML files? This requires Root / Magisk or TWRP shell.")) return;
+      logLine("Purging /data/system/device_owner_2.xml and device_policies.xml...", "log-white");
+      try {
+        const res = await fetch("/api/remove_device_owner", { method: "POST" });
+        const data = await res.json();
+        data.logs.forEach(l => logLine(l, "log-green"));
+      } catch (err) {
+        logLine("Device owner purge failed: " + err, "log-red");
       }
     }
 

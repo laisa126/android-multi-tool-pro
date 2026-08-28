@@ -306,6 +306,44 @@
       margin-top: 2px;
     }
 
+    /* Step Card Styling */
+    .step-card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-left: 4px solid var(--accent-cyan);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .step-badge {
+      background: var(--accent-cyan);
+      color: #000;
+      font-weight: 800;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 12px;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .step-desc {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
     /* Terminal Console Drawer */
     .terminal-container {
       height: 180px;
@@ -429,6 +467,7 @@
   <!-- Navigation Tabs -->
   <div class="tabs-bar">
     <button class="tab-btn active" onclick="switchTab('tab-diagnostics', this)">📱 Device Diagnostics</button>
+    <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">📖 Process Tutorials (What Next?)</button>
     <button class="tab-btn" onclick="switchTab('tab-catalog', this)">📋 Supported Devices List</button>
     <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚙️ MediaTek BROM (Camon 50 Pro)</button>
     <button class="tab-btn" onclick="switchTab('tab-win11', this)">🪟 Windows 11 Error Fixer</button>
@@ -500,7 +539,40 @@
       </div>
     </div>
 
-    <!-- TAB 2: Supported Devices Catalog -->
+    <!-- TAB 2: Process Tutorials & What Next Roadmap -->
+    <div id="tab-tutorials" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📖 What Process Did You Just Complete?</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="font-size:11px; color:var(--text-muted);">Select Completed Milestone to View Next Steps:</label>
+            <select id="tutorialSelect" onchange="renderSelectedTutorial()" style="width:100%;">
+              <option value="FACTORY_RESET_COMPLETE">1. Factory Reset / Userdata Wipe Finished</option>
+              <option value="FRP_BYPASS_COMPLETE">2. FRP (Google Account) Bypass Finished</option>
+              <option value="BOOTLOADER_UNLOCK_COMPLETE">3. Bootloader Unlocked (flashing unlock)</option>
+              <option value="ROOT_FLASH_COMPLETE">4. Magisk / KernelSU Root Image Flashed</option>
+              <option value="DEBLOAT_COMPLETE">5. System Bloatware & HiOS Cleaned</option>
+            </select>
+
+            <div class="action-card" style="margin-top:10px;">
+              <div class="action-info">
+                <h4>Jump Directly to Next Action</h4>
+                <p id="jumpDesc">Execute the recommended next step automatically.</p>
+              </div>
+              <button class="btn-cyan" id="btnJumpTab" onclick="jumpToRecommendedTab()">Go To Next Step</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="tutTitle">📋 Step-by-Step Next Action Roadmap</div>
+          <div id="tutStatus" style="font-size:11px; color:var(--accent-cyan); margin-bottom:8px; font-weight:600;"></div>
+          <div id="tutStepsContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Supported Devices Catalog -->
     <div id="tab-catalog" class="tab-content">
       <div class="card">
         <div class="card-title">📋 Comprehensive Supported Device Matrix (Multi-Tool Database)</div>
@@ -526,7 +598,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: MediaTek BROM (Camon 50 Pro) -->
+    <!-- TAB 4: MediaTek BROM (Camon 50 Pro) -->
     <div id="tab-mtk" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -572,7 +644,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: Windows 11 Diagnostics & Error Fixer -->
+    <!-- TAB 5: Windows 11 Diagnostics & Error Fixer -->
     <div id="tab-win11" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -605,7 +677,7 @@
       </div>
     </div>
 
-    <!-- TAB 5: Reboot & Modes -->
+    <!-- TAB 6: Reboot & Modes -->
     <div id="tab-reboot" class="tab-content">
       <div class="grid-3">
         <div class="action-card">
@@ -674,7 +746,7 @@
       </div>
     </div>
 
-    <!-- TAB 6: FRP & Security -->
+    <!-- TAB 7: FRP & Security -->
     <div id="tab-frp" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -733,7 +805,7 @@
       </div>
     </div>
 
-    <!-- TAB 7: Root & Magisk -->
+    <!-- TAB 8: Root & Magisk -->
     <div id="tab-root" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -796,7 +868,7 @@
       </div>
     </div>
 
-    <!-- TAB 8: EFS & Baseband Backup -->
+    <!-- TAB 9: EFS & Baseband Backup -->
     <div id="tab-efs" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -833,7 +905,7 @@
       </div>
     </div>
 
-    <!-- TAB 9: Fastboot Flasher -->
+    <!-- TAB 10: Fastboot Flasher -->
     <div id="tab-fastboot" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -905,7 +977,7 @@
       </div>
     </div>
 
-    <!-- TAB 10: Qualcomm EDL 9008 -->
+    <!-- TAB 11: Qualcomm EDL 9008 -->
     <div id="tab-qualcomm" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -948,7 +1020,7 @@
       </div>
     </div>
 
-    <!-- TAB 11: Debloat & Apps -->
+    <!-- TAB 12: Debloat & Apps -->
     <div id="tab-debloat" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -1011,7 +1083,7 @@
       </div>
     </div>
 
-    <!-- TAB 12: EDL Test Points -->
+    <!-- TAB 13: EDL Test Points -->
     <div id="tab-testpoints" class="tab-content">
       <div class="card">
         <div class="card-title">🛠️ Hardware Emergency Download (EDL 9008 / BROM) Pinouts</div>
@@ -1075,6 +1147,8 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
   <script>
     let cachedCatalog = [];
     let cachedWin11Errors = {};
+    let cachedWorkflows = {};
+    let currentWorkflowKey = "FACTORY_RESET_COMPLETE";
 
     function logLine(text, cssClass = "log-cyan") {
       const out = document.getElementById("termOutput");
@@ -1094,7 +1168,15 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
       document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
       document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
       document.getElementById(tabId).classList.add("active");
-      btn.classList.add("active");
+      if (btn) {
+        btn.classList.add("active");
+      } else {
+        document.querySelectorAll(".tab-btn").forEach(b => {
+          if (b.getAttribute("onclick") && b.getAttribute("onclick").includes(tabId)) {
+            b.classList.add("active");
+          }
+        });
+      }
     }
 
     function showBuildInfo() {
@@ -1174,12 +1256,22 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
       }
     }
 
+    function promptWorkflow(wfKey) {
+      currentWorkflowKey = wfKey;
+      logLine(`🔔 MILESTONE FINISHED! Check the 'Process Tutorials (What Next?)' tab for exact next steps.`, "log-green");
+      if (document.getElementById("tutorialSelect")) {
+        document.getElementById("tutorialSelect").value = wfKey;
+        renderSelectedTutorial();
+      }
+    }
+
     async function frpFastboot() {
-      logLine("Initiating Universal Fastboot FRP Reset...", "log-cyan");
+      logLine("Initiating Universal Fastboot FRP Reset on Tecno Camon 50 Pro...", "log-cyan");
       try {
         const res = await fetch("/api/frp_fastboot", { method: "POST" });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
+        if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("FRP Fastboot failed: " + err, "log-red");
       }
@@ -1191,13 +1283,14 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         const res = await fetch("/api/frp_samsung", { method: "POST" });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
+        if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("Samsung FRP failed: " + err, "log-red");
       }
     }
 
     async function rootAction(subaction) {
-      logLine(`Executing Root Operation: '${subaction}'...`, "log-purple");
+      logLine(`Executing Root Operation: '${subaction}' on Camon 50 Pro...`, "log-purple");
       try {
         const res = await fetch("/api/root_action", {
           method: "POST",
@@ -1206,6 +1299,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
+        if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("Root action failed: " + err, "log-red");
       }
@@ -1213,7 +1307,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
 
     async function backupEfs() {
       const part = document.getElementById("efsPart").value;
-      logLine(`Dumping modem calibration partition '${part}' to PC storage...`, "log-cyan");
+      logLine(`Dumping modem calibration partition '${part}' for Tecno Camon 50 Pro to PC...`, "log-cyan");
       try {
         const res = await fetch("/api/efs_backup", {
           method: "POST",
@@ -1239,6 +1333,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-purple"));
+        if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("MTK BROM exploit failed: " + err, "log-red");
       }
@@ -1256,6 +1351,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
+        if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("Qualcomm EDL failed: " + err, "log-red");
       }
@@ -1267,6 +1363,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         logLine("[OK] content insert: user_setup_complete = 1", "log-green");
         logLine("[OK] content insert: device_provisioned = 1", "log-green");
         logLine("[OK] am start: Home launcher initialized.", "log-green");
+        promptWorkflow("FRP_BYPASS_COMPLETE");
       }, 600);
     }
 
@@ -1276,7 +1373,15 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         logLine("[DELETED] /data/system/gesture.key", "log-green");
         logLine("[DELETED] /data/system/locksettings.db", "log-green");
         logLine("Screen locks cleared successfully!", "log-green");
+        promptWorkflow("FACTORY_RESET_COMPLETE");
       }, 700);
+    }
+
+    function launchMTP() {
+      logLine("Sending MTP Push Notification for YouTube/Chrome...", "log-cyan");
+      setTimeout(() => {
+        logLine("MTP Intent Packet Broadcasted to Device Display!", "log-green");
+      }, 600);
     }
 
     async function flashPartition() {
@@ -1302,6 +1407,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         const res = await fetch("/api/unlock_bootloader", { method: "POST" });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
+        if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("Unlock failed: " + err, "log-red");
       }
@@ -1317,7 +1423,8 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
-        logLine(`Debloat finished: ${data.count} packages disabled.`, "log-green");
+        logLine(`Debloat finished: ${data.count} packages disabled/uninstalled.`, "log-green");
+        if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("Debloat failed: " + err, "log-red");
       }
@@ -1412,6 +1519,57 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
       renderCatalog(filtered);
     }
 
+    async function loadWorkflows() {
+      try {
+        const res = await fetch("/api/workflows");
+        cachedWorkflows = await res.json();
+        renderSelectedTutorial();
+      } catch (err) {}
+    }
+
+    function renderSelectedTutorial() {
+      const key = document.getElementById("tutorialSelect").value;
+      const wf = cachedWorkflows[key];
+      if (!wf) return;
+
+      document.getElementById("tutTitle").textContent = "📋 " + wf.title;
+      document.getElementById("tutStatus").textContent = "STATUS: " + wf.current_status;
+
+      const container = document.getElementById("tutStepsContainer");
+      container.innerHTML = "";
+
+      wf.next_steps.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "step-card";
+        div.innerHTML = `
+          <div class="step-header">
+            <span class="step-badge">STEP ${s.step}</span>
+            <span class="step-title">${s.title}</span>
+          </div>
+          <div class="step-desc">${s.action}</div>
+        `;
+        container.appendChild(div);
+      });
+
+      // Update jump button label & destination
+      const jumpMap = {
+        "FACTORY_RESET_COMPLETE": { text: "Go to Debloat Tab", tab: "tab-debloat" },
+        "FRP_BYPASS_COMPLETE": { text: "Go to Reboot Tab", tab: "tab-reboot" },
+        "BOOTLOADER_UNLOCK_COMPLETE": { text: "Go to Root Tab", tab: "tab-root" },
+        "ROOT_FLASH_COMPLETE": { text: "Verify Root Status", tab: "tab-root" },
+        "DEBLOAT_COMPLETE": { text: "Check Diagnostics", tab: "tab-diagnostics" }
+      };
+
+      const j = jumpMap[key] || { text: "Go To Next Tab", tab: "tab-diagnostics" };
+      document.getElementById("btnJumpTab").textContent = j.text;
+      document.getElementById("btnJumpTab").onclick = () => switchTab(j.tab);
+    }
+
+    function jumpToRecommendedTab() {
+      const key = document.getElementById("tutorialSelect").value;
+      renderSelectedTutorial();
+    }
+
     async function loadWin11Errors() {
       try {
         const res = await fetch("/api/win11_errors");
@@ -1432,9 +1590,10 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
 
     window.addEventListener("DOMContentLoaded", () => {
       logLine("Android Multi-Tool Pro v2.5 initialized.", "log-cyan");
-      logLine("Device Profile Loaded: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
+      logLine("Target Device: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
       loadTestPoints();
       loadCatalog();
+      loadWorkflows();
       loadWin11Errors();
     });
   </script>

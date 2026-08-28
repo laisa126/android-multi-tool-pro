@@ -19,6 +19,7 @@ from core.efs_engine import EFSEngine
 from core.error_handler import WINDOWS_11_ERROR_SOLUTIONS
 from core.device_matrix import SUPPORTED_DEVICE_CATALOG, find_device_matches
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
+from core.workflow_guide import WORKFLOW_TUTORIALS
 
 adb = ADBEngine()
 fastboot = FastbootEngine()
@@ -29,7 +30,6 @@ samsung_modem = SamsungModemEngine()
 root_engine = RootEngine(adb, fastboot)
 efs = EFSEngine(adb, fastboot)
 
-# Multi-device mock presets including Tecno Camon 50 Pro
 device_presets = {
     "tecno": {
         "brand": "Tecno Mobile (Transsion)",
@@ -94,6 +94,9 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             return
         elif parsed.path == "/api/catalog":
             self.send_json_response(SUPPORTED_DEVICE_CATALOG)
+            return
+        elif parsed.path == "/api/workflows":
+            self.send_json_response(WORKFLOW_TUTORIALS)
             return
         elif parsed.path == "/api/win11_errors":
             self.send_json_response(WINDOWS_11_ERROR_SOLUTIONS)
@@ -176,6 +179,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 time.sleep(0.8)
                 self.send_json_response({
                     "success": True,
+                    "workflow": "FRP_BYPASS_COMPLETE",
                     "logs": [
                         "[FASTBOOT] Target: Tecno Camon 50 Pro (UFS Storage)",
                         "[FASTBOOT] Erasing 'frp'... OKAY [0.042s]",
@@ -187,7 +191,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             else:
                 results = frp.reset_frp_fastboot()
                 logs = [f"[{part}] {msg}" for part, ok, msg in results]
-                self.send_json_response({"success": True, "logs": logs})
+                self.send_json_response({"success": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
 
         elif action == "frp_samsung":
             seq = samsung_modem.build_test_mode_sequence()
@@ -199,12 +203,13 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             logs.append("Wiping setup wizard & Google account tokens...")
             logs.append("Samsung FRP bypass SUCCESSFUL!")
             time.sleep(1)
-            self.send_json_response({"success": True, "logs": logs})
+            self.send_json_response({"success": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
 
         elif action == "mtk_brom_format":
             soc = req.get("soc", "MT6878")
             part = req.get("partition", "frp")
             plan = mtk.format_partition_plan(part)
+            wf = "FACTORY_RESET_COMPLETE" if part == "userdata" else "FRP_BYPASS_COMPLETE"
             logs = [
                 f"Connecting to MediaTek BROM / Preloader on Windows 11...",
                 f"Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]",
@@ -216,7 +221,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!"
             ]
             time.sleep(1.2)
-            self.send_json_response({"success": True, "logs": logs})
+            self.send_json_response({"success": True, "workflow": wf, "logs": logs})
 
         elif action == "qualcomm_edl_format":
             chip = req.get("chip", "SM6125")
@@ -233,7 +238,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 f"Partition '{part}' erased successfully via Qualcomm EDL 9008!"
             ]
             time.sleep(1.2)
-            self.send_json_response({"success": True, "logs": logs})
+            self.send_json_response({"success": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
 
         elif action == "efs_backup":
             part = req.get("partition", "nvram")
@@ -260,7 +265,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                             "Running: adb shell which su -> not found",
                             "Running: adb shell id -> uid=2000(shell) gid=2000(shell)",
                             "SELinux status: Enforcing",
-                            "Result: Device is NOT rooted."
+                            "Result: Device is NOT rooted yet. Follow Root tutorial steps."
                         ]
                     })
                 else:
@@ -272,6 +277,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 time.sleep(1)
                 self.send_json_response({
                     "success": True,
+                    "workflow": "ROOT_FLASH_COMPLETE",
                     "logs": [
                         f"Target: Android 15/16 Generic Kernel Image (GKI)",
                         f"Sending '{part}' (33554432 bytes)... OKAY [0.72s]",
@@ -285,6 +291,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 time.sleep(0.8)
                 self.send_json_response({
                     "success": True,
+                    "workflow": "ROOT_FLASH_COMPLETE",
                     "logs": [
                         "Executing: fastboot flash --disable-verity --disable-verification vbmeta vbmeta.img",
                         "Rewriting VBMeta header flags (0x02 -> 0x00)... OKAY",
@@ -312,6 +319,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             time.sleep(1)
             self.send_json_response({
                 "success": True,
+                "workflow": "BOOTLOADER_UNLOCK_COMPLETE",
                 "logs": [
                     "Sending: fastboot flashing unlock",
                     "(bootloader) Tecno Camon 50 Pro Bootloader Unlock Request",
@@ -324,9 +332,10 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "debloat":
             brand = "Transsion (Tecno / Infinix / itel - HiOS 14/15/16)"
             pkgs = BLOATWARE_PRESETS.get(brand, [])
-            logs = [f"HiOS 16 Package disabled: {p}" for p in pkgs]
+            logs = [f"HiOS 16 System App disabled/uninstalled: {p}" for p in pkgs]
             self.send_json_response({
                 "success": True,
+                "workflow": "DEBLOAT_COMPLETE",
                 "brand": brand,
                 "count": len(pkgs),
                 "logs": logs

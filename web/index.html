@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Android Multi-Tool Pro - Monochrome Edition (Windows 11)</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0c0c">
   <style>
     /* STRICT 10-COLOR MONOCHROME PALETTE */
     :root {
@@ -446,6 +448,7 @@
         <option value="xiaomi">Xiaomi Redmi Note 11 (Fastboot)</option>
       </select>
       <button class="btn-white" onclick="scanDevices()">Scan USB</button>
+      <button class="btn-white" onclick="showInstallModal()">Install as PC App</button>
       <button class="btn-dark" onclick="showBuildInfo()">Build .EXE</button>
     </div>
   </div>
@@ -1075,6 +1078,40 @@
     <div class="terminal-output" id="termOutput"></div>
   </div>
 
+  <!-- PC App Installation Modal -->
+  <div class="modal-overlay" id="installModal" onclick="if(event.target===this) hideInstallModal()">
+    <div class="modal-box" style="max-width: 580px;">
+      <h2>Install Android Multi-Tool Pro on PC</h2>
+      <p style="margin-bottom: 12px; color: var(--c7-lightgray);">You can install Android Multi-Tool Pro directly on your Windows PC using either method:</p>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <!-- Option 1: Native Windows App -->
+        <div style="background:var(--c3-card); border:1px solid var(--c5-border); border-radius:3px; padding:12px;">
+          <div style="font-size:12px; font-weight:800; color:var(--c8-white); margin-bottom:4px;">1. NATIVE WINDOWS APP (.EXE INSTALLER)</div>
+          <p style="font-size:11px; color:var(--c7-lightgray); line-height:1.4; margin-bottom:8px;">
+            Downloads the full standalone Windows application. Creates a Desktop Shortcut, adds it to the Start Menu, and registers it in Windows "Installed Apps".
+          </p>
+          <div class="code-block" style="margin-bottom:8px;">1. Download 'AndroidMultiTool-Windows-v2.5.zip' from GitHub releases.
+2. Extract the folder and double-click: install_app_on_pc.bat
+3. Desktop icon & Start Menu shortcut will be created automatically!</div>
+        </div>
+
+        <!-- Option 2: Browser Standalone Window (PWA) -->
+        <div style="background:var(--c3-card); border:1px solid var(--c5-border); border-radius:3px; padding:12px;">
+          <div style="font-size:12px; font-weight:800; color:var(--c8-white); margin-bottom:4px;">2. CHROME / EDGE DESKTOP APP (STANDALONE WINDOW)</div>
+          <p style="font-size:11px; color:var(--c7-lightgray); line-height:1.4; margin-bottom:8px;">
+            Installs this exact interface as a dedicated desktop app on your PC. Launches in its own window without browser tabs or address bar, and pins to your Windows Taskbar.
+          </p>
+          <button class="btn-white" id="btnPwaInstall" onclick="triggerPwaInstall()" style="font-size:11px; padding:6px 12px;">Install Web App to PC Desktop</button>
+        </div>
+      </div>
+
+      <div style="text-align: right; margin-top: 14px;">
+        <button class="btn-white" onclick="hideInstallModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Build Info Modal -->
   <div class="modal-overlay" id="buildModal" onclick="if(event.target===this) hideBuildInfo()">
     <div class="modal-box">
@@ -1124,6 +1161,37 @@ build.bat</div>
             b.classList.add("active");
           }
         });
+      }
+    }
+
+    let deferredInstallPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btn = document.getElementById("btnPwaInstall");
+      if (btn) btn.textContent = "Click to Install to PC Desktop Now";
+    });
+
+    function showInstallModal() {
+      document.getElementById("installModal").style.display = "flex";
+    }
+
+    function hideInstallModal() {
+      document.getElementById("installModal").style.display = "none";
+    }
+
+    async function triggerPwaInstall() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === 'accepted') {
+          logLine("Android Multi-Tool Pro installed as PC desktop application!", "log-green");
+        }
+        deferredInstallPrompt = null;
+        hideInstallModal();
+      } else {
+        alert("To install as a PC desktop app:\n\n1. In Chrome/Edge, click the 'Install App' icon on the right side of the address bar (or click Menu -> 'Install Android Multi-Tool Pro').\n\n2. Or download the standalone Windows ZIP and run 'install_app_on_pc.bat'!");
       }
     }
 
@@ -1695,6 +1763,10 @@ build.bat</div>
       loadWorkflows();
       loadWin11Errors();
       renderWizardStep(1);
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
     });
   </script>
 </body>

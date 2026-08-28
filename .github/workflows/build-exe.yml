@@ -51,6 +51,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "dist\package"
           Copy-Item "dist\AndroidMultiTool.exe" -Destination "dist\package\"
           Copy-Item "install_drivers.bat" -Destination "dist\package\"
+          Copy-Item "install_app_on_pc.bat" -Destination "dist\package\"
           Copy-Item "README.md" -Destination "dist\package\"
           Compress-Archive -Path "dist\package\*" -DestinationPath "dist\AndroidMultiTool-v2.5-Windows.zip"
 

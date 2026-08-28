@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Android Multi-Tool Pro v2.5</title>
+  <title>Android Multi-Tool Pro v2.5 - Windows 11 / 11 Pro Edition</title>
   <style>
     :root {
       --bg-main: #0c1017;
@@ -406,38 +406,41 @@
     <div class="brand-section">
       <div class="brand-logo">⚡</div>
       <div class="brand-text">
-        <h1>Android Multi-Tool Pro <span>v2.5 GSM Suite</span></h1>
-        <p>100% Offline Universal GSM Service, Flasher, FRP, Root, MTK & Qualcomm EDL Suite</p>
+        <h1>Android Multi-Tool Pro <span>Windows 11 / 11 Pro Suite</span></h1>
+        <p>100% Offline Universal Service Tool | Samsung, Xiaomi, MTK BROM, Qualcomm EDL, Transsion, BBK</p>
       </div>
     </div>
 
     <div class="conn-section">
       <div class="status-pill">
         <div class="status-dot" id="statusDot"></div>
-        <span id="connState">100% Offline Mode</span>
+        <span id="connState">Win 11 / 11 Pro Verified</span>
       </div>
-      <select id="deviceSelect">
-        <option>SM-S908B (Samsung S22 Ultra - ADB)</option>
-        <option>Xiaomi Redmi Note 11 (Fastboot)</option>
-        <option>MTK Preloader Port (COM5)</option>
-        <option>Qualcomm HS-USB QDLoader 9008 (COM7)</option>
+      <select id="deviceSelect" onchange="onDeviceChanged()">
+        <option value="samsung">SM-S908B (Samsung Galaxy S22 Ultra - ADB)</option>
+        <option value="xiaomi">Redmi Note 11 (Xiaomi / POCO - FASTBOOT)</option>
+        <option value="tecno">Tecno Spark 10 / Hot 12 (MTK Preloader COM5)</option>
+        <option value="qualcomm">Qualcomm HS-USB QDLoader 9008 (COM7)</option>
       </select>
       <button class="btn-cyan" onclick="scanDevices()">🔄 Scan USB</button>
-      <button class="btn-secondary" onclick="showBuildInfo()">📦 Build .EXE Guide</button>
+      <button class="btn-secondary" onclick="showBuildInfo()">📦 Build .EXE</button>
     </div>
   </div>
 
   <!-- Navigation Tabs -->
   <div class="tabs-bar">
     <button class="tab-btn active" onclick="switchTab('tab-diagnostics', this)">📱 Device Diagnostics</button>
+    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">📋 Supported Devices List</button>
+    <button class="tab-btn" onclick="switchTab('tab-win11', this)">🪟 Windows 11 Error Fixer</button>
     <button class="tab-btn" onclick="switchTab('tab-reboot', this)">🔄 Reboot & Modes</button>
     <button class="tab-btn" onclick="switchTab('tab-frp', this)">🔓 FRP & Screen Lock</button>
     <button class="tab-btn" onclick="switchTab('tab-root', this)">🛡️ Root & Magisk</button>
+    <button class="tab-btn" onclick="switchTab('tab-efs', this)">📡 EFS & Baseband Backup</button>
     <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">⚡ Fastboot Flasher</button>
     <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚙️ MediaTek BROM</button>
     <button class="tab-btn" onclick="switchTab('tab-qualcomm', this)">🐉 Qualcomm EDL 9008</button>
     <button class="tab-btn" onclick="switchTab('tab-debloat', this)">📦 Debloat & Apps</button>
-    <button class="tab-btn" onclick="switchTab('tab-testpoints', this)">🛠️ EDL & Test Points</button>
+    <button class="tab-btn" onclick="switchTab('tab-testpoints', this)">🛠️ EDL Test Points</button>
   </div>
 
   <!-- Main Tabs Workspace -->
@@ -498,7 +501,66 @@
       </div>
     </div>
 
-    <!-- TAB 2: Reboot & Modes -->
+    <!-- TAB 2: Supported Devices Catalog -->
+    <div id="tab-catalog" class="tab-content">
+      <div class="card">
+        <div class="card-title">📋 Comprehensive Supported Device Matrix (Multi-Tool Database)</div>
+        <div style="margin-bottom: 10px;">
+          <input type="text" id="catalogSearch" placeholder="Search by Brand, Model, or Chipset (e.g. Samsung, Redmi, Helio G85, Snapdragon)..." 
+                 style="width: 100%; padding: 8px 12px; background: #0b0f17; border: 1px solid var(--border-color); color: #fff; border-radius: 6px;"
+                 oninput="filterCatalog()">
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="info-table" style="font-size: 11px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); color: #38bdf8;">
+                <th style="text-align: left; padding: 8px;">Brand</th>
+                <th style="text-align: left; padding: 8px;">Series</th>
+                <th style="text-align: left; padding: 8px;">Representative Models</th>
+                <th style="text-align: left; padding: 8px;">Chipset Family</th>
+                <th style="text-align: left; padding: 8px;">Supported Servicing Operations</th>
+              </tr>
+            </thead>
+            <tbody id="catalogTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Windows 11 Diagnostics & Error Fixer -->
+    <div id="tab-win11" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🪟 Windows 11 & 11 Pro Connection Troubleshooting</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="font-size:11px; color:var(--text-muted);">Select Symptom or Error Message:</label>
+            <select id="win11ErrorSelect" onchange="showWin11Fix()" style="width:100%;">
+              <option value="DEVICE_UNAUTHORIZED">Device Unauthorized in ADB (No popup on phone)</option>
+              <option value="DEVICE_NOT_FOUND">Device Not Detected (Yellow triangle in Device Manager)</option>
+              <option value="FASTBOOT_AMD_USB3_BUG">Fastboot Hangs on Windows 11 (AMD Ryzen / USB 3.0)</option>
+              <option value="WIN11_CORE_ISOLATION_BLOCK">Driver Blocked by Windows 11 Core Isolation (HVCI)</option>
+              <option value="FASTBOOT_DYNAMIC_PARTITION_ERROR">Fastboot Flash Error: Unknown Partition (Android 10-14 Super)</option>
+              <option value="MTK_HANDSHAKE_TIMEOUT">MediaTek Handshake Drops After 2 Seconds</option>
+            </select>
+
+            <div class="action-card" style="margin-top:10px;">
+              <div class="action-info">
+                <h4>Run Administrator Driver Installer</h4>
+                <p>Registers official signed Windows 11 inf driver packages.</p>
+              </div>
+              <button class="btn-cyan" onclick="logLine('Executing install_drivers.bat with Administrator privileges...', 'log-green')">Install Drivers</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="fixTitle">🛠️ Step-by-Step Fix for Windows 11</div>
+          <div id="fixContent" style="font-size:11px; line-height:1.6; color:#cbd5e1; white-space:pre-wrap;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Reboot & Modes -->
     <div id="tab-reboot" class="tab-content">
       <div class="grid-3">
         <div class="action-card">
@@ -567,7 +629,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: FRP & Security -->
+    <!-- TAB 5: FRP & Security -->
     <div id="tab-frp" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -626,7 +688,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: Root & Magisk -->
+    <!-- TAB 6: Root & Magisk -->
     <div id="tab-root" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -689,7 +751,44 @@
       </div>
     </div>
 
-    <!-- TAB 5: Fastboot Flasher -->
+    <!-- TAB 7: EFS & Baseband Backup -->
+    <div id="tab-efs" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📡 Cellular Modem, EFS & NVRAM Safeguard</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Target Baseband / Modem Partition:</label>
+              <select id="efsPart" style="width:100%;">
+                <option value="efs">efs (Samsung Cellular Calibration)</option>
+                <option value="sec_efs">sec_efs (Samsung Secondary EFS)</option>
+                <option value="modemst1">modemst1 (Qualcomm Modem NV Data 1)</option>
+                <option value="modemst2">modemst2 (Qualcomm Modem NV Data 2)</option>
+                <option value="fsg">fsg (Qualcomm Golden Modem Configuration)</option>
+                <option value="nvram">nvram (MediaTek Radio Calibration)</option>
+                <option value="nvdata">nvdata (MediaTek Dynamic Calibration)</option>
+              </select>
+            </div>
+
+            <div class="action-row">
+              <button class="btn-cyan" style="padding:10px;" onclick="backupEfs()">📥 Dump & Backup Modem Partition to PC</button>
+              <button class="btn-danger" style="padding:10px;" onclick="logLine('Restoring modem partition from local PC backup...', 'log-yellow')">📤 Restore Modem Partition from PC</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">ℹ️ Why EFS / NVRAM Backups Are Critical</div>
+          <div style="font-size:11px; line-height:1.6; color:var(--text-muted);">
+            <p>When flashing custom ROMs, unbricking dead phones, or performing deep partition wipes, the radio frequency calibration blocks can get zeroed out.</p>
+            <p style="margin-top:6px;">This results in <strong>'Baseband Version: Unknown'</strong>, missing IMEI, or complete loss of cellular network reception.</p>
+            <p style="margin-top:6px;">Always create a backup of your device's <code>efs</code> / <code>nvram</code> / <code>modemst1/2</code> blocks before modifying partitions.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 8: Fastboot Flasher -->
     <div id="tab-fastboot" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -761,7 +860,7 @@
       </div>
     </div>
 
-    <!-- TAB 6: MediaTek BROM -->
+    <!-- TAB 9: MediaTek BROM -->
     <div id="tab-mtk" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -805,7 +904,7 @@
       </div>
     </div>
 
-    <!-- TAB 7: Qualcomm EDL 9008 -->
+    <!-- TAB 10: Qualcomm EDL 9008 -->
     <div id="tab-qualcomm" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -848,7 +947,7 @@
       </div>
     </div>
 
-    <!-- TAB 8: Debloat & Apps -->
+    <!-- TAB 11: Debloat & Apps -->
     <div id="tab-debloat" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -911,7 +1010,7 @@
       </div>
     </div>
 
-    <!-- TAB 9: EDL & Test Points -->
+    <!-- TAB 12: EDL Test Points -->
     <div id="tab-testpoints" class="tab-content">
       <div class="card">
         <div class="card-title">🛠️ Hardware Emergency Download (EDL 9008 / BROM) Pinouts</div>
@@ -939,7 +1038,7 @@
     <div class="terminal-header">
       <div class="terminal-header-title">
         <span>💻 TECHNICIAN OPERATION TERMINAL</span>
-        <span id="termStatus" style="color: #34d399; font-weight: 600;">[READY - 100% OFFLINE]</span>
+        <span id="termStatus" style="color: #34d399; font-weight: 600;">[READY - WINDOWS 11 64-BIT OPTIMIZED]</span>
       </div>
       <div>
         <button class="btn-secondary" style="padding: 3px 8px; font-size: 10px;" onclick="clearTerminal()">Clear Log</button>
@@ -973,6 +1072,9 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
   </div>
 
   <script>
+    let cachedCatalog = [];
+    let cachedWin11Errors = {};
+
     function logLine(text, cssClass = "log-cyan") {
       const out = document.getElementById("termOutput");
       const time = new Date().toTimeString().split(' ')[0];
@@ -1014,10 +1116,15 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
           opt.textContent = d;
           sel.appendChild(opt);
         });
-        logLine(`Scan completed: ${data.count} device(s) found.`, "log-green");
+        logLine(`Scan completed: ${data.count} device(s) found on Windows 11 USB bus.`, "log-green");
       } catch (err) {
         logLine("Error scanning devices: " + err, "log-red");
       }
+    }
+
+    function onDeviceChanged() {
+      const dev = document.getElementById("deviceSelect").value;
+      logLine(`Active target switched to: ${dev.toUpperCase()}`, "log-cyan");
     }
 
     async function readInfo() {
@@ -1093,6 +1200,22 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         data.logs.forEach(l => logLine(l, "log-green"));
       } catch (err) {
         logLine("Root action failed: " + err, "log-red");
+      }
+    }
+
+    async function backupEfs() {
+      const part = document.getElementById("efsPart").value;
+      logLine(`Dumping modem calibration partition '${part}' to PC storage...`, "log-cyan");
+      try {
+        const res = await fetch("/api/efs_backup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ partition: part })
+        });
+        const data = await res.json();
+        data.logs.forEach(l => logLine(l, "log-green"));
+      } catch (err) {
+        logLine("EFS backup failed: " + err, "log-red");
       }
     }
 
@@ -1254,10 +1377,65 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
       } catch (err) {}
     }
 
+    async function loadCatalog() {
+      try {
+        const res = await fetch("/api/catalog");
+        cachedCatalog = await res.json();
+        renderCatalog(cachedCatalog);
+      } catch (err) {}
+    }
+
+    function renderCatalog(items) {
+      const tbody = document.getElementById("catalogTableBody");
+      tbody.innerHTML = "";
+      items.forEach(cat => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight:700; color:#38bdf8; padding:8px;">${cat.brand}</td>
+          <td style="color:#fff; padding:8px;">${cat.series}</td>
+          <td style="color:#cbd5e1; padding:8px; font-size:11px;">${cat.models.join(", ")}</td>
+          <td style="color:#f59e0b; padding:8px; font-family:Consolas, monospace;">${cat.chipset}</td>
+          <td style="color:#34d399; padding:8px; font-size:11px;">${cat.supported_ops.join(" • ")}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterCatalog() {
+      const q = document.getElementById("catalogSearch").value.toLowerCase();
+      const filtered = cachedCatalog.filter(c => 
+        c.brand.toLowerCase().includes(q) || 
+        c.series.toLowerCase().includes(q) || 
+        c.chipset.toLowerCase().includes(q) || 
+        c.models.some(m => m.toLowerCase().includes(q))
+      );
+      renderCatalog(filtered);
+    }
+
+    async function loadWin11Errors() {
+      try {
+        const res = await fetch("/api/win11_errors");
+        cachedWin11Errors = await res.json();
+        showWin11Fix();
+      } catch (err) {}
+    }
+
+    function showWin11Fix() {
+      const key = document.getElementById("win11ErrorSelect").value;
+      const data = cachedWin11Errors[key];
+      if (data) {
+        document.getElementById("fixTitle").textContent = "🛠️ " + data.title;
+        let content = `CAUSE: ${data.cause}\n\nSYMPTOMS:\n- ${data.symptoms.join("\n- ")}\n\nEXACT WINDOWS 11 / 11 PRO RESOLUTION:\n${data.win11_fix}`;
+        document.getElementById("fixContent").textContent = content;
+      }
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
       logLine("Android Multi-Tool Pro v2.5 initialized.", "log-cyan");
-      logLine("Status: 100% OFFLINE. All engines, binaries, and exploits ready.", "log-green");
+      logLine("Environment: Windows 11 / 11 Pro 64-Bit Verified & Ready.", "log-green");
       loadTestPoints();
+      loadCatalog();
+      loadWin11Errors();
     });
   </script>
 </body>

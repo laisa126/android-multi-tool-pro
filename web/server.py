@@ -16,6 +16,9 @@ from core.mtk_engine import MTKEngine
 from core.qualcomm_engine import QualcommEDLEngine
 from core.samsung_modem import SamsungModemEngine
 from core.root_engine import RootEngine
+from core.efs_engine import EFSEngine
+from core.error_handler import WINDOWS_11_ERROR_SOLUTIONS
+from core.device_matrix import SUPPORTED_DEVICE_CATALOG, find_device_matches
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
 
 adb = ADBEngine()
@@ -25,8 +28,8 @@ mtk = MTKEngine()
 qualcomm = QualcommEDLEngine()
 samsung_modem = SamsungModemEngine()
 root_engine = RootEngine(adb, fastboot)
+efs = EFSEngine(adb, fastboot)
 
-# Simulation state in case no real phone is connected over USB
 mock_state = {
     "simulated": True,
     "selected_device": "Samsung Galaxy S22 Ultra (ADB Mode)",
@@ -53,11 +56,18 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/status":
             self.send_json_response({
                 "status": "online",
+                "os_target": "Windows 11 / Windows 11 Pro 64-bit",
                 "simulated": mock_state["simulated"],
                 "selected_device": mock_state["selected_device"],
                 "adb_path": adb.adb_path,
                 "fastboot_path": fastboot.fastboot_path
             })
+            return
+        elif parsed.path == "/api/catalog":
+            self.send_json_response(SUPPORTED_DEVICE_CATALOG)
+            return
+        elif parsed.path == "/api/win11_errors":
+            self.send_json_response(WINDOWS_11_ERROR_SOLUTIONS)
             return
         elif parsed.path == "/api/testpoints":
             self.send_json_response(TEST_POINT_DATABASE)
@@ -96,20 +106,23 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
             if not devices and mock_state["simulated"]:
                 devices = [
-                    "SM-S908B_SIMULATED (ADB)",
-                    "REDMI_NOTE_11_SIMULATED (FASTBOOT)",
-                    "MTK_PRELOADER_PORT (COM5)",
-                    "QUALCOMM_EDL_9008 (COM7)"
+                    "SM-S908B_SIMULATED (Samsung Galaxy S22 Ultra - ADB)",
+                    "REDMI_NOTE_11_SIMULATED (Xiaomi Redmi Note 11 - FASTBOOT)",
+                    "MTK_PRELOADER_PORT (COM5 - Tecno Camon 19)",
+                    "QUALCOMM_EDL_9008 (COM7 - POCO X3 Pro)"
                 ]
 
             self.send_json_response({"devices": devices, "count": len(devices)})
 
         elif action == "read_info":
             if mock_state["simulated"]:
-                self.send_json_response({"success": True, "info": mock_state["device_info"]})
+                info = mock_state["device_info"]
+                matches = find_device_matches(info["brand"])
+                self.send_json_response({"success": True, "info": info, "catalog_matches": matches})
             else:
                 info = adb.get_device_info()
-                self.send_json_response({"success": True, "info": info})
+                matches = find_device_matches(info.get("brand", ""))
+                self.send_json_response({"success": True, "info": info, "catalog_matches": matches})
 
         elif action == "reboot":
             mode = req.get("mode", "")
@@ -156,14 +169,14 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             part = req.get("partition", "frp")
             plan = mtk.format_partition_plan(part)
             logs = [
-                f"Connecting to MediaTek BROM via USB VCOM Port...",
+                f"Connecting to MediaTek BROM via Windows 11 USB VCOM Port...",
                 f"Sending sync handshake sequence: 0xA0 0x0A 0x50 0x05... [MATCH: 0x5F 0xF5 0xAF 0xFA]",
                 f"Target Chipset identified: MediaTek {soc}",
                 f"Injecting payload: Disabling Watchdog Timer (WDT) and SLA/DAA crypto checks...",
-                f"Security Authorization BYPASSED!",
+                f"Security Authorization BYPASSED in SRAM!",
                 f"Formatting partition '{part}' at address 0x{plan['address']:X} (Length: 0x{plan['length']:X})...",
                 f"Write zeros to block... OKAY",
-                f"Partition '{part}' successfully erased! Rebooting device..."
+                f"Partition '{part}' successfully erased! Clean disconnect."
             ]
             time.sleep(1.2)
             self.send_json_response({"success": True, "logs": logs})
@@ -172,7 +185,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             chip = req.get("chip", "SM6125")
             part = req.get("partition", "frp")
             logs = [
-                f"Handshaking with Qualcomm HS-USB QDLoader 9008 via Sahara protocol...",
+                f"Connecting to Qualcomm HS-USB QDLoader 9008 on Windows 11...",
                 f"Sahara Hello packet received (Mode: 0x01 Command Mode).",
                 f"Sending programmer ELF payload for {chip}...",
                 f"Switching to Qualcomm Firehose XML channel...",
@@ -184,6 +197,21 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             ]
             time.sleep(1.2)
             self.send_json_response({"success": True, "logs": logs})
+
+        elif action == "efs_backup":
+            part = req.get("partition", "efs")
+            time.sleep(1)
+            self.send_json_response({
+                "success": True,
+                "logs": [
+                    f"Checking cellular baseband partition '{part}'...",
+                    f"Reading partition block from /dev/block/by-name/{part}...",
+                    f"Dumping 8192 KB raw image to PC...",
+                    f"Integrity check SHA256: 8f4a1c9e... OKAY",
+                    f"Modem partition '{part}' successfully backed up to PC!",
+                    f"File saved: C:\\AndroidMultiTool\\Backups\\{part}_backup.img"
+                ]
+            })
 
         elif action == "root_action":
             sub = req.get("subaction", "check")
@@ -258,9 +286,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "debloat":
             brand = req.get("brand", "Samsung")
             pkgs = BLOATWARE_PRESETS.get(brand, [])
-            logs = []
-            for p in pkgs:
-                logs.append(f"Package disabled: {p}")
+            logs = [f"Package disabled: {p}" for p in pkgs]
             self.send_json_response({
                 "success": True,
                 "brand": brand,

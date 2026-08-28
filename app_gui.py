@@ -731,7 +731,7 @@ class AndroidMultiToolApp:
     def clear_log(self):
         self.txt_console.delete("1.0", tk.END)
 
-    def set_busy(self, busy: bool, status_msg: str = "BUSY..."):
+    def set_busy(self, busy: bool, status_msg: str = "ACTIVE"):
         self.is_busy = busy
         if busy:
             self.lbl_busy.configure(text=status_msg, fg=C_WHITE)
@@ -741,12 +741,9 @@ class AndroidMultiToolApp:
     # ================= ASYNC RUNNER WRAPPER =================
 
     def _run_threaded(self, target, *args):
-        if self.is_busy:
-            messagebox.showwarning("Busy", "An operation is currently running. Please wait.")
-            return
-
+        # Non-blocking async execution: Never lock user out with a modal "Busy" dialog!
         def wrapper():
-            self.set_busy(True)
+            self.set_busy(True, "ACTIVE")
             try:
                 target(*args)
             except Exception as e:
@@ -773,39 +770,60 @@ class AndroidMultiToolApp:
 
     def scan_devices(self):
         def task():
-            self.log("Scanning USB bus for Android devices and MTK/EDL ports...", "info")
+            self.log("Scanning USB bus for Android 16+ devices, ADB, Fastboot, and MTK ports...", "info")
 
             if self.simulated_mode.get():
                 sim_devs = [
+                    "0834212450001234 (TECNO-CN5c Android 16+ USB HW)",
                     "TECNO_CAMON_50_PRO_5G (MTK Preloader Port COM5)",
                     "SM-S908B_SIMULATED (Samsung S22 Ultra - ADB)",
                     "REDMI_NOTE_11_SIMULATED (Redmi Note 11 - Fastboot)"
                 ]
                 self.combo_devices["values"] = sim_devs
                 self.combo_devices.current(0)
-                self.log("Simulation Active: Tecno Camon 50 Pro 5G selected on COM5.", "warning")
+                self.log("Simulation Active: Tecno Camon 50 Pro (CN5c) detected on USB Bus.", "warning")
                 return
 
+            # Tier 1 & Tier 2: Enhanced ADB + Direct Hardware USB Bus Enumeration (Android 16+ Support)
             adb_devs = self.adb.get_devices()
             fb_devs = self.fastboot.get_devices()
 
             items = []
             for d in adb_devs:
-                items.append(f"{d['serial']} (ADB: {d['state']})")
+                tag = d.get("state", "device")
+                items.append(f"{d['serial']} ({tag})")
             for d in fb_devs:
                 items.append(f"{d['serial']} (FASTBOOT: {d['mode']})")
+
+            # Tier 3: Scan COM ports on Windows for MediaTek Preloader & BROM ports
+            if platform.system() == "Windows":
+                try:
+                    res = subprocess.run(
+                        ["powershell", "-NoProfile", "-Command", "Get-PnpDevice -PresentOnly -Class Ports 2>$null | Select-Object -ExpandProperty FriendlyName"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        timeout=3
+                    )
+                    if res.returncode == 0 and res.stdout.strip():
+                        for line in res.stdout.splitlines():
+                            line = line.strip()
+                            if any(k in line.lower() for k in ["mediatek", "mtk", "preloader", "vcom", "qdloader", "9008"]):
+                                items.append(f"{line} (COM PORT)")
+                except Exception:
+                    pass
 
             if not items:
                 self.combo_devices["values"] = ["No device found"]
                 self.combo_devices.current(0)
-                self.log("No devices detected. Ensure USB Debugging is ON or phone is in Bootloader/Preloader.", "warning")
+                self.log("No devices detected. If on Android 16+, swipe down and change USB to 'File Transfer' or connect in MTK BROM mode (Hold Vol Up+Down while OFF).", "warning")
             else:
                 self.combo_devices["values"] = items
                 self.combo_devices.current(0)
                 active = items[0].split()[0]
                 self.adb.set_active_device(active)
                 self.fastboot.set_active_device(active)
-                self.log(f"Found {len(items)} device(s). Active target: {active}", "success")
+                self.log(f"Found {len(items)} device(s). Serial: {active} | State: Ready", "success")
 
         self._run_threaded(task)
 

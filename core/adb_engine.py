@@ -85,25 +85,122 @@ class ADBEngine:
     def get_devices(self) -> List[Dict[str, str]]:
         code, out, _ = self.run_cmd(["devices", "-l"])
         devices = []
-        if code != 0:
-            return devices
+        if code == 0:
+            lines = out.splitlines()
+            for line in lines[1:]:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if len(parts) >= 2:
+                    serial = parts[0]
+                    state = parts[1]
+                    details = " ".join(parts[2:]) if len(parts) > 2 else ""
+                    devices.append({
+                        "serial": serial,
+                        "state": state,
+                        "details": details
+                    })
 
-        lines = out.splitlines()
-        for line in lines[1:]:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split()
-            if len(parts) >= 2:
-                serial = parts[0]
-                state = parts[1]
-                details = " ".join(parts[2:]) if len(parts) > 2 else ""
-                devices.append({
-                    "serial": serial,
-                    "state": state,
-                    "details": details
-                })
+        # Android 16+ Enhanced Hardware Detection:
+        # If ADB returns empty (e.g. Android 16 USB Data Isolation or screen lock),
+        # query direct USB physical hardware bus to capture device serial number immediately!
+        if not devices:
+            hw_devices = self.get_hardware_usb_devices()
+            devices.extend(hw_devices)
+
         return devices
+
+    def get_hardware_usb_devices(self) -> List[Dict[str, str]]:
+        """
+        Direct USB physical bus inspection.
+        Captures serial numbers for Android 16+ devices even when ADB daemon
+        is restricted by OS lockscreen or USB charging mode.
+        """
+        found = []
+        system = platform.system()
+
+        # Known Android & GSM OEM Vendor IDs
+        known_vids = {
+            "2E04": "Tecno / Infinix (Transsion)",
+            "0E8D": "MediaTek (Dimensity / Helio Preloader / BROM)",
+            "18D1": "Google / Android AOSP",
+            "04E8": "Samsung Electronics",
+            "2717": "Xiaomi / Redmi / POCO",
+            "22D9": "Oppo / Realme / OnePlus",
+            "2A70": "OnePlus",
+            "05C6": "Qualcomm HS-USB"
+        }
+
+        try:
+            if system == "Windows":
+                # Method 1: PowerShell Get-PnpDevice (Fast and highly accurate on Windows 10/11)
+                ps_cmd = (
+                    "Get-PnpDevice -PresentOnly | "
+                    "Where-Object { $_.InstanceId -match 'VID_(2E04|0E8D|18D1|04E8|2717|22D9|2A70|05C6)' } | "
+                    "Select-Object -Property InstanceId, FriendlyName, Class | "
+                    "ConvertTo-Json -Compress"
+                )
+                res = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command", ps_cmd],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=4
+                )
+                if res.returncode == 0 and res.stdout.strip():
+                    import json
+                    try:
+                        raw = json.loads(res.stdout.strip())
+                        items = raw if isinstance(raw, list) else [raw]
+                        for item in items:
+                            inst_id = item.get("InstanceId", "")
+                            name = item.get("FriendlyName") or "Android 16+ Device"
+                            # InstanceId format: USB\VID_2E04&PID_C001\0834212450001234
+                            m = re.search(r'VID_([0-9A-Fa-f]{4})&PID_([0-9A-Fa-f]{4})\\([^\\]+)', inst_id)
+                            if m:
+                                vid = m.group(1).upper()
+                                serial = m.group(3).strip()
+                                vendor = known_vids.get(vid, "Android Device")
+                                found.append({
+                                    "serial": serial,
+                                    "state": "device (Android 16+ USB HW)",
+                                    "details": f"{vendor} - {name} [Hardware Bus]"
+                                })
+                    except Exception:
+                        pass
+
+            elif system == "Linux":
+                # Direct sysfs USB bus inspection on Linux
+                usb_base = "/sys/bus/usb/devices"
+                if os.path.isdir(usb_base):
+                    for dev_dir in os.listdir(usb_base):
+                        p = os.path.join(usb_base, dev_dir)
+                        vid_file = os.path.join(p, "idVendor")
+                        ser_file = os.path.join(p, "serial")
+                        prod_file = os.path.join(p, "product")
+                        if os.path.isfile(vid_file) and os.path.isfile(ser_file):
+                            try:
+                                with open(vid_file, "r") as f:
+                                    vid = f.read().strip().upper()
+                                with open(ser_file, "r") as f:
+                                    ser = f.read().strip()
+                                prod = ""
+                                if os.path.isfile(prod_file):
+                                    with open(prod_file, "r") as f:
+                                        prod = f.read().strip()
+                                if vid in known_vids and ser:
+                                    found.append({
+                                        "serial": ser,
+                                        "state": "device (Android 16+ USB HW)",
+                                        "details": f"{known_vids[vid]} {prod} [Direct sysfs]"
+                                    })
+                            except Exception:
+                                pass
+        except Exception:
+            pass
+
+        return found
 
     def set_active_device(self, serial: str):
         self.connected_device = serial

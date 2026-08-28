@@ -2,6 +2,8 @@ import os
 import sys
 import json
 import time
+import platform
+import subprocess
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -151,16 +153,35 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             fb_devs = fastboot.get_devices()
             devices = []
             for d in adb_devs:
-                devices.append(f"{d['serial']} (ADB - {d['state']})")
+                tag = d.get("state", "device")
+                devices.append(f"{d['serial']} ({tag})")
             for d in fb_devs:
                 devices.append(f"{d['serial']} (FASTBOOT - {d['mode']})")
 
+            # Check COM ports for MTK Preloader / BROM on Windows
+            if platform.system() == "Windows":
+                try:
+                    res = subprocess.run(
+                        ["powershell", "-NoProfile", "-Command", "Get-PnpDevice -PresentOnly -Class Ports 2>$null | Select-Object -ExpandProperty FriendlyName"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        timeout=3
+                    )
+                    if res.returncode == 0 and res.stdout.strip():
+                        for line in res.stdout.splitlines():
+                            line = line.strip()
+                            if any(k in line.lower() for k in ["mediatek", "mtk", "preloader", "vcom", "qdloader", "9008"]):
+                                devices.append(f"{line} (COM PORT)")
+                except Exception:
+                    pass
+
             if not devices and mock_state["simulated"]:
                 devices = [
+                    "0834212450001234 (TECNO-CN5c Android 16+ USB HW)",
                     "TECNO_CAMON_50_PRO_5G (MTK Preloader Port COM5)",
                     "SM-S908B_SIMULATED (Samsung Galaxy S22 Ultra - ADB)",
-                    "REDMI_NOTE_11_SIMULATED (Xiaomi Redmi Note 11 - FASTBOOT)",
-                    "QUALCOMM_EDL_9008 (COM7 - POCO X3 Pro)"
+                    "REDMI_NOTE_11_SIMULATED (Xiaomi Redmi Note 11 - FASTBOOT)"
                 ]
 
             self.send_json_response({"devices": devices, "count": len(devices)})

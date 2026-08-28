@@ -19,7 +19,7 @@ from core.efs_engine import EFSEngine
 from core.error_handler import WINDOWS_11_ERROR_SOLUTIONS
 from core.device_matrix import SUPPORTED_DEVICE_CATALOG, find_device_matches
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
-from core.workflow_guide import WORKFLOW_TUTORIALS
+from core.workflow_guide import WORKFLOW_TUTORIALS, USB_PLUGGED_WIZARD
 from core.payload_extractor import PayloadExtractor
 from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
@@ -103,6 +103,9 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             return
         elif parsed.path == "/api/workflows":
             self.send_json_response(WORKFLOW_TUTORIALS)
+            return
+        elif parsed.path == "/api/wizard":
+            self.send_json_response(USB_PLUGGED_WIZARD)
             return
         elif parsed.path == "/api/win11_errors":
             self.send_json_response(WINDOWS_11_ERROR_SOLUTIONS)

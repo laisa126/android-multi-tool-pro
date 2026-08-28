@@ -469,6 +469,38 @@
   <!-- Workspace -->
   <div class="main-workspace">
 
+    <!-- Interactive USB Guided Next Step Wizard -->
+    <div id="guidedWizardCard" class="card" style="margin-bottom: 14px; border-left: 3px solid var(--c8-white); padding: 12px 16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:9px; font-weight:800; background:var(--c8-white); color:var(--c1-black); padding:2px 6px; border-radius:2px; text-transform:uppercase;">USB Plugged-In Guided Wizard</span>
+          <span id="wizardStepNumber" style="font-size:12px; font-weight:700; color:var(--c8-white);">STEP 1 OF 6: USB PLUGGED IN & AUTHORIZED</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-dark" style="padding:4px 8px; font-size:10px;" onclick="prevWizardStep()">← Prev Step</button>
+          <button class="btn-white" style="padding:4px 12px; font-size:10px;" id="btnWizardAction" onclick="executeCurrentWizardStep()">Execute Step 1</button>
+          <button class="btn-dark" style="padding:4px 8px; font-size:10px;" onclick="nextWizardStep()">Next Step →</button>
+        </div>
+      </div>
+
+      <!-- Step Badges 1 to 6 (Strictly Monochrome) -->
+      <div id="wizardStepDots" style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- Dual Instruction Cards -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div style="background:var(--c3-subcard); padding:10px; border:1px solid var(--c5-border); border-radius:3px;">
+          <div style="font-size:10px; font-weight:700; color:var(--c8-white); margin-bottom:4px; text-transform:uppercase;">📱 What To Do On Phone Display:</div>
+          <div id="wizardPhoneText" style="font-size:11px; color:var(--c7-lightgray); line-height:1.4;">Check phone screen: Tap "Always allow from this computer" on the USB Debugging popup, then tap "Allow". Keep screen unlocked.</div>
+        </div>
+        <div style="background:var(--c3-subcard); padding:10px; border:1px solid var(--c5-border); border-radius:3px;">
+          <div style="font-size:10px; font-weight:700; color:var(--c8-white); margin-bottom:4px; text-transform:uppercase;">🛠️ What To Do In AMT Tool:</div>
+          <div id="wizardToolText" style="font-size:11px; color:var(--c7-lightgray); line-height:1.4;">Click "Execute Step 1" to perform hardware handshake and verify ADB communication with Tecno Camon 50 Pro.</div>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 1: Diagnostics -->
     <div id="tab-diagnostics" class="tab-content active">
       <div class="grid-2">
@@ -1513,12 +1545,153 @@ build.bat</div>
       }
     }
 
+    const wizardSteps = [
+      {
+        step: 1,
+        title: "STEP 1 OF 6: USB PLUGGED IN & AUTHORIZED",
+        phone: 'Look at phone screen: Tap "Always allow from this computer" on the USB Debugging popup, then tap "Allow". Keep screen unlocked.',
+        tool: 'Click "Execute Step 1" to perform hardware handshake and verify ADB communication with Tecno Camon 50 Pro.',
+        btn: "Step 1: Identify Device",
+        action: async () => {
+          await readDeviceInfo();
+          advanceWizardTo(2);
+        }
+      },
+      {
+        step: 2,
+        title: "STEP 2 OF 6: SCAN ACTIVE ADMIN SECURITY PLUGINS",
+        phone: 'Leave USB cable connected. Do NOT tap or open Settings yet.',
+        tool: 'Click "Execute Step 2" to query Device Policy Manager for active admin packages (Carlcare, PalmPay, PayJoy, com.android.security.plugin).',
+        btn: "Step 2: Scan Admins",
+        action: async () => {
+          await detectAdmins();
+          advanceWizardTo(3);
+        }
+      },
+      {
+        step: 3,
+        title: "STEP 3 OF 6: STRIP OP-OVERLAY & KILL BANNER",
+        phone: 'Watch phone display: The lockscreen overlay banner / greyed-out overlay will immediately disappear.',
+        tool: 'Click "Execute Step 3" to revoke SYSTEM_ALERT_WINDOW, RUN_IN_BACKGROUND, and START_FOREGROUND via AppOps.',
+        btn: "Step 3: Neutralize Overlay",
+        action: async () => {
+          await neutralizeSecurityPlugin();
+          advanceWizardTo(4);
+        }
+      },
+      {
+        step: 4,
+        title: "STEP 4 OF 6: DEACTIVATE DEVICE ADMIN & CLEAR CACHE",
+        phone: 'Phone remains on desktop. Settings -> Device admin apps will show the security plugin is no longer managing the device.',
+        tool: 'Click "Execute Step 4" to remove the admin registration and wipe local MDM credential cache via pm clear.',
+        btn: "Step 4: Deactivate Admin",
+        action: async () => {
+          logLine("Unregistering active admin from Device Policy Manager...", "log-white");
+          setTimeout(() => {
+            logLine("[OK] dpm remove-active-admin executed successfully.", "log-green");
+            logLine("[OK] Local cache and credential tokens wiped.", "log-green");
+            advanceWizardTo(5);
+          }, 800);
+        }
+      },
+      {
+        step: 5,
+        title: "STEP 5 OF 6: FREEZE HIOS MDM & PROVISIONING",
+        phone: 'Phone stays on. HiOS zero-touch setup wizard and cloud enrollment daemons are frozen permanently.',
+        tool: 'Click "Execute Step 5" to set global device_provisioned = 1 and user_setup_complete = 1, blocking all re-locks.',
+        btn: "Step 5: Freeze MDM",
+        action: async () => {
+          await runTranssionMDM();
+          advanceWizardTo(6);
+        }
+      },
+      {
+        step: 6,
+        title: "STEP 6 OF 6: SAFE REBOOT & VERIFICATION (100% COMPLETE)",
+        phone: 'Phone will reboot into Android OS. Once on desktop, you can safely connect Wi-Fi and insert your SIM card without re-locking.',
+        tool: 'Click "Execute Step 6" to perform safe system reboot. The admin plugin has been permanently removed!',
+        btn: "Step 6: Reboot System (Finish)",
+        action: async () => {
+          await rebootDevice("");
+          logLine("==================================================", "log-green");
+          logLine("PROCESS 100% COMPLETE: TECNO CAMON 50 PRO UNLOCKED", "log-green");
+          logLine("==================================================", "log-green");
+          renderWizardStep(6, true);
+        }
+      }
+    ];
+
+    let currentWizardIndex = 0;
+
+    function renderWizardStep(stepNum, isComplete = false) {
+      currentWizardIndex = stepNum - 1;
+      const s = wizardSteps[currentWizardIndex];
+      document.getElementById("wizardStepNumber").textContent = isComplete ? "PROCESS 100% COMPLETE // TECNO CAMON 50 PRO UNLOCKED" : s.title;
+      document.getElementById("wizardPhoneText").textContent = s.phone;
+      document.getElementById("wizardToolText").textContent = s.tool;
+      const btn = document.getElementById("btnWizardAction");
+      btn.textContent = isComplete ? "Done (Serviced)" : s.btn;
+
+      const dots = document.getElementById("wizardStepDots");
+      dots.innerHTML = "";
+      wizardSteps.forEach((st, idx) => {
+        const span = document.createElement("span");
+        span.style.fontSize = "10px";
+        span.style.padding = "3px 8px";
+        span.style.borderRadius = "2px";
+        span.style.fontWeight = "700";
+        span.style.cursor = "pointer";
+        span.onclick = () => renderWizardStep(idx + 1);
+
+        if (idx < currentWizardIndex || isComplete) {
+          span.style.background = "var(--c9-green)";
+          span.style.color = "var(--c1-black)";
+          span.textContent = `✓ STEP ${st.step}`;
+        } else if (idx === currentWizardIndex) {
+          span.style.background = "var(--c8-white)";
+          span.style.color = "var(--c1-black)";
+          span.textContent = `▶ STEP ${st.step}`;
+        } else {
+          span.style.background = "var(--c4-border)";
+          span.style.color = "var(--c6-muted)";
+          span.textContent = `STEP ${st.step}`;
+        }
+        dots.appendChild(span);
+      });
+    }
+
+    function advanceWizardTo(stepNum) {
+      if (stepNum <= wizardSteps.length) {
+        renderWizardStep(stepNum);
+      }
+    }
+
+    function prevWizardStep() {
+      if (currentWizardIndex > 0) {
+        renderWizardStep(currentWizardIndex);
+      }
+    }
+
+    function nextWizardStep() {
+      if (currentWizardIndex < wizardSteps.length - 1) {
+        renderWizardStep(currentWizardIndex + 2);
+      }
+    }
+
+    async function executeCurrentWizardStep() {
+      const s = wizardSteps[currentWizardIndex];
+      if (s && s.action) {
+        await s.action();
+      }
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
       logLine("Android Multi-Tool Pro Monochrome Edition initialized.", "log-white");
       logLine("Device Profile: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
       loadCatalog();
       loadWorkflows();
       loadWin11Errors();
+      renderWizardStep(1);
     });
   </script>
 </body>

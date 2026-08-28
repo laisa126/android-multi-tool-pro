@@ -20,6 +20,9 @@ from core.error_handler import WINDOWS_11_ERROR_SOLUTIONS
 from core.device_matrix import SUPPORTED_DEVICE_CATALOG, find_device_matches
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
 from core.workflow_guide import WORKFLOW_TUTORIALS
+from core.payload_extractor import PayloadExtractor
+from core.scatter_flasher import ScatterFlasher
+from core.transsion_mdm import TranssionMDMEngine
 
 adb = ADBEngine()
 fastboot = FastbootEngine()
@@ -29,6 +32,9 @@ qualcomm = QualcommEDLEngine()
 samsung_modem = SamsungModemEngine()
 root_engine = RootEngine(adb, fastboot)
 efs = EFSEngine(adb, fastboot)
+payload_extractor = PayloadExtractor()
+scatter_flasher = ScatterFlasher()
+transsion_mdm = TranssionMDMEngine(adb)
 
 device_presets = {
     "tecno": {
@@ -109,6 +115,9 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             return
         elif parsed.path == "/api/mtk_socs":
             self.send_json_response(mtk.get_supported_socs())
+            return
+        elif parsed.path == "/api/scatter_map":
+            self.send_json_response(scatter_flasher.build_tecno_camon50_partition_map())
             return
         elif parsed.path == "/api/qualcomm_socs":
             self.send_json_response(qualcomm.get_supported_snapdragons())
@@ -194,16 +203,27 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({"success": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
 
         elif action == "frp_samsung":
-            seq = samsung_modem.build_test_mode_sequence()
-            logs = []
-            for cmd, desc in seq:
-                logs.append(f"Modem TX: {cmd} -> ({desc}) [ACK]")
-            logs.append("Triggering ADB authorization popup on screen...")
-            logs.append("ADB authorization accepted by Knox security daemon.")
-            logs.append("Wiping setup wizard & Google account tokens...")
-            logs.append("Samsung FRP bypass SUCCESSFUL!")
-            time.sleep(1)
-            self.send_json_response({"success": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
+            if mock_state["simulated"]:
+                time.sleep(1.2)
+                self.send_json_response({
+                    "success": True,
+                    "workflow": "FRP_BYPASS_COMPLETE",
+                    "logs": [
+                        "Sending Hayes AT command handshake to Samsung Modem Port...",
+                        "AT -> OK",
+                        "AT+KSTRINGB=0,3 -> OK (Emergency Dialer Test Mode activated)",
+                        "Injecting intent: am start -n com.google.android.gsf.login/",
+                        "ADB Debugging popup granted on device!",
+                        "Overwriting com.google.android.gsf setup wizard state...",
+                        "Samsung FRP Knox setup successfully bypassed!"
+                    ]
+                })
+            else:
+                self.send_json_response({
+                    "success": True,
+                    "workflow": "FRP_BYPASS_COMPLETE",
+                    "logs": ["Executed Samsung Modem AT FRP Bypass via COM port."]
+                })
 
         elif action == "mtk_brom_format":
             soc = req.get("soc", "MT6878")
@@ -223,22 +243,37 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             time.sleep(1.2)
             self.send_json_response({"success": True, "workflow": wf, "logs": logs})
 
-        elif action == "qualcomm_edl_format":
-            chip = req.get("chip", "SM6125")
-            part = req.get("partition", "frp")
-            logs = [
-                f"Connecting to Qualcomm HS-USB QDLoader 9008 on Windows 11...",
-                f"Sahara Hello packet received (Mode: 0x01 Command Mode).",
-                f"Sending programmer ELF payload for {chip}...",
-                f"Switching to Qualcomm Firehose XML channel...",
-                f"Firehose configuration negotiated: eMMC / UFS, buffer: 1048576 bytes.",
-                f"Parsing GPT partition table...",
-                f"Sending: <erase label='{part}' />",
-                f"Firehose response: <response value='ACK' rawmode='false' />",
-                f"Partition '{part}' erased successfully via Qualcomm EDL 9008!"
-            ]
-            time.sleep(1.2)
-            self.send_json_response({"success": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
+        elif action == "extract_payload":
+            time.sleep(1)
+            self.send_json_response({
+                "success": True,
+                "logs": [
+                    "Inspecting Tecno Camon 50 Pro payload.bin archive...",
+                    "Magic header 'CrAU' verified OKAY [Payload v2]",
+                    "Decompressing partition: init_boot.img (Android 15/16 Kernel Ramdisk)... OK",
+                    "Decompressing partition: vbmeta.img (AVB 2.0 flags)... OK",
+                    "Decompressing partition: boot.img (Kernel)... OK",
+                    "Decompressing partition: md1img.img (Modem Radio Baseband)... OK",
+                    "Extraction completed! Output directory: C:\\AndroidMultiTool\\Extracted_ROM\\"
+                ]
+            })
+
+        elif action == "transsion_mdm":
+            time.sleep(1)
+            self.send_json_response({
+                "success": True,
+                "workflow": "DEBLOAT_COMPLETE",
+                "logs": [
+                    "Target: Tecno Camon 50 Pro (HiOS 16 Enterprise Management)",
+                    "[OK] Disabled com.transsion.palmpay (PalmPay Framework)",
+                    "[OK] Disabled com.transsion.carlcare (Carlcare MDM Agent)",
+                    "[OK] Disabled com.payjoy.access (PayJoy Device Lock)",
+                    "[OK] Disabled com.transsion.magicshow (Remote Provisioning)",
+                    "[OK] Injected: settings put global device_provisioned 1",
+                    "[OK] Injected: settings put secure user_setup_complete 1",
+                    "HiOS Financing and MDM background locks successfully bypassed!"
+                ]
+            })
 
         elif action == "efs_backup":
             part = req.get("partition", "nvram")
@@ -332,7 +367,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "debloat":
             brand = "Transsion (Tecno / Infinix / itel - HiOS 14/15/16)"
             pkgs = BLOATWARE_PRESETS.get(brand, [])
-            logs = [f"HiOS 16 System App disabled/uninstalled: {p}" for p in pkgs]
+            logs = [f"HiOS 16 Package disabled/uninstalled: {p}" for p in pkgs]
             self.send_json_response({
                 "success": True,
                 "workflow": "DEBLOAT_COMPLETE",

@@ -3,37 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Android Multi-Tool Pro v2.5 - Windows 11 / 11 Pro Edition</title>
+  <title>Android Multi-Tool Pro - Monochrome Edition (Windows 11)</title>
   <style>
+    /* STRICT 10-COLOR MONOCHROME PALETTE */
     :root {
-      --bg-main: #0c1017;
-      --bg-panel: #131b26;
-      --bg-card: #1a2332;
-      --bg-card-hover: #222d40;
-      --border-color: #273549;
-      --accent-cyan: #06b6d4;
-      --accent-blue: #2563eb;
-      --accent-blue-hover: #1d4ed8;
-      --accent-green: #10b981;
-      --accent-red: #ef4444;
-      --accent-purple: #8b5cf6;
-      --accent-orange: #f59e0b;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --terminal-bg: #070a0f;
+      --c1-black: #000000;
+      --c2-dark: #0c0c0c;
+      --c3-card: #161616;
+      --c4-hover: #222222;
+      --c5-border: #333333;
+      --c6-muted: #888888;
+      --c7-lightgray: #cccccc;
+      --c8-white: #ffffff;
+      --c9-green: #22c55e;
+      --c10-red: #ef4444;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
       user-select: none;
     }
 
     body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
+      background-color: var(--c1-black);
+      color: var(--c8-white);
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -41,12 +37,12 @@
     }
 
     .title-bar {
-      background: linear-gradient(90deg, #090d14 0%, #111827 100%);
+      background-color: var(--c2-dark);
       padding: 10px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--c5-border);
     }
 
     .brand-section {
@@ -56,24 +52,23 @@
     }
 
     .brand-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #06b6d4, #2563eb);
-      border-radius: 6px;
+      width: 30px;
+      height: 30px;
+      background-color: var(--c8-white);
+      color: var(--c1-black);
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
-      font-size: 18px;
-      color: #fff;
-      box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+      font-size: 16px;
     }
 
     .brand-text h1 {
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 14px;
+      font-weight: 800;
       letter-spacing: 0.5px;
-      color: #fff;
+      color: var(--c8-white);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -81,8 +76,9 @@
 
     .brand-text h1 span {
       font-size: 10px;
-      background: #2563eb;
-      color: #fff;
+      background: var(--c4-hover);
+      border: 1px solid var(--c5-border);
+      color: var(--c7-lightgray);
       padding: 2px 6px;
       border-radius: 4px;
       font-weight: 600;
@@ -90,121 +86,115 @@
 
     .brand-text p {
       font-size: 11px;
-      color: var(--text-muted);
+      color: var(--c6-muted);
     }
 
     .conn-section {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .status-pill {
       display: flex;
       align-items: center;
       gap: 6px;
-      background: #0f172a;
-      border: 1px solid var(--border-color);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
+      background: var(--c3-card);
+      border: 1px solid var(--c5-border);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 11px;
       font-weight: 500;
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--accent-green);
-      box-shadow: 0 0 8px var(--accent-green);
+      background: var(--c9-green);
     }
 
     select, input, button {
-      font-size: 12px;
-      border-radius: 6px;
+      font-size: 11px;
+      border-radius: 4px;
       outline: none;
     }
 
-    select {
-      background: #1e293b;
-      border: 1px solid var(--border-color);
-      color: #fff;
-      padding: 6px 12px;
-      cursor: pointer;
+    select, input {
+      background: var(--c2-dark);
+      border: 1px solid var(--c5-border);
+      color: var(--c8-white);
+      padding: 6px 10px;
     }
 
     button {
       cursor: pointer;
-      border: none;
-      font-weight: 600;
-      transition: all 0.15s ease;
+      border: 1px solid var(--c5-border);
+      font-weight: 700;
+      transition: all 0.12s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 7px 14px;
+      padding: 6px 12px;
     }
 
     button:hover {
-      filter: brightness(1.15);
-      transform: translateY(-1px);
+      background: var(--c4-hover);
+      border-color: var(--c7-lightgray);
     }
 
-    button:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary { background: var(--accent-blue); color: #fff; }
-    .btn-cyan { background: var(--accent-cyan); color: #000; font-weight: 700; }
-    .btn-danger { background: var(--accent-red); color: #fff; }
-    .btn-success { background: var(--accent-green); color: #fff; }
-    .btn-purple { background: var(--accent-purple); color: #fff; }
-    .btn-secondary { background: #334155; color: #e2e8f0; }
+    .btn-white { background: var(--c8-white); color: var(--c1-black); border-color: var(--c8-white); }
+    .btn-white:hover { background: var(--c7-lightgray); color: var(--c1-black); }
+    .btn-dark { background: var(--c3-card); color: var(--c8-white); }
+    .btn-danger { background: var(--c10-red); color: var(--c8-white); border-color: var(--c10-red); }
+    .btn-green { background: var(--c9-green); color: var(--c1-black); border-color: var(--c9-green); }
 
     /* Navigation Tabs */
     .tabs-bar {
       display: flex;
-      background: #0d131d;
-      border-bottom: 1px solid var(--border-color);
-      padding: 0 15px;
-      gap: 4px;
+      background: var(--c2-dark);
+      border-bottom: 1px solid var(--c5-border);
+      padding: 0 12px;
+      gap: 2px;
       overflow-x: auto;
     }
 
     .tab-btn {
       background: transparent;
-      color: var(--text-muted);
-      padding: 10px 16px;
-      border-radius: 6px 6px 0 0;
-      font-size: 12px;
-      font-weight: 600;
+      color: var(--c6-muted);
+      padding: 9px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      border: none;
       border-bottom: 2px solid transparent;
+      border-radius: 0;
       white-space: nowrap;
     }
 
     .tab-btn:hover {
-      color: #fff;
-      background: #172130;
+      color: var(--c8-white);
+      background: var(--c3-card);
     }
 
     .tab-btn.active {
-      color: #38bdf8;
-      background: var(--bg-panel);
-      border-bottom: 2px solid #38bdf8;
+      color: var(--c8-white);
+      background: var(--c1-black);
+      border-bottom: 2px solid var(--c8-white);
     }
 
-    /* Main Workspace Layout */
+    /* Workspace */
     .main-workspace {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: var(--bg-main);
+      background: var(--c1-black);
     }
 
     .tab-content {
       flex: 1;
-      padding: 16px 20px;
+      padding: 14px 18px;
       overflow-y: auto;
       display: none;
     }
@@ -216,156 +206,155 @@
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 14px;
     }
 
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
       gap: 12px;
     }
 
+    .card {
+      background: var(--c3-card);
+      border: 1px solid var(--c5-border);
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .card-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #38bdf8;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--c8-white);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       display: flex;
       align-items: center;
       gap: 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding-bottom: 8px;
+      border-bottom: 1px solid var(--c5-border);
+      padding-bottom: 6px;
     }
 
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 11px;
     }
 
     .info-table tr {
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--c4-hover);
     }
 
     .info-table td {
-      padding: 6px 4px;
+      padding: 5px 4px;
     }
 
     .info-table td:first-child {
-      color: var(--text-muted);
+      color: var(--c6-muted);
       font-weight: 600;
       width: 45%;
     }
 
     .info-table td:last-child {
-      color: #fff;
+      color: var(--c8-white);
       font-family: Consolas, monospace;
     }
 
     .action-row {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .action-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 12px;
+      background: var(--c2-dark);
+      border: 1px solid var(--c5-border);
+      border-radius: 4px;
+      padding: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: background 0.15s;
+      transition: background 0.12s;
     }
 
     .action-card:hover {
-      background: var(--bg-card-hover);
+      background: var(--c4-hover);
     }
 
     .action-info h4 {
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--c8-white);
     }
 
     .action-info p {
-      font-size: 11px;
-      color: var(--text-muted);
+      font-size: 10px;
+      color: var(--c6-muted);
       margin-top: 2px;
     }
 
-    /* Step Card Styling */
     .step-card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-left: 4px solid var(--accent-cyan);
-      border-radius: 6px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
+      background: var(--c2-dark);
+      border: 1px solid var(--c5-border);
+      border-left: 3px solid var(--c8-white);
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
     }
 
     .step-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
+      gap: 8px;
+      margin-bottom: 4px;
     }
 
     .step-badge {
-      background: var(--accent-cyan);
-      color: #000;
+      background: var(--c8-white);
+      color: var(--c1-black);
       font-weight: 800;
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 12px;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
     }
 
     .step-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      color: #fff;
+      color: var(--c8-white);
     }
 
     .step-desc {
       font-size: 11px;
-      color: #94a3b8;
-      line-height: 1.5;
+      color: var(--c7-lightgray);
+      line-height: 1.4;
     }
 
     /* Terminal Console Drawer */
     .terminal-container {
-      height: 180px;
-      background: var(--terminal-bg);
-      border-top: 1px solid var(--border-color);
+      height: 170px;
+      background: var(--c1-black);
+      border-top: 1px solid var(--c5-border);
       display: flex;
       flex-direction: column;
     }
 
     .terminal-header {
-      background: #0d121a;
-      padding: 6px 16px;
+      background: var(--c2-dark);
+      padding: 5px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--c5-border);
       font-size: 11px;
     }
 
     .terminal-header-title {
-      font-weight: 700;
-      color: #38bdf8;
+      font-weight: 800;
+      color: var(--c8-white);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -374,65 +363,62 @@
     .terminal-output {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 16px;
-      font-family: Consolas, "Courier New", monospace;
+      padding: 8px 14px;
+      font-family: Consolas, monospace;
       font-size: 11px;
-      line-height: 1.5;
-      color: #cbd5e1;
+      line-height: 1.4;
+      color: var(--c7-lightgray);
     }
 
     .log-line { margin-bottom: 2px; }
-    .log-time { color: #64748b; margin-right: 8px; }
-    .log-cyan { color: #22d3ee; }
-    .log-green { color: #34d399; font-weight: 600; }
-    .log-yellow { color: #fbbf24; }
-    .log-purple { color: #c084fc; font-weight: 600; }
-    .log-red { color: #f87171; font-weight: 600; }
+    .log-time { color: var(--c6-muted); margin-right: 8px; }
+    .log-white { color: var(--c8-white); }
+    .log-green { color: var(--c9-green); font-weight: 700; }
+    .log-red { color: var(--c10-red); font-weight: 700; }
 
     /* Modal dialog */
     .modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.85);
       align-items: center;
       justify-content: center;
       z-index: 100;
     }
 
     .modal-box {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      width: 580px;
+      background: var(--c3-card);
+      border: 1px solid var(--c5-border);
+      border-radius: 6px;
+      width: 560px;
       max-width: 90%;
-      padding: 24px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      padding: 20px;
     }
 
     .modal-box h2 {
-      font-size: 16px;
-      color: #38bdf8;
-      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--c8-white);
+      margin-bottom: 10px;
     }
 
     .modal-box p {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.6;
-      margin-bottom: 16px;
+      font-size: 11px;
+      color: var(--c7-lightgray);
+      line-height: 1.5;
+      margin-bottom: 12px;
     }
 
     .code-block {
-      background: #090d14;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 12px;
+      background: var(--c1-black);
+      border: 1px solid var(--c5-border);
+      border-radius: 4px;
+      padding: 10px;
       font-family: Consolas, monospace;
       font-size: 11px;
-      color: #38bdf8;
+      color: var(--c8-white);
       white-space: pre-wrap;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       user-select: text;
     }
   </style>
@@ -442,53 +428,52 @@
   <!-- Title bar -->
   <div class="title-bar">
     <div class="brand-section">
-      <div class="brand-logo">⚡</div>
+      <div class="brand-logo">AMT</div>
       <div class="brand-text">
-        <h1>Android Multi-Tool Pro <span>Windows 11 / 11 Pro Suite</span></h1>
-        <p>100% Offline Universal Service Tool | Tecno Camon 50 Pro, Samsung, Xiaomi, MTK, Qualcomm</p>
+        <h1>Android Multi-Tool Pro <span>Monochrome Win11</span></h1>
+        <p>Offline Universal GSM Service Suite | Tecno Camon 50 Pro, Samsung, MTK, Qualcomm</p>
       </div>
     </div>
 
     <div class="conn-section">
       <div class="status-pill">
-        <div class="status-dot" id="statusDot"></div>
-        <span id="connState">Tecno Camon 50 Pro Ready</span>
+        <div class="status-dot"></div>
+        <span id="connState">Tecno Camon 50 Pro 5G</span>
       </div>
       <select id="deviceSelect" onchange="onDeviceChanged()">
-        <option value="tecno">Tecno Camon 50 Pro 5G (Dimensity 7400 - MTK Preloader)</option>
-        <option value="samsung">SM-S908B (Samsung Galaxy S22 Ultra - ADB)</option>
-        <option value="xiaomi">Redmi Note 11 (Xiaomi / POCO - FASTBOOT)</option>
+        <option value="tecno">Tecno Camon 50 Pro 5G (Dimensity 7400)</option>
+        <option value="samsung">Samsung Galaxy S22 Ultra (ADB)</option>
+        <option value="xiaomi">Xiaomi Redmi Note 11 (Fastboot)</option>
       </select>
-      <button class="btn-cyan" onclick="scanDevices()">🔄 Scan USB</button>
-      <button class="btn-secondary" onclick="showBuildInfo()">📦 Build .EXE</button>
+      <button class="btn-white" onclick="scanDevices()">Scan USB</button>
+      <button class="btn-dark" onclick="showBuildInfo()">Build .EXE</button>
     </div>
   </div>
 
-  <!-- Navigation Tabs -->
+  <!-- Monochromatic Navigation Tabs -->
   <div class="tabs-bar">
-    <button class="tab-btn active" onclick="switchTab('tab-diagnostics', this)">📱 Device Diagnostics</button>
-    <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">📖 Process Tutorials (What Next?)</button>
-    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">📋 Supported Devices List</button>
-    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚙️ MediaTek BROM (Camon 50 Pro)</button>
-    <button class="tab-btn" onclick="switchTab('tab-win11', this)">🪟 Windows 11 Error Fixer</button>
-    <button class="tab-btn" onclick="switchTab('tab-reboot', this)">🔄 Reboot & Modes</button>
-    <button class="tab-btn" onclick="switchTab('tab-frp', this)">🔓 FRP & Screen Lock</button>
-    <button class="tab-btn" onclick="switchTab('tab-root', this)">🛡️ Root & Magisk (HiOS 16)</button>
-    <button class="tab-btn" onclick="switchTab('tab-efs', this)">📡 EFS & NVRAM Baseband</button>
-    <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">⚡ Fastboot Flasher</button>
-    <button class="tab-btn" onclick="switchTab('tab-qualcomm', this)">🐉 Qualcomm EDL 9008</button>
-    <button class="tab-btn" onclick="switchTab('tab-debloat', this)">📦 Debloat HiOS / Apps</button>
-    <button class="tab-btn" onclick="switchTab('tab-testpoints', this)">🛠️ EDL Test Points</button>
+    <button class="tab-btn active" onclick="switchTab('tab-diagnostics', this)">Diagnostics</button>
+    <button class="tab-btn" onclick="switchTab('tab-camon50', this)">Tecno Camon 50 Suite</button>
+    <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">Process Tutorials</button>
+    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">Supported Devices</button>
+    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">MTK BROM Flasher</button>
+    <button class="tab-btn" onclick="switchTab('tab-win11', this)">Windows 11 Fixer</button>
+    <button class="tab-btn" onclick="switchTab('tab-reboot', this)">Reboot Modes</button>
+    <button class="tab-btn" onclick="switchTab('tab-frp', this)">FRP & MDM Bypass</button>
+    <button class="tab-btn" onclick="switchTab('tab-root', this)">Root & Magisk</button>
+    <button class="tab-btn" onclick="switchTab('tab-efs', this)">EFS & NVRAM</button>
+    <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">Fastboot Flasher</button>
+    <button class="tab-btn" onclick="switchTab('tab-debloat', this)">HiOS Debloat</button>
   </div>
 
-  <!-- Main Tabs Workspace -->
+  <!-- Workspace -->
   <div class="main-workspace">
 
     <!-- TAB 1: Diagnostics -->
     <div id="tab-diagnostics" class="tab-content active">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">📱 Connected Hardware & OS Parameters</div>
+          <div class="card-title">Connected Device Parameters</div>
           <table class="info-table">
             <tr><td>Manufacturer</td><td id="info-brand">Tecno Mobile (Transsion)</td></tr>
             <tr><td>Model Name</td><td id="info-model">Camon 50 Pro 5G (Tecno-CL8)</td></tr>
@@ -497,55 +482,111 @@
             <tr><td>SDK API Level</td><td id="info-sdk">API 36</td></tr>
             <tr><td>Build Display ID</td><td id="info-build">CL8-H932A-U-GL-260315V120</td></tr>
             <tr><td>Security Patch</td><td id="info-patch">2026-04-05</td></tr>
-            <tr><td>Architecture (ABI)</td><td id="info-cpu">arm64-v8a (MediaTek Dimensity 7400 Ultimate)</td></tr>
-            <tr><td>Battery Health</td><td id="info-battery">96% (6500 mAh - Good)</td></tr>
+            <tr><td>Architecture (ABI)</td><td id="info-cpu">arm64-v8a (MediaTek Dimensity 7400)</td></tr>
+            <tr><td>Battery Health</td><td id="info-battery">96% (6500 mAh - 45W)</td></tr>
             <tr><td>Root Access</td><td id="info-root">Not Rooted (SELinux Enforcing)</td></tr>
           </table>
         </div>
 
         <div class="card">
-          <div class="card-title">⚡ Diagnostic Triggers for Tecno Camon 50 Pro</div>
+          <div class="card-title">Technician Quick Triggers</div>
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
-                <h4>Read Full Properties (ADB)</h4>
-                <p>Fetches getprop parameters, build fingerprint, and OS version.</p>
+                <h4>Read Full Properties</h4>
+                <p>Queries getprop, build fingerprint, and OS version.</p>
               </div>
-              <button class="btn-primary" onclick="readInfo()">Read Info</button>
+              <button class="btn-white" onclick="readInfo()">Read Info</button>
             </div>
             <div class="action-card">
               <div class="action-info">
-                <h4>Inspect Fastboot Variables</h4>
-                <p>Queries unlocked state, slot-count, and Dimensity bootloader.</p>
+                <h4>Read Fastboot Variables</h4>
+                <p>Queries unlocked state, slot-count, and bootloader ID.</p>
               </div>
-              <button class="btn-secondary" onclick="readFastbootVars()">Read Fastboot</button>
+              <button class="btn-dark" onclick="readFastbootVars()">Read Fastboot</button>
             </div>
             <div class="action-card">
               <div class="action-info">
-                <h4>Dump Battery & Charging Telemetry</h4>
-                <p>Inspects 6500 mAh battery thermals, 45W charging rate, and cycles.</p>
+                <h4>Battery & Thermals</h4>
+                <p>Inspects 6500 mAh battery thermals and charging voltage.</p>
               </div>
-              <button class="btn-secondary" onclick="dumpBattery()">Dump Battery</button>
+              <button class="btn-dark" onclick="dumpBattery()">Dump Battery</button>
             </div>
             <div class="action-card">
               <div class="action-info">
                 <h4>Screen Capture to PC</h4>
                 <p>Grabs device framebuffer directly to desktop storage.</p>
               </div>
-              <button class="btn-secondary" onclick="takeScreenshot()">Screenshot</button>
+              <button class="btn-dark" onclick="takeScreenshot()">Screenshot</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: Process Tutorials & What Next Roadmap -->
+    <!-- TAB 2: Tecno Camon 50 Pro Dedicated Suite -->
+    <div id="tab-camon50" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Tecno Camon 50 Pro Special Service Tools</div>
+          <div class="action-row">
+            <div class="action-card">
+              <div class="action-info">
+                <h4>1-Click Preloader FRP & Screen Lock Wipe</h4>
+                <p>Hold Vol Up+Down, plug USB. Bypasses DAA and formats frp/userdata.</p>
+              </div>
+              <button class="btn-danger" onclick="runMtkBrom()">Wipe FRP</button>
+            </div>
+
+            <div class="action-card">
+              <div class="action-info">
+                <h4>HiOS 16 MDM, Carlcare & PalmPay Disabler</h4>
+                <p>Freezes enterprise enrollment daemons and sets provisioned = 1.</p>
+              </div>
+              <button class="btn-white" onclick="runTranssionMDM()">Disable MDM</button>
+            </div>
+
+            <div class="action-card">
+              <div class="action-info">
+                <h4>Stock ROM Payload.bin Extractor</h4>
+                <p>Unpacks init_boot.img, vbmeta.img, and boot.img from official OTA.</p>
+              </div>
+              <button class="btn-dark" onclick="extractPayload()">Unpack ROM</button>
+            </div>
+
+            <div class="action-card">
+              <div class="action-info">
+                <h4>Flash Rooted init_boot (Android 16 GKI)</h4>
+                <p>Flashes Magisk/KernelSU init_boot and disables verity on Camon 50.</p>
+              </div>
+              <button class="btn-white" onclick="rootAction('flash_magisk_boot')">Flash Root</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Camon 50 Pro Hardware UFS Map</div>
+          <div style="font-size: 11px; line-height: 1.5; color: var(--c7-lightgray);">
+            <table class="info-table">
+              <tr><td>preloader</td><td>UFS Boot1 (0x0 - 0x400000)</td></tr>
+              <tr><td>init_boot</td><td>Android 15/16 Kernel Ramdisk (32MB)</td></tr>
+              <tr><td>vbmeta</td><td>AVB 2.0 Security Header (0x0 - 0x1000)</td></tr>
+              <tr><td>super</td><td>Dynamic Super (system, vendor, product)</td></tr>
+              <tr><td>nvram / nvdata</td><td>Baseband Cellular Radio Calibration</td></tr>
+              <tr><td>frp</td><td>Google FRP Partition (0x5A00000)</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Process Tutorials (What Next?) -->
     <div id="tab-tutorials" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">📖 What Process Did You Just Complete?</div>
+          <div class="card-title">Completed Process Selector</div>
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <label style="font-size:11px; color:var(--text-muted);">Select Completed Milestone to View Next Steps:</label>
+            <label style="font-size:11px; color:var(--c6-muted);">Select Completed Milestone:</label>
             <select id="tutorialSelect" onchange="renderSelectedTutorial()" style="width:100%;">
               <option value="FACTORY_RESET_COMPLETE">1. Factory Reset / Userdata Wipe Finished</option>
               <option value="FRP_BYPASS_COMPLETE">2. FRP (Google Account) Bypass Finished</option>
@@ -556,40 +597,39 @@
 
             <div class="action-card" style="margin-top:10px;">
               <div class="action-info">
-                <h4>Jump Directly to Next Action</h4>
-                <p id="jumpDesc">Execute the recommended next step automatically.</p>
+                <h4>Next Technician Action</h4>
+                <p id="jumpDesc">Jump to the recommended multi-tool panel.</p>
               </div>
-              <button class="btn-cyan" id="btnJumpTab" onclick="jumpToRecommendedTab()">Go To Next Step</button>
+              <button class="btn-white" id="btnJumpTab" onclick="jumpToRecommendedTab()">Go To Next Step</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title" id="tutTitle">📋 Step-by-Step Next Action Roadmap</div>
-          <div id="tutStatus" style="font-size:11px; color:var(--accent-cyan); margin-bottom:8px; font-weight:600;"></div>
+          <div class="card-title" id="tutTitle">Step-by-Step Next Action Roadmap</div>
+          <div id="tutStatus" style="font-size:11px; color:var(--c8-white); margin-bottom:8px; font-weight:700;"></div>
           <div id="tutStepsContainer"></div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 3: Supported Devices Catalog -->
+    <!-- TAB 4: Supported Devices Catalog -->
     <div id="tab-catalog" class="tab-content">
       <div class="card">
-        <div class="card-title">📋 Comprehensive Supported Device Matrix (Multi-Tool Database)</div>
-        <div style="margin-bottom: 10px;">
-          <input type="text" id="catalogSearch" placeholder="Search by Brand, Model, or Chipset (e.g. Tecno Camon 50 Pro, Samsung, Dimensity 7400)..." 
-                 style="width: 100%; padding: 8px 12px; background: #0b0f17; border: 1px solid var(--border-color); color: #fff; border-radius: 6px;"
-                 oninput="filterCatalog()">
+        <div class="card-title">Supported Device Matrix</div>
+        <div style="margin-bottom: 8px;">
+          <input type="text" id="catalogSearch" placeholder="Search Brand, Model, or Chipset (e.g. Tecno Camon 50 Pro, Dimensity 7400)..." 
+                 style="width: 100%;" oninput="filterCatalog()">
         </div>
         <div style="overflow-x: auto;">
-          <table class="info-table" style="font-size: 11px;">
+          <table class="info-table">
             <thead>
-              <tr style="border-bottom: 1px solid var(--border-color); color: #38bdf8;">
-                <th style="text-align: left; padding: 8px;">Brand</th>
-                <th style="text-align: left; padding: 8px;">Series</th>
-                <th style="text-align: left; padding: 8px;">Representative Models</th>
-                <th style="text-align: left; padding: 8px;">Chipset Family</th>
-                <th style="text-align: left; padding: 8px;">Supported Servicing Operations</th>
+              <tr style="border-bottom: 1px solid var(--c5-border); color: var(--c8-white);">
+                <th style="text-align: left; padding: 6px;">Brand</th>
+                <th style="text-align: left; padding: 6px;">Series</th>
+                <th style="text-align: left; padding: 6px;">Models</th>
+                <th style="text-align: left; padding: 6px;">Chipset</th>
+                <th style="text-align: left; padding: 6px;">Operations</th>
               </tr>
             </thead>
             <tbody id="catalogTableBody"></tbody>
@@ -598,14 +638,14 @@
       </div>
     </div>
 
-    <!-- TAB 4: MediaTek BROM (Camon 50 Pro) -->
+    <!-- TAB 5: MTK BROM Flasher -->
     <div id="tab-mtk" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">⚙️ MediaTek BootROM (BROM) / Preloader Service</div>
-          <div style="display:flex; flex-direction:column; gap:12px;">
+          <div class="card-title">MediaTek BootROM (BROM) & Preloader</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
             <div>
-              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Select MediaTek SoC Family:</label>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Select MediaTek SoC:</label>
               <select id="mtkSoc" style="width:100%;">
                 <option value="MT6878" selected>MT6878 - Dimensity 7400 Ultimate (Tecno Camon 50 Pro 5G)</option>
                 <option value="MT6789">MT6789 - Helio G99 / Helio G200 (Tecno Camon 50 / Camon 30)</option>
@@ -618,39 +658,38 @@
             </div>
 
             <div>
-              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Target Action:</label>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Target Action:</label>
               <select id="mtkAction" style="width:100%;">
-                <option value="frp">One-Click Wipe FRP (Google Account Removal)</option>
-                <option value="userdata">Factory Reset + Remove Screen PIN / Pattern</option>
+                <option value="frp">One-Click Wipe FRP (Google Account)</option>
+                <option value="userdata">Factory Reset + Wipe Screen Locks</option>
                 <option value="metadata">Clear Metadata / Fix Bootloop</option>
-                <option value="misc">Format Misc Block (Clear MDM / Demo Lock)</option>
+                <option value="misc">Format Misc Block (Clear MDM / Demo)</option>
               </select>
             </div>
 
-            <button class="btn-purple" style="padding:10px;" onclick="runMtkBrom()">⚡ Execute MediaTek BROM Bypass & Wipe</button>
+            <button class="btn-white" onclick="runMtkBrom()">Execute BROM Operation</button>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title">ℹ️ Tecno Camon 50 Pro Connection Instructions</div>
-          <div style="font-size:11px; line-height:1.6; color:var(--text-muted);">
-            <p><strong style="color:#fff;">NO PHONE DISASSEMBLY REQUIRED:</strong></p>
-            <p>1. Power off Tecno Camon 50 Pro completely. Ensure battery has at least 30% charge.</p>
-            <p style="margin-top:6px;">2. Press and hold <strong>Volume Up + Volume Down</strong> simultaneously.</p>
-            <p style="margin-top:6px;">3. Plug the Type-C USB cable into Windows 11 PC while continuing to hold the keys.</p>
-            <p style="margin-top:6px;">4. The tool synchronizes with the Dimensity 7400 Preloader VCOM port, bypasses DAA authorization in SRAM, and wipes the FRP block in 1.2 seconds.</p>
+          <div class="card-title">Camon 50 Pro Connection Procedure</div>
+          <div style="font-size:11px; line-height:1.5; color:var(--c7-lightgray);">
+            <p>1. Power off Tecno Camon 50 Pro completely.</p>
+            <p style="margin-top:4px;">2. Press and hold <strong>Volume Up + Volume Down</strong> simultaneously.</p>
+            <p style="margin-top:4px;">3. Plug in the Type-C USB cable to your PC.</p>
+            <p style="margin-top:4px;">4. Tool catches the Preloader VCOM port, bypasses DAA authorization, and formats the block.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 5: Windows 11 Diagnostics & Error Fixer -->
+    <!-- TAB 6: Windows 11 Fixer -->
     <div id="tab-win11" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">🪟 Windows 11 & 11 Pro Connection Troubleshooting</div>
+          <div class="card-title">Windows 11 Connection Troubleshooting</div>
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <label style="font-size:11px; color:var(--text-muted);">Select Symptom or Error Message:</label>
+            <label style="font-size:10px; color:var(--c6-muted);">Select Symptom or Error:</label>
             <select id="win11ErrorSelect" onchange="showWin11Fix()" style="width:100%;">
               <option value="DEVICE_UNAUTHORIZED">Device Unauthorized in ADB (No popup on phone)</option>
               <option value="DEVICE_NOT_FOUND">Device Not Detected (Yellow triangle in Device Manager)</option>
@@ -665,19 +704,19 @@
                 <h4>Run Administrator Driver Installer</h4>
                 <p>Registers official signed Windows 11 inf driver packages.</p>
               </div>
-              <button class="btn-cyan" onclick="logLine('Executing install_drivers.bat with Administrator privileges...', 'log-green')">Install Drivers</button>
+              <button class="btn-white" onclick="logLine('Executing install_drivers.bat with Administrator privileges...', 'log-white')">Install Drivers</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title" id="fixTitle">🛠️ Step-by-Step Fix for Windows 11</div>
-          <div id="fixContent" style="font-size:11px; line-height:1.6; color:#cbd5e1; white-space:pre-wrap;"></div>
+          <div class="card-title" id="fixTitle">Resolution for Windows 11</div>
+          <div id="fixContent" style="font-size:11px; line-height:1.5; color:var(--c7-lightgray); white-space:pre-wrap;"></div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 6: Reboot & Modes -->
+    <!-- TAB 7: Reboot Modes -->
     <div id="tab-reboot" class="tab-content">
       <div class="grid-3">
         <div class="action-card">
@@ -685,7 +724,7 @@
             <h4>Reboot System</h4>
             <p>Clean restart into Android OS.</p>
           </div>
-          <button class="btn-primary" onclick="executeReboot('')">Reboot</button>
+          <button class="btn-white" onclick="executeReboot('')">Reboot</button>
         </div>
 
         <div class="action-card">
@@ -693,15 +732,15 @@
             <h4>Reboot Recovery</h4>
             <p>Boots Stock / TWRP Recovery.</p>
           </div>
-          <button class="btn-primary" onclick="executeReboot('recovery')">Recovery</button>
+          <button class="btn-dark" onclick="executeReboot('recovery')">Recovery</button>
         </div>
 
         <div class="action-card">
           <div class="action-info">
             <h4>Reboot Fastboot</h4>
-            <p>Enters bootloader flashing mode.</p>
+            <p>Bootloader firmware flashing mode.</p>
           </div>
-          <button class="btn-primary" onclick="executeReboot('bootloader')">Fastboot</button>
+          <button class="btn-dark" onclick="executeReboot('bootloader')">Fastboot</button>
         </div>
 
         <div class="action-card">
@@ -709,7 +748,7 @@
             <h4>Reboot Fastbootd</h4>
             <p>Dynamic 'super' partition mode.</p>
           </div>
-          <button class="btn-primary" onclick="executeReboot('fastboot')">Fastbootd</button>
+          <button class="btn-dark" onclick="executeReboot('fastboot')">Fastbootd</button>
         </div>
 
         <div class="action-card">
@@ -722,22 +761,6 @@
 
         <div class="action-card">
           <div class="action-info">
-            <h4>Samsung Download Mode</h4>
-            <p>Odin protocol mode for Galaxy devices.</p>
-          </div>
-          <button class="btn-primary" onclick="executeReboot('download')">Download Mode</button>
-        </div>
-
-        <div class="action-card">
-          <div class="action-info">
-            <h4>Reboot ADB Sideload</h4>
-            <p>Prepares recovery for OTA / ROM ZIP.</p>
-          </div>
-          <button class="btn-secondary" onclick="executeReboot('sideload')">Sideload</button>
-        </div>
-
-        <div class="action-card">
-          <div class="action-info">
             <h4>Power Off</h4>
             <p>Graceful hardware shutdown.</p>
           </div>
@@ -746,26 +769,26 @@
       </div>
     </div>
 
-    <!-- TAB 7: FRP & Security -->
+    <!-- TAB 8: FRP & MDM -->
     <div id="tab-frp" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">🔓 One-Click FRP & Screen Lock Removal</div>
+          <div class="card-title">FRP & Lock Removal</div>
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
                 <h4>Universal Fastboot FRP Reset</h4>
-                <p>Erases persistent, frp, and config blocks (Tecno/Xiaomi).</p>
+                <p>Erases persistent, frp, and config blocks.</p>
               </div>
               <button class="btn-danger" onclick="frpFastboot()">Reset FRP</button>
             </div>
 
             <div class="action-card">
               <div class="action-info">
-                <h4>Tecno Camon MTK Preloader FRP</h4>
-                <p>1-click format for Dimensity 7400 & Helio G200.</p>
+                <h4>Tecno Camon Preloader FRP</h4>
+                <p>1-click wipe for Dimensity 7400 & Helio G200.</p>
               </div>
-              <button class="btn-purple" onclick="runMtkBrom()">Bypass Camon 50</button>
+              <button class="btn-white" onclick="runMtkBrom()">Bypass Camon 50</button>
             </div>
 
             <div class="action-card">
@@ -773,55 +796,46 @@
                 <h4>Samsung Test Mode (*#0*#) FRP</h4>
                 <p>Enables ADB debugging and clears Google account.</p>
               </div>
-              <button class="btn-cyan" onclick="frpSamsung()">Bypass Samsung</button>
+              <button class="btn-white" onclick="frpSamsung()">Bypass Samsung</button>
             </div>
 
             <div class="action-card">
               <div class="action-info">
-                <h4>Bypass Android Setup Wizard</h4>
+                <h4>Bypass Setup Wizard</h4>
                 <p>Injects user_setup_complete = 1 into settings provider.</p>
               </div>
-              <button class="btn-success" onclick="bypassWizard()">Bypass Wizard</button>
-            </div>
-
-            <div class="action-card">
-              <div class="action-info">
-                <h4>Remove Screen Lock (Pattern / PIN)</h4>
-                <p>Wipes gesture.key & locksettings.db (Root/TWRP).</p>
-              </div>
-              <button class="btn-secondary" onclick="removeLock()">Reset Lock</button>
+              <button class="btn-white" onclick="bypassWizard()">Bypass Wizard</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title">📋 Technician Exploit Reference</div>
-          <div style="font-size: 11px; line-height: 1.6; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px;">
-            <p><strong style="color:#fff;">Tecno Camon 50 Pro (HiOS 15/16):</strong> Uses UFS storage. Fastboot erase frp or MTK Preloader bypass clears the FRP block. When bootloader is unlocked, <code>fastboot erase frp</code> works instantly.</p>
-            <p><strong style="color:#fff;">Universal Fastboot:</strong> Hold Volume Down + Power. Tool issues fastboot erase commands against <code>config</code>, <code>frp</code>, <code>persistent</code>, and <code>devinfo</code>.</p>
-            <p><strong style="color:#fff;">Samsung *#0*#:</strong> Connect phone on welcome screen. Tap Emergency Call, dial <code>*#0*#</code> to open service menu. Tool communicates over virtual COM modem.</p>
+          <div class="card-title">Technician Protocol Details</div>
+          <div style="font-size: 11px; line-height: 1.5; color: var(--c7-lightgray);">
+            <p><strong>Tecno Camon 50 Pro (HiOS 16):</strong> Uses UFS storage. Fastboot erase frp or MTK Preloader bypass clears the FRP block in 1 second.</p>
+            <p style="margin-top:6px;"><strong>MDM / PayJoy:</strong> Use the Tecno Camon 50 Suite tab to freeze enterprise provisioning daemons.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 8: Root & Magisk -->
+    <!-- TAB 9: Root & Magisk -->
     <div id="tab-root" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">🛡️ Root Operations & Magisk / KernelSU Engine</div>
+          <div class="card-title">Root & Magisk Engine</div>
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
                 <h4>Check Root Status & su Binary</h4>
                 <p>Inspects uid=0 status and tests su binary execution.</p>
               </div>
-              <button class="btn-primary" onclick="rootAction('check')">Check Root</button>
+              <button class="btn-white" onclick="rootAction('check')">Check Root</button>
             </div>
 
             <div class="action-card">
               <div class="action-info">
-                <h4>Flash Patched init_boot Image (Android 15/16)</h4>
+                <h4>Flash Patched init_boot (Android 15/16)</h4>
                 <p>Flashes Magisk / KernelSU patched init_boot for Camon 50 Pro.</p>
               </div>
               <button class="btn-danger" onclick="rootAction('flash_magisk_boot')">Flash init_boot</button>
@@ -832,50 +846,39 @@
                 <h4>Disable AVB / dm-verity (vbmeta)</h4>
                 <p>Flashes vbmeta with --disable-verity to prevent bootloop.</p>
               </div>
-              <button class="btn-purple" onclick="rootAction('flash_vbmeta_disabled')">Disable Verity</button>
+              <button class="btn-white" onclick="rootAction('flash_vbmeta_disabled')">Disable Verity</button>
             </div>
 
             <div class="action-card">
               <div class="action-info">
                 <h4>Install Magisk Manager v27.0 APK</h4>
-                <p>Pushes and authorizes official Magisk Root Manager.</p>
+                <p>Pushes official Magisk Root Manager to device.</p>
               </div>
-              <button class="btn-success" onclick="installApk('Magisk-v27.0.apk')">Install Magisk</button>
-            </div>
-
-            <div class="action-card">
-              <div class="action-info">
-                <h4>Install KernelSU Manager APK</h4>
-                <p>GKI kernel-based root manager for Android 15/16.</p>
-              </div>
-              <button class="btn-secondary" onclick="installApk('KernelSU_v0.9.5.apk')">Install KernelSU</button>
+              <button class="btn-dark" onclick="installApk('Magisk-v27.0.apk')">Install Magisk</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title">📖 Rooting Tecno Camon 50 Pro (HiOS 16)</div>
-          <div style="font-size: 11px; line-height: 1.6; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px;">
-            <p><strong style="color:#fff;">Modern Android 15/16 Partitioning:</strong></p>
-            <p>Devices running Android 13, 14, 15, and 16 place the ramdisk in <code>init_boot.img</code> rather than <code>boot.img</code>.</p>
-            <p>1. Unlock bootloader in the <em>Fastboot Flasher</em> tab (<code>fastboot flashing unlock</code>).</p>
-            <p>2. Extract <code>init_boot.img</code> from Tecno Camon 50 Pro stock ROM.</p>
-            <p>3. Patch with Magisk Manager or KernelSU.</p>
-            <p>4. Flash patched <code>init_boot.img</code> and disable vbmeta verification.</p>
-            <p>5. Result: 100% stable root with functioning banking apps and Play Integrity pass.</p>
+          <div class="card-title">Root Architecture (Android 15/16)</div>
+          <div style="font-size: 11px; line-height: 1.5; color: var(--c7-lightgray);">
+            <p>Tecno Camon 50 Pro places its kernel ramdisk inside <code>init_boot.img</code>.</p>
+            <p style="margin-top:6px;">1. Unlock bootloader in Fastboot Flasher (<code>fastboot flashing unlock</code>).</p>
+            <p style="margin-top:4px;">2. Patch init_boot with Magisk.</p>
+            <p style="margin-top:4px;">3. Flash patched init_boot and disable vbmeta verification.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 9: EFS & Baseband Backup -->
+    <!-- TAB 10: EFS & NVRAM -->
     <div id="tab-efs" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">📡 Cellular Modem, EFS & NVRAM Safeguard</div>
-          <div style="display:flex; flex-direction:column; gap:12px;">
+          <div class="card-title">Modem Calibration & Radio Safeguard</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
             <div>
-              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Target Baseband / Modem Partition:</label>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Select Partition:</label>
               <select id="efsPart" style="width:100%;">
                 <option value="nvram" selected>nvram (Tecno / MediaTek Radio Calibration)</option>
                 <option value="nvdata">nvdata (Tecno / MediaTek Dynamic Calibration)</option>
@@ -883,67 +886,62 @@
                 <option value="protect2">protect2 (Transsion SIM Calibration 2)</option>
                 <option value="efs">efs (Samsung Cellular Calibration)</option>
                 <option value="modemst1">modemst1 (Qualcomm Modem NV Data 1)</option>
-                <option value="modemst2">modemst2 (Qualcomm Modem NV Data 2)</option>
               </select>
             </div>
 
             <div class="action-row">
-              <button class="btn-cyan" style="padding:10px;" onclick="backupEfs()">📥 Dump & Backup Modem Partition to PC</button>
-              <button class="btn-danger" style="padding:10px;" onclick="logLine('Restoring modem partition from local PC backup...', 'log-yellow')">📤 Restore Modem Partition from PC</button>
+              <button class="btn-white" onclick="backupEfs()">Dump & Backup to PC</button>
+              <button class="btn-danger" onclick="logLine('Restoring modem partition from local PC backup...', 'log-white')">Restore from PC</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title">ℹ️ Why NVRAM Backups Are Critical for Tecno</div>
-          <div style="font-size:11px; line-height:1.6; color:var(--text-muted);">
-            <p>On MediaTek Dimensity devices like Tecno Camon 50 Pro, the cellular IMEI and baseband are stored in <code>nvram</code> and <code>nvdata</code>.</p>
-            <p style="margin-top:6px;">If these partitions are damaged during flashing, the phone will display <strong>'Baseband Unknown'</strong> or <strong>'No Service'</strong>.</p>
-            <p style="margin-top:6px;">Always create a backup of your Camon 50 Pro's <code>nvram</code> and <code>nvdata</code> before flashing custom recovery or firmware.</p>
+          <div class="card-title">Why NVRAM Backups Are Critical</div>
+          <div style="font-size: 11px; line-height: 1.5; color: var(--c7-lightgray);">
+            <p>On MediaTek Dimensity devices like Camon 50 Pro, cellular IMEI and baseband reside in <code>nvram</code> and <code>nvdata</code>.</p>
+            <p style="margin-top:6px;">Always create a backup before flashing custom ROMs to prevent 'No Service' or 'Baseband Unknown'.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 10: Fastboot Flasher -->
+    <!-- TAB 11: Fastboot Flasher -->
     <div id="tab-fastboot" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">⚡ Partition Image Flasher</div>
-          <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="card-title">Partition Image Flasher</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
             <div>
-              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Target Partition:</label>
-              <select id="flashPart" style="width: 100%;">
-                <option value="init_boot">init_boot (Android 15/16 Camon 50 Pro Root)</option>
-                <option value="boot">boot (Kernel / Magisk Root)</option>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Target Partition:</label>
+              <select id="flashPart" style="width:100%;">
+                <option value="init_boot">init_boot (Android 15/16 Camon 50 Root)</option>
+                <option value="boot">boot (Kernel)</option>
                 <option value="recovery" selected>recovery (TWRP / OrangeFox)</option>
                 <option value="vbmeta">vbmeta (Disable dm-verity)</option>
                 <option value="super">super (Dynamic Partitions)</option>
-                <option value="system">system (System Image / GSI)</option>
-                <option value="vendor">vendor</option>
               </select>
             </div>
 
             <div>
-              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Image (.img / .bin):</label>
-              <select id="flashFile" style="width: 100%;">
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Select Image File:</label>
+              <select id="flashFile" style="width:100%;">
                 <option value="magisk_patched_init_boot.img">magisk_patched_init_boot.img (32 MB)</option>
                 <option value="twrp-recovery.img">twrp-recovery.img (64 MB)</option>
-                <option value="stock_init_boot.img">stock_init_boot.img (32 MB)</option>
                 <option value="vbmeta_disabled.img">vbmeta_disabled.img (4 KB)</option>
               </select>
             </div>
 
-            <button class="btn-cyan" style="padding: 10px;" onclick="flashPartition()">⚡ Flash Partition Now</button>
+            <button class="btn-white" onclick="flashPartition()">Flash Partition Now</button>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title">🔒 Bootloader Lock & Wipe Controls</div>
+          <div class="card-title">Bootloader Controls</div>
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
-                <h4>Unlock Bootloader (Tecno / Transsion)</h4>
+                <h4>Unlock Bootloader</h4>
                 <p>Executes 'fastboot flashing unlock'.</p>
               </div>
               <button class="btn-danger" onclick="unlockBootloader()">Unlock</button>
@@ -951,87 +949,28 @@
 
             <div class="action-card">
               <div class="action-info">
-                <h4>Relock Bootloader</h4>
-                <p>Restores OEM locked state.</p>
-              </div>
-              <button class="btn-secondary" onclick="logLine('Command: fastboot flashing lock... OKAY', 'log-green')">Relock</button>
-            </div>
-
-            <div class="action-card">
-              <div class="action-info">
                 <h4>Wipe Userdata (Factory Reset)</h4>
                 <p>Format userdata partition via Fastboot.</p>
               </div>
-              <button class="btn-danger" onclick="logLine('Command: fastboot erase userdata... OKAY [1.2s]', 'log-green')">Erase Data</button>
-            </div>
-
-            <div class="action-card">
-              <div class="action-info">
-                <h4>Erase Cache & Metadata</h4>
-                <p>Clears temp and OTA cache partitions.</p>
-              </div>
-              <button class="btn-secondary" onclick="logLine('Command: fastboot erase cache... OKAY', 'log-green')">Erase Cache</button>
+              <button class="btn-danger" onclick="logLine('Command: fastboot erase userdata... OKAY [1.2s]', 'log-white')">Erase Data</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 11: Qualcomm EDL 9008 -->
-    <div id="tab-qualcomm" class="tab-content">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title">🐉 Qualcomm Snapdragon EDL (HS-USB QDLoader 9008)</div>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div>
-              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Select Snapdragon Chipset:</label>
-              <select id="qcChip" style="width:100%;">
-                <option value="SM6125">SM6125 - Snapdragon 665 (Redmi Note 8, Vivo Y50, Oppo A9 2020)</option>
-                <option value="SM7150">SM7150 - Snapdragon 730G / 732G (POCO X3 NFC, Redmi Note 10 Pro)</option>
-                <option value="SDM660">SDM660 - Snapdragon 660 (Redmi Note 7, Xiaomi Mi A2)</option>
-                <option value="SM7225">SM7225 - Snapdragon 750G (Galaxy A52 5G, Mi 10i)</option>
-                <option value="SM8250">SM8250 - Snapdragon 865 (Mi 10T, OnePlus 8)</option>
-              </select>
-            </div>
-
-            <div>
-              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">EDL Operation:</label>
-              <select id="qcAction" style="width:100%;">
-                <option value="frp">Erase FRP Partition (Google Lock Reset)</option>
-                <option value="persist">Format Persist Partition (Xiaomi Mi Cloud Fix)</option>
-                <option value="userdata">Full Factory Reset (Userdata Wipe)</option>
-                <option value="gpt">Read Raw Partition Table (GPT Dump)</option>
-              </select>
-            </div>
-
-            <button class="btn-danger" style="padding:10px;" onclick="runQualcommEdl()">⚡ Execute Firehose 9008 Exploit</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">ℹ️ Qualcomm EDL 9008 Procedure</div>
-          <div style="font-size:11px; line-height:1.6; color:var(--text-muted);">
-            <p>1. Open phone back cover or enter EDL via test points (see Test Points tab).</p>
-            <p style="margin-top:6px;">2. Short the 2 gold test-point pads to ground with metal tweezers, then connect USB cable.</p>
-            <p style="margin-top:6px;">3. Device Manager will list port as <strong>Qualcomm HS-USB QDLoader 9008</strong>.</p>
-            <p style="margin-top:6px;">4. Tool establishes Sahara handshake, sends Firehose ELF programmer, and formats partitions directly.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 12: Debloat & Apps -->
+    <!-- TAB 12: Debloat -->
     <div id="tab-debloat" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">📦 OEM Bloatware Removers</div>
+          <div class="card-title">HiOS & OEM Bloatware Removers</div>
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
                 <h4>Tecno HiOS 14/15/16 Bloatware Cleaner</h4>
                 <p>Removes PalmPay, AHA Games, PhoneMaster, Carlcare.</p>
               </div>
-              <button class="btn-cyan" onclick="runDebloat('Transsion')">Clean Tecno</button>
+              <button class="btn-white" onclick="runDebloat('Transsion')">Clean Tecno</button>
             </div>
 
             <div class="action-card">
@@ -1039,7 +978,7 @@
                 <h4>Samsung OneUI Bloatware Preset</h4>
                 <p>Removes Bixby, Samsung GameTools, Knox bloat.</p>
               </div>
-              <button class="btn-secondary" onclick="runDebloat('Samsung')">Clean Samsung</button>
+              <button class="btn-dark" onclick="runDebloat('Samsung')">Clean Samsung</button>
             </div>
 
             <div class="action-card">
@@ -1047,74 +986,37 @@
                 <h4>Xiaomi / MIUI / HyperOS Debloat</h4>
                 <p>Removes MSA analytics, Mi Picks, Yellow Pages.</p>
               </div>
-              <button class="btn-secondary" onclick="runDebloat('Xiaomi')">Clean Xiaomi</button>
-            </div>
-
-            <div class="action-card">
-              <div class="action-info">
-                <h4>BBK (Oppo / Realme / Vivo)</h4>
-                <p>Removes ColorOS / FunTouch preloaded stores.</p>
-              </div>
-              <button class="btn-secondary" onclick="runDebloat('BBK')">Clean BBK</button>
+              <button class="btn-dark" onclick="runDebloat('Xiaomi')">Clean Xiaomi</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title">📲 Custom APK Sideload</div>
-          <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="card-title">Sideload Technician APKs</div>
+          <div class="action-row">
             <div class="action-card">
               <div class="action-info">
                 <h4>FRP Bypass Helper APK</h4>
-                <p>QuickShortcutMaker & Google Account Manager.</p>
+                <p>QuickShortcutMaker & Account Manager.</p>
               </div>
-              <button class="btn-primary" onclick="installApk('FRP_Bypass_v3.0.apk')">Install</button>
-            </div>
-
-            <div class="action-card">
-              <div class="action-info">
-                <h4>Custom APK File</h4>
-                <p>Install user provided APK package directly.</p>
-              </div>
-              <button class="btn-secondary" onclick="logLine('Drag and drop your APK file or specify path in desktop GUI.', 'log-cyan')">Select APK</button>
+              <button class="btn-white" onclick="installApk('FRP_Bypass_v3.0.apk')">Install</button>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 13: EDL Test Points -->
-    <div id="tab-testpoints" class="tab-content">
-      <div class="card">
-        <div class="card-title">🛠️ Hardware Emergency Download (EDL 9008 / BROM) Pinouts</div>
-        <div style="overflow-x: auto;">
-          <table class="info-table" style="font-size: 11px;">
-            <thead>
-              <tr style="border-bottom: 1px solid var(--border-color); color: #38bdf8;">
-                <th style="text-align: left; padding: 8px;">Brand</th>
-                <th style="text-align: left; padding: 8px;">Model</th>
-                <th style="text-align: left; padding: 8px;">Chipset</th>
-                <th style="text-align: left; padding: 8px;">Protocol</th>
-                <th style="text-align: left; padding: 8px;">Hardware Procedure</th>
-              </tr>
-            </thead>
-            <tbody id="testpointRows"></tbody>
-          </table>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- Bottom Terminal Log Drawer -->
+  <!-- Terminal Drawer -->
   <div class="terminal-container">
     <div class="terminal-header">
       <div class="terminal-header-title">
-        <span>💻 TECHNICIAN OPERATION TERMINAL</span>
-        <span id="termStatus" style="color: #34d399; font-weight: 600;">[READY - TECNO CAMON 50 PRO ONLINE]</span>
+        <span>TECHNICIAN TERMINAL</span>
+        <span id="termStatus" style="color: var(--c9-green); font-weight: 700;">[READY]</span>
       </div>
       <div>
-        <button class="btn-secondary" style="padding: 3px 8px; font-size: 10px;" onclick="clearTerminal()">Clear Log</button>
+        <button class="btn-dark" style="padding: 2px 8px; font-size: 10px;" onclick="clearTerminal()">Clear Log</button>
       </div>
     </div>
     <div class="terminal-output" id="termOutput"></div>
@@ -1124,22 +1026,15 @@
   <div class="modal-overlay" id="buildModal" onclick="if(event.target===this) hideBuildInfo()">
     <div class="modal-box">
       <h2>How to Compile Standalone AndroidMultiTool.exe</h2>
-      <p>The entire Python source, GUI scripts, ADB/Fastboot engines, MTK/Qualcomm protocols, and PyInstaller configs are created in <code>/home/user/android-multi-tool</code>. To build the final standalone Windows <code>AndroidMultiTool.exe</code>:</p>
+      <p>Source files, PyInstaller configs, and GitHub Actions are active. To build locally on Windows:</p>
       
-      <div class="code-block"># 1. On your Windows PC, open Command Prompt or PowerShell:
-cd path\to\android-multi-tool
+      <div class="code-block">cd path\to\android-multi-tool
+build.bat</div>
 
-# 2. Run the automated 1-click builder:
-build.bat
-
-# OR manually compile with PyInstaller:
-pip install pyinstaller
-python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
-
-      <p>This generates a single, portable <code>AndroidMultiTool.exe</code> in the <code>dist/</code> folder containing ADB, Fastboot, AdbWinApi.dll, and all required tools bundled inside!</p>
+      <p>Or push to your private GitHub repo where GitHub Actions automatically builds the green EXE artifact!</p>
 
       <div style="text-align: right;">
-        <button class="btn-primary" onclick="hideBuildInfo()">Close</button>
+        <button class="btn-white" onclick="hideBuildInfo()">Close</button>
       </div>
     </div>
   </div>
@@ -1150,7 +1045,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     let cachedWorkflows = {};
     let currentWorkflowKey = "FACTORY_RESET_COMPLETE";
 
-    function logLine(text, cssClass = "log-cyan") {
+    function logLine(text, cssClass = "log-white") {
       const out = document.getElementById("termOutput");
       const time = new Date().toTimeString().split(' ')[0];
       const div = document.createElement("div");
@@ -1188,7 +1083,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function scanDevices() {
-      logLine("Scanning USB bus for connected Android devices (ADB / Fastboot / MTK COM)...", "log-cyan");
+      logLine("Scanning USB bus for connected Android devices...", "log-white");
       try {
         const res = await fetch("/api/scan", { method: "POST" });
         const data = await res.json();
@@ -1218,7 +1113,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function readInfo() {
-      logLine("Reading device hardware parameters via ADB...", "log-cyan");
+      logLine("Reading device hardware parameters via ADB...", "log-white");
       try {
         const res = await fetch("/api/read_info", { method: "POST" });
         const data = await res.json();
@@ -1242,7 +1137,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function executeReboot(mode) {
-      logLine(`Sending reboot command: target='${mode || 'normal OS'}'...`, "log-cyan");
+      logLine(`Sending reboot command: target='${mode || 'normal OS'}'...`, "log-white");
       try {
         const res = await fetch("/api/reboot", {
           method: "POST",
@@ -1258,7 +1153,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
 
     function promptWorkflow(wfKey) {
       currentWorkflowKey = wfKey;
-      logLine(`🔔 MILESTONE FINISHED! Check the 'Process Tutorials (What Next?)' tab for exact next steps.`, "log-green");
+      logLine(`MILESTONE COMPLETED! Check 'Process Tutorials' tab for next instructions.`, "log-green");
       if (document.getElementById("tutorialSelect")) {
         document.getElementById("tutorialSelect").value = wfKey;
         renderSelectedTutorial();
@@ -1266,7 +1161,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function frpFastboot() {
-      logLine("Initiating Universal Fastboot FRP Reset on Tecno Camon 50 Pro...", "log-cyan");
+      logLine("Initiating Universal Fastboot FRP Reset on Tecno Camon 50 Pro...", "log-white");
       try {
         const res = await fetch("/api/frp_fastboot", { method: "POST" });
         const data = await res.json();
@@ -1278,7 +1173,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function frpSamsung() {
-      logLine("Triggering Samsung Test Mode (*#0*#) ADB authorization...", "log-cyan");
+      logLine("Triggering Samsung Test Mode (*#0*#) ADB authorization...", "log-white");
       try {
         const res = await fetch("/api/frp_samsung", { method: "POST" });
         const data = await res.json();
@@ -1290,7 +1185,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function rootAction(subaction) {
-      logLine(`Executing Root Operation: '${subaction}' on Camon 50 Pro...`, "log-purple");
+      logLine(`Executing Root Operation: '${subaction}' on Camon 50 Pro...`, "log-white");
       try {
         const res = await fetch("/api/root_action", {
           method: "POST",
@@ -1307,7 +1202,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
 
     async function backupEfs() {
       const part = document.getElementById("efsPart").value;
-      logLine(`Dumping modem calibration partition '${part}' for Tecno Camon 50 Pro to PC...`, "log-cyan");
+      logLine(`Dumping modem calibration partition '${part}' for Tecno Camon 50 Pro to PC...`, "log-white");
       try {
         const res = await fetch("/api/efs_backup", {
           method: "POST",
@@ -1324,7 +1219,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     async function runMtkBrom() {
       const soc = document.getElementById("mtkSoc").value;
       const part = document.getElementById("mtkAction").value;
-      logLine(`Starting MediaTek BROM / Preloader exploit for '${soc}' -> '${part}'...`, "log-purple");
+      logLine(`Starting MediaTek BROM / Preloader exploit for '${soc}' -> '${part}'...`, "log-white");
       try {
         const res = await fetch("/api/mtk_brom_format", {
           method: "POST",
@@ -1332,62 +1227,50 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
           body: JSON.stringify({ soc, partition: part })
         });
         const data = await res.json();
-        data.logs.forEach(l => logLine(l, "log-purple"));
+        data.logs.forEach(l => logLine(l, "log-green"));
         if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("MTK BROM exploit failed: " + err, "log-red");
       }
     }
 
-    async function runQualcommEdl() {
-      const chip = document.getElementById("qcChip").value;
-      const part = document.getElementById("qcAction").value;
-      logLine(`Starting Qualcomm EDL 9008 Firehose protocol for '${chip}' -> '${part}'...`, "log-cyan");
+    async function runTranssionMDM() {
+      logLine("Freezing Tecno Camon 50 Pro HiOS 16 Enterprise & PalmPay MDM daemons...", "log-white");
       try {
-        const res = await fetch("/api/qualcomm_edl_format", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chip, partition: part })
-        });
+        const res = await fetch("/api/transsion_mdm", { method: "POST" });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
         if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
-        logLine("Qualcomm EDL failed: " + err, "log-red");
+        logLine("MDM freeze failed: " + err, "log-red");
+      }
+    }
+
+    async function extractPayload() {
+      logLine("Inspecting official Tecno Camon 50 Pro OTA payload.bin...", "log-white");
+      try {
+        const res = await fetch("/api/extract_payload", { method: "POST" });
+        const data = await res.json();
+        data.logs.forEach(l => logLine(l, "log-green"));
+      } catch (err) {
+        logLine("Payload extract failed: " + err, "log-red");
       }
     }
 
     async function bypassWizard() {
-      logLine("Injecting setup wizard completion flags...", "log-cyan");
+      logLine("Injecting setup wizard completion flags...", "log-white");
       setTimeout(() => {
-        logLine("[OK] content insert: user_setup_complete = 1", "log-green");
-        logLine("[OK] content insert: device_provisioned = 1", "log-green");
+        logLine("[OK] settings put secure user_setup_complete 1", "log-green");
+        logLine("[OK] settings put global device_provisioned 1", "log-green");
         logLine("[OK] am start: Home launcher initialized.", "log-green");
         promptWorkflow("FRP_BYPASS_COMPLETE");
-      }, 600);
-    }
-
-    async function removeLock() {
-      logLine("Wiping gesture.key and locksettings.db (Root/TWRP)...", "log-yellow");
-      setTimeout(() => {
-        logLine("[DELETED] /data/system/gesture.key", "log-green");
-        logLine("[DELETED] /data/system/locksettings.db", "log-green");
-        logLine("Screen locks cleared successfully!", "log-green");
-        promptWorkflow("FACTORY_RESET_COMPLETE");
-      }, 700);
-    }
-
-    function launchMTP() {
-      logLine("Sending MTP Push Notification for YouTube/Chrome...", "log-cyan");
-      setTimeout(() => {
-        logLine("MTP Intent Packet Broadcasted to Device Display!", "log-green");
       }, 600);
     }
 
     async function flashPartition() {
       const part = document.getElementById("flashPart").value;
       const file = document.getElementById("flashFile").value;
-      logLine(`Flashing partition '${part}' with '${file}' in Fastboot...`, "log-cyan");
+      logLine(`Flashing partition '${part}' with '${file}' in Fastboot...`, "log-white");
       try {
         const res = await fetch("/api/flash_partition", {
           method: "POST",
@@ -1402,7 +1285,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function unlockBootloader() {
-      logLine("Sending Fastboot bootloader unlock sequence...", "log-yellow");
+      logLine("Sending Fastboot bootloader unlock sequence...", "log-white");
       try {
         const res = await fetch("/api/unlock_bootloader", { method: "POST" });
         const data = await res.json();
@@ -1414,7 +1297,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function runDebloat(brand) {
-      logLine(`Running debloat preset for ${brand}...`, "log-cyan");
+      logLine(`Running debloat preset for ${brand}...`, "log-white");
       try {
         const res = await fetch("/api/debloat", {
           method: "POST",
@@ -1431,57 +1314,36 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     function installApk(name) {
-      logLine(`Installing ${name} over ADB...`, "log-cyan");
+      logLine(`Installing ${name} over ADB...`, "log-white");
       setTimeout(() => {
         logLine(`Package ${name} successfully installed! [Success]`, "log-green");
-      }, 1200);
+      }, 1000);
     }
 
     function readFastbootVars() {
-      logLine("Querying 'fastboot getvar all'...", "log-cyan");
+      logLine("Querying 'fastboot getvar all'...", "log-white");
       setTimeout(() => {
-        logLine("(bootloader) product: TECNO-CL8", "log-cyan");
-        logLine("(bootloader) secure: yes", "log-cyan");
-        logLine("(bootloader) unlocked: no", "log-yellow");
-        logLine("(bootloader) version-bootloader: CL8-H932A-U-GL-260315V120", "log-cyan");
+        logLine("(bootloader) product: TECNO-CL8", "log-white");
+        logLine("(bootloader) secure: yes", "log-white");
+        logLine("(bootloader) unlocked: no", "log-white");
+        logLine("(bootloader) version-bootloader: CL8-H932A-U-GL-260315V120", "log-white");
         logLine("(bootloader) battery-voltage: 4320mV", "log-green");
-        logLine("Fastboot parameters fetched successfully.", "log-green");
-      }, 600);
-    }
-
-    function dumpBattery() {
-      logLine("Querying 'dumpsys battery' for Tecno Camon 50 Pro...", "log-cyan");
-      setTimeout(() => {
-        logLine("Capacity: 6500 mAh | Level: 96% | Health: Good", "log-green");
-        logLine("Charging Type: 45W Ultra Fast Charge | Temp: 27.8°C", "log-cyan");
       }, 500);
     }
 
-    function takeScreenshot() {
-      logLine("Capturing screencap from device...", "log-cyan");
+    function dumpBattery() {
+      logLine("Querying 'dumpsys battery' for Tecno Camon 50 Pro...", "log-white");
       setTimeout(() => {
-        logLine("Screenshot captured and saved to ~/amt_screenshot.png", "log-green");
-      }, 800);
+        logLine("Capacity: 6500 mAh | Level: 96% | Health: Good", "log-green");
+        logLine("Charging Type: 45W Ultra Fast Charge | Temp: 27.8°C", "log-white");
+      }, 400);
     }
 
-    async function loadTestPoints() {
-      try {
-        const res = await fetch("/api/testpoints");
-        const list = await res.json();
-        const tbody = document.getElementById("testpointRows");
-        tbody.innerHTML = "";
-        list.forEach(tp => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td style="font-weight:700; color:#fff; padding:6px 8px;">${tp.brand}</td>
-            <td style="color:#38bdf8; padding:6px 8px;">${tp.model}</td>
-            <td style="color:#94a3b8; padding:6px 8px;">${tp.chipset}</td>
-            <td style="color:#f59e0b; font-weight:600; padding:6px 8px;">${tp.mode}</td>
-            <td style="color:#cbd5e1; padding:6px 8px; font-size:11px;">${tp.instructions}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (err) {}
+    function takeScreenshot() {
+      logLine("Capturing screencap from device...", "log-white");
+      setTimeout(() => {
+        logLine("Screenshot captured and saved to ~/amt_screenshot.png", "log-green");
+      }, 700);
     }
 
     async function loadCatalog() {
@@ -1498,11 +1360,11 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
       items.forEach(cat => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td style="font-weight:700; color:#38bdf8; padding:8px;">${cat.brand}</td>
-          <td style="color:#fff; padding:8px;">${cat.series}</td>
-          <td style="color:#cbd5e1; padding:8px; font-size:11px;">${cat.models.join(", ")}</td>
-          <td style="color:#f59e0b; padding:8px; font-family:Consolas, monospace;">${cat.chipset}</td>
-          <td style="color:#34d399; padding:8px; font-size:11px;">${cat.supported_ops.join(" • ")}</td>
+          <td style="font-weight:700; color:var(--c8-white); padding:5px;">${cat.brand}</td>
+          <td style="color:var(--c7-lightgray); padding:5px;">${cat.series}</td>
+          <td style="color:var(--c6-muted); padding:5px; font-size:10px;">${cat.models.join(", ")}</td>
+          <td style="color:var(--c8-white); padding:5px; font-family:Consolas, monospace;">${cat.chipset}</td>
+          <td style="color:var(--c9-green); padding:5px; font-size:10px;">${cat.supported_ops.join(" • ")}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1532,7 +1394,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
       const wf = cachedWorkflows[key];
       if (!wf) return;
 
-      document.getElementById("tutTitle").textContent = "📋 " + wf.title;
+      document.getElementById("tutTitle").textContent = wf.title;
       document.getElementById("tutStatus").textContent = "STATUS: " + wf.current_status;
 
       const container = document.getElementById("tutStepsContainer");
@@ -1551,7 +1413,6 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         container.appendChild(div);
       });
 
-      // Update jump button label & destination
       const jumpMap = {
         "FACTORY_RESET_COMPLETE": { text: "Go to Debloat Tab", tab: "tab-debloat" },
         "FRP_BYPASS_COMPLETE": { text: "Go to Reboot Tab", tab: "tab-reboot" },
@@ -1582,16 +1443,15 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
       const key = document.getElementById("win11ErrorSelect").value;
       const data = cachedWin11Errors[key];
       if (data) {
-        document.getElementById("fixTitle").textContent = "🛠️ " + data.title;
+        document.getElementById("fixTitle").textContent = data.title;
         let content = `CAUSE: ${data.cause}\n\nSYMPTOMS:\n- ${data.symptoms.join("\n- ")}\n\nEXACT WINDOWS 11 / 11 PRO RESOLUTION:\n${data.win11_fix}`;
         document.getElementById("fixContent").textContent = content;
       }
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      logLine("Android Multi-Tool Pro v2.5 initialized.", "log-cyan");
-      logLine("Target Device: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
-      loadTestPoints();
+      logLine("Android Multi-Tool Pro Monochrome Edition initialized.", "log-white");
+      logLine("Device Profile: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
       loadCatalog();
       loadWorkflows();
       loadWin11Errors();

@@ -41,7 +41,10 @@ a = Analysis(
         'core.device_matrix',
         'core.device_profiles',
         'core.downloader',
-        'core.workflow_guide'
+        'core.workflow_guide',
+        'core.payload_extractor',
+        'core.scatter_flasher',
+        'core.transsion_mdm'
     ],
     hookspath=[],
     hooksconfig={},
@@ -66,7 +69,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False, # Disable UPX compression to avoid antivirus false positives and packaging errors
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,

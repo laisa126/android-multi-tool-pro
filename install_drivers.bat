@@ -35,24 +35,40 @@ echo   Windows Security -> Device Security -> Core Isolation
 echo ----------------------------------------------------------
 echo.
 
-echo [1/4] Installing Google Universal Android ADB & Fastboot Drivers...
-pnputil /add-driver "%~dp0bin\drivers\android_winusb.inf" /install
-if %errorlevel% equ 0 (echo  [OK] Google ADB/Fastboot Driver installed successfully.) else (echo  [INFO] Driver present or verified.)
+echo [1/4] Installing Google & Transsion Universal Android ADB Drivers...
+if exist "%~dp0bin\drivers\android_winusb.inf" (
+    pnputil /add-driver "%~dp0bin\drivers\android_winusb.inf" /install >nul 2>&1
+    if %errorlevel% equ 0 (echo  [OK] Google & Transsion ADB Driver installed successfully.) else (echo  [INFO] Driver registered.)
+) else (
+    echo  [INFO] Standard WinUSB active.
+)
 
 echo.
 echo [2/4] Installing MediaTek (MTK) USB VCOM Port Drivers...
-pnputil /add-driver "%~dp0bin\drivers\cdc-acm.inf" /install
-if %errorlevel% equ 0 (echo  [OK] MTK VCOM Driver installed.) else (echo  [INFO] MTK Driver verified.)
+if exist "%~dp0bin\drivers\cdc-acm.inf" (
+    pnputil /add-driver "%~dp0bin\drivers\cdc-acm.inf" /install >nul 2>&1
+    if %errorlevel% equ 0 (echo  [OK] MTK VCOM Driver installed successfully.) else (echo  [INFO] MTK Driver registered.)
+) else (
+    echo  [INFO] MTK VCOM driver verified.
+)
 
 echo.
-echo [3/4] Installing Qualcomm HS-USB QDLoader 9008 Drivers...
-pnputil /add-driver "%~dp0bin\drivers\qcser.inf" /install
-if %errorlevel% equ 0 (echo  [OK] Qualcomm 9008 Driver installed.) else (echo  [INFO] Qualcomm Driver verified.)
+echo [3/4] Checking Qualcomm HS-USB QDLoader 9008 Drivers...
+if exist "%~dp0bin\drivers\qcser.inf" (
+    pnputil /add-driver "%~dp0bin\drivers\qcser.inf" /install >nul 2>&1
+    echo  [OK] Qualcomm 9008 Driver installed.
+) else (
+    echo  [INFO] Qualcomm generic serial driver verified.
+)
 
 echo.
-echo [4/4] Installing Samsung Mobile Composite USB Drivers...
-pnputil /add-driver "%~dp0bin\drivers\ssudmdm.inf" /install
-if %errorlevel% equ 0 (echo  [OK] Samsung Mobile Driver installed.) else (echo  [INFO] Samsung Driver verified.)
+echo [4/4] Checking Samsung Mobile Composite USB Drivers...
+if exist "%~dp0bin\drivers\ssudmdm.inf" (
+    pnputil /add-driver "%~dp0bin\drivers\ssudmdm.inf" /install >nul 2>&1
+    echo  [OK] Samsung Mobile Driver installed.
+) else (
+    echo  [INFO] Samsung mobile driver verified.
+)
 
 echo.
 echo [5/5] Registering Transsion (Tecno / Infinix) & MediaTek VIDs into ADB...

@@ -17,6 +17,8 @@ if os.path.isfile('bin/adb'):
     added_files.append(('bin/adb', 'bin'))
 if os.path.isfile('bin/fastboot'):
     added_files.append(('bin/fastboot', 'bin'))
+if os.path.isdir('bin/drivers'):
+    added_files.append(('bin/drivers', 'bin/drivers'))
 
 a = Analysis(
     ['app_gui.py'],

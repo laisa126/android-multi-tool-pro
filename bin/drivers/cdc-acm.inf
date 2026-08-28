@@ -1,0 +1,47 @@
+;
+; MediaTek USB VCOM Port driver installation file for Windows 10 & 11 (64-bit)
+; Specifically handles MTK MT6878 / Dimensity 7400 / Helio G200 Preloader & BROM
+;
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = Ports
+ClassGuid   = {4D36E978-E325-11CE-BFC1-08002BE10318}
+Provider    = %ProviderName%
+DriverVer   = 08/28/2026,3.0.0.0
+
+[Manufacturer]
+%ProviderName% = MTK, NTamd64, NTx86
+
+[MTK.NTamd64]
+%MTK_PRELOADER% = USB_Install, USB\VID_0E8D&PID_2000
+%MTK_BROM%      = USB_Install, USB\VID_0E8D&PID_0003
+%MTK_DA%        = USB_Install, USB\VID_0E8D&PID_2001
+
+[MTK.NTx86]
+%MTK_PRELOADER% = USB_Install, USB\VID_0E8D&PID_2000
+%MTK_BROM%      = USB_Install, USB\VID_0E8D&PID_0003
+%MTK_DA%        = USB_Install, USB\VID_0E8D&PID_2001
+
+[USB_Install]
+Include = mdmcpq.inf
+Needs   = FakeModemCopyFileSection
+AddReg  = LowerFilterAddReg, SerialPropAddReg
+
+[USB_Install.Services]
+Include    = mdmcpq.inf
+AddService = usbser, 0x00000002, DriverService
+
+[DriverService]
+DisplayName = %ServiceDesc%
+ServiceType = 1
+StartType   = 3
+ErrorControl= 1
+ServiceBinary = %12%\usbser.sys
+
+[Strings]
+ProviderName    = "MediaTek Inc."
+ServiceDesc     = "MediaTek USB VCOM Driver Service"
+MTK_PRELOADER   = "MediaTek Preloader USB VCOM (Android)"
+MTK_BROM        = "MediaTek BootROM USB Port"
+MTK_DA          = "MediaTek DA USB VCOM Port"

@@ -1,0 +1,80 @@
+;
+; Android WinUsb driver installation file for Windows 10 & 11 (64-bit)
+; Specifically includes Transsion Holdings (Tecno / Infinix) VID 0x2E04
+; and MediaTek Preloader VID 0x0E8D
+;
+
+[Version]
+Signature           = "$Windows NT$"
+Class               = AndroidUsbDeviceClass
+ClassGuid           = {3F966BD9-FA04-4ec5-991C-D326973B5128}
+Provider            = %ProviderName%
+DriverVer           = 08/28/2026,14.0.0.0
+CatalogFile         = androidwinusb.cat
+
+[ClassInstall32]
+Addreg = AndroidWinUsbClassReg
+
+[AndroidWinUsbClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-1
+
+[Manufacturer]
+%ProviderName% = Google, NTx86, NTamd64
+
+[Google.NTx86]
+; Generic & Transsion (Tecno Camon 50 Pro CN5c)
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C001&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C002&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C003&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_0E8D&PID_201D
+%SingleAdbInterface%        = USB_Install, USB\VID_18D1&PID_4EE7
+
+[Google.NTamd64]
+; Transsion Holdings (Tecno Camon 50 Pro 5G / CN5c)
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C001&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C002&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C003&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C004&MI_01
+; MediaTek Inc. Android Bootloader & Fastboot
+%CompositeAdbInterface%     = USB_Install, USB\VID_0E8D&PID_201D
+%SingleBootLoaderInterface% = USB_Install, USB\VID_0E8D&PID_201C
+; Universal Google / AOSP
+%SingleAdbInterface%        = USB_Install, USB\VID_18D1&PID_4EE7
+%CompositeAdbInterface%     = USB_Install, USB\VID_18D1&PID_4EE7&MI_01
+%SingleBootLoaderInterface% = USB_Install, USB\VID_18D1&PID_4EE0
+
+[USB_Install]
+Include = winusb.inf
+Needs   = WINUSB.NT
+
+[USB_Install.Services]
+Include    = winusb.inf
+AddService = WinUSB,0x00000002,WinUSB_ServiceInstall
+
+[WinUSB_ServiceInstall]
+DisplayName     = %WinUSB_SvcDesc%
+ServiceType     = 1
+StartType       = 3
+ErrorControl    = 1
+ServiceBinary   = %12%\WinUSB.sys
+
+[USB_Install.Wdf]
+KmdfService = WINUSB, WinUSB_Install
+
+[WinUSB_Install]
+KmdfLibraryVersion = 1.9
+
+[USB_Install.HW]
+AddReg = Dev_AddReg
+
+[Dev_AddReg]
+HKR,,DeviceInterfaceGUIDs,0x00010000,"{F72FE0D4-CBCB-407d-8814-9ED673D0DD6B}"
+
+[Strings]
+ProviderName                = "Google, Inc."
+ClassName                   = "Android Device"
+WinUSB_SvcDesc              = "Android Multi-Tool WinUSB Driver"
+SingleAdbInterface          = "Android ADB Interface"
+CompositeAdbInterface       = "Android Composite ADB Interface"
+SingleBootLoaderInterface   = "Android Bootloader Interface"

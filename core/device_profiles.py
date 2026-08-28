@@ -1,7 +1,7 @@
 """
 Android Multi-Tool Pro - OEM Bloatware Database & Diagnostics
 Curated lists of OEM pre-installed bloatware packages safe to disable,
-plus hardware test-point references.
+plus hardware test-point references including Tecno Camon 50 Pro.
 """
 
 BLOATWARE_PRESETS = {
@@ -34,7 +34,7 @@ BLOATWARE_PRESETS = {
         "com.facebook.katana",
         "com.facebook.system"
     ],
-    "Transsion (Tecno / Infinix / itel)": [
+    "Transsion (Tecno / Infinix / itel - HiOS 14/15/16)": [
         "com.transsion.hilauncher",
         "com.transsion.phonemaster",
         "com.transsion.aha",
@@ -42,7 +42,12 @@ BLOATWARE_PRESETS = {
         "com.transsion.carlcare",
         "com.transsion.palmpay",
         "com.transsion.boomplayer",
-        "com.talpa.shareme"
+        "com.talpa.shareme",
+        "com.transsion.tecnospot",
+        "com.transsion.smartpanel",
+        "com.transsion.vskit",
+        "com.transsion.molink",
+        "com.transsion.letswitch"
     ],
     "BBK (Oppo / Realme / Vivo)": [
         "com.oppo.market",
@@ -55,9 +60,9 @@ BLOATWARE_PRESETS = {
         "com.vivo.game"
     ],
     "Google Safe Debloat (Generic)": [
-        "com.google.android.apps.tachyon",  # Google Duo / Meet
-        "com.google.android.videos",        # Google TV
-        "com.google.android.music",         # Play Music
+        "com.google.android.apps.tachyon",
+        "com.google.android.videos",
+        "com.google.android.music",
         "com.google.android.apps.photos",
         "com.google.android.apps.docs",
         "com.google.android.apps.wellbeing"
@@ -65,6 +70,20 @@ BLOATWARE_PRESETS = {
 }
 
 TEST_POINT_DATABASE = [
+    {
+        "brand": "Tecno",
+        "model": "Camon 50 Pro / Camon 50 Pro 5G",
+        "chipset": "MediaTek Dimensity 7400 Ultimate / Helio G200",
+        "mode": "MTK Preloader / BROM VCOM",
+        "instructions": "NO DISASSEMBLY REQUIRED. Power off phone completely. Press and hold Volume Up + Volume Down simultaneously. Connect high-quality Type-C cable to Windows 11 PC. The tool catches the Preloader USB VCOM Port within 1.5 seconds, bypasses auth, and executes FRP wipe or userdata format."
+    },
+    {
+        "brand": "Tecno",
+        "model": "Camon 19 / 20 / 30 Pro",
+        "chipset": "MediaTek Helio G96/G99 & Dimensity 8050/8200",
+        "mode": "MTK Preloader",
+        "instructions": "Power off phone. Hold Volume Down or Volume Up+Down. Insert Type-C cable. Multi-tool executes one-click auth bypass and formats FRP partition."
+    },
     {
         "brand": "Xiaomi",
         "model": "Redmi Note 8 / 8T (Ginkgo)",
@@ -92,12 +111,5 @@ TEST_POINT_DATABASE = [
         "chipset": "Qualcomm Snapdragon 720G",
         "mode": "EDL 9008 Test Point",
         "instructions": "Locate two gold pads underneath motherboard sub-board flex. Short pins to ground and insert Type-C cable. Bypasses Knox bit check for emergency unbrick."
-    },
-    {
-        "brand": "Tecno / Infinix",
-        "model": "Spark 8 / Hot 10 / Hot 11 Play",
-        "chipset": "MediaTek Helio G35 / G70",
-        "mode": "MTK Preloader",
-        "instructions": "No test point needed. Power off phone completely. Press and hold Volume Up + Volume Down simultaneously. Connect USB cable. Multi-Tool triggers DA exploit in 1.5 seconds."
     }
 ]

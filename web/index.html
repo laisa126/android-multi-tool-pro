@@ -407,20 +407,19 @@
       <div class="brand-logo">⚡</div>
       <div class="brand-text">
         <h1>Android Multi-Tool Pro <span>Windows 11 / 11 Pro Suite</span></h1>
-        <p>100% Offline Universal Service Tool | Samsung, Xiaomi, MTK BROM, Qualcomm EDL, Transsion, BBK</p>
+        <p>100% Offline Universal Service Tool | Tecno Camon 50 Pro, Samsung, Xiaomi, MTK, Qualcomm</p>
       </div>
     </div>
 
     <div class="conn-section">
       <div class="status-pill">
         <div class="status-dot" id="statusDot"></div>
-        <span id="connState">Win 11 / 11 Pro Verified</span>
+        <span id="connState">Tecno Camon 50 Pro Ready</span>
       </div>
       <select id="deviceSelect" onchange="onDeviceChanged()">
+        <option value="tecno">Tecno Camon 50 Pro 5G (Dimensity 7400 - MTK Preloader)</option>
         <option value="samsung">SM-S908B (Samsung Galaxy S22 Ultra - ADB)</option>
         <option value="xiaomi">Redmi Note 11 (Xiaomi / POCO - FASTBOOT)</option>
-        <option value="tecno">Tecno Spark 10 / Hot 12 (MTK Preloader COM5)</option>
-        <option value="qualcomm">Qualcomm HS-USB QDLoader 9008 (COM7)</option>
       </select>
       <button class="btn-cyan" onclick="scanDevices()">🔄 Scan USB</button>
       <button class="btn-secondary" onclick="showBuildInfo()">📦 Build .EXE</button>
@@ -431,15 +430,15 @@
   <div class="tabs-bar">
     <button class="tab-btn active" onclick="switchTab('tab-diagnostics', this)">📱 Device Diagnostics</button>
     <button class="tab-btn" onclick="switchTab('tab-catalog', this)">📋 Supported Devices List</button>
+    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚙️ MediaTek BROM (Camon 50 Pro)</button>
     <button class="tab-btn" onclick="switchTab('tab-win11', this)">🪟 Windows 11 Error Fixer</button>
     <button class="tab-btn" onclick="switchTab('tab-reboot', this)">🔄 Reboot & Modes</button>
     <button class="tab-btn" onclick="switchTab('tab-frp', this)">🔓 FRP & Screen Lock</button>
-    <button class="tab-btn" onclick="switchTab('tab-root', this)">🛡️ Root & Magisk</button>
-    <button class="tab-btn" onclick="switchTab('tab-efs', this)">📡 EFS & Baseband Backup</button>
+    <button class="tab-btn" onclick="switchTab('tab-root', this)">🛡️ Root & Magisk (HiOS 16)</button>
+    <button class="tab-btn" onclick="switchTab('tab-efs', this)">📡 EFS & NVRAM Baseband</button>
     <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">⚡ Fastboot Flasher</button>
-    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚙️ MediaTek BROM</button>
     <button class="tab-btn" onclick="switchTab('tab-qualcomm', this)">🐉 Qualcomm EDL 9008</button>
-    <button class="tab-btn" onclick="switchTab('tab-debloat', this)">📦 Debloat & Apps</button>
+    <button class="tab-btn" onclick="switchTab('tab-debloat', this)">📦 Debloat HiOS / Apps</button>
     <button class="tab-btn" onclick="switchTab('tab-testpoints', this)">🛠️ EDL Test Points</button>
   </div>
 
@@ -452,21 +451,21 @@
         <div class="card">
           <div class="card-title">📱 Connected Hardware & OS Parameters</div>
           <table class="info-table">
-            <tr><td>Manufacturer</td><td id="info-brand">Samsung Electronics</td></tr>
-            <tr><td>Model Name</td><td id="info-model">Galaxy S22 Ultra (SM-S908B)</td></tr>
-            <tr><td>Device Codename</td><td id="info-device">b0s</td></tr>
-            <tr><td>Android Release</td><td id="info-android">Android 14 (OneUI 6.1)</td></tr>
-            <tr><td>SDK API Level</td><td id="info-sdk">API 34</td></tr>
-            <tr><td>Build Display ID</td><td id="info-build">UP1A.231005.007.S908BXXU7ZXCD</td></tr>
-            <tr><td>Security Patch</td><td id="info-patch">2026-04-01</td></tr>
-            <tr><td>Architecture (ABI)</td><td id="info-cpu">arm64-v8a</td></tr>
-            <tr><td>Battery Health</td><td id="info-battery">92% (Good)</td></tr>
+            <tr><td>Manufacturer</td><td id="info-brand">Tecno Mobile (Transsion)</td></tr>
+            <tr><td>Model Name</td><td id="info-model">Camon 50 Pro 5G (Tecno-CL8)</td></tr>
+            <tr><td>Device Codename</td><td id="info-device">TECNO-CL8</td></tr>
+            <tr><td>Android Release</td><td id="info-android">Android 16 (HiOS 16)</td></tr>
+            <tr><td>SDK API Level</td><td id="info-sdk">API 36</td></tr>
+            <tr><td>Build Display ID</td><td id="info-build">CL8-H932A-U-GL-260315V120</td></tr>
+            <tr><td>Security Patch</td><td id="info-patch">2026-04-05</td></tr>
+            <tr><td>Architecture (ABI)</td><td id="info-cpu">arm64-v8a (MediaTek Dimensity 7400 Ultimate)</td></tr>
+            <tr><td>Battery Health</td><td id="info-battery">96% (6500 mAh - Good)</td></tr>
             <tr><td>Root Access</td><td id="info-root">Not Rooted (SELinux Enforcing)</td></tr>
           </table>
         </div>
 
         <div class="card">
-          <div class="card-title">⚡ Diagnostic Triggers</div>
+          <div class="card-title">⚡ Diagnostic Triggers for Tecno Camon 50 Pro</div>
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
@@ -478,14 +477,14 @@
             <div class="action-card">
               <div class="action-info">
                 <h4>Inspect Fastboot Variables</h4>
-                <p>Queries locked state, anti-rollback index, and slot count.</p>
+                <p>Queries unlocked state, slot-count, and Dimensity bootloader.</p>
               </div>
               <button class="btn-secondary" onclick="readFastbootVars()">Read Fastboot</button>
             </div>
             <div class="action-card">
               <div class="action-info">
-                <h4>Dump Battery Telemetry</h4>
-                <p>Inspects charging cycles, battery temperature, and voltage.</p>
+                <h4>Dump Battery & Charging Telemetry</h4>
+                <p>Inspects 6500 mAh battery thermals, 45W charging rate, and cycles.</p>
               </div>
               <button class="btn-secondary" onclick="dumpBattery()">Dump Battery</button>
             </div>
@@ -506,7 +505,7 @@
       <div class="card">
         <div class="card-title">📋 Comprehensive Supported Device Matrix (Multi-Tool Database)</div>
         <div style="margin-bottom: 10px;">
-          <input type="text" id="catalogSearch" placeholder="Search by Brand, Model, or Chipset (e.g. Samsung, Redmi, Helio G85, Snapdragon)..." 
+          <input type="text" id="catalogSearch" placeholder="Search by Brand, Model, or Chipset (e.g. Tecno Camon 50 Pro, Samsung, Dimensity 7400)..." 
                  style="width: 100%; padding: 8px 12px; background: #0b0f17; border: 1px solid var(--border-color); color: #fff; border-radius: 6px;"
                  oninput="filterCatalog()">
         </div>
@@ -527,7 +526,53 @@
       </div>
     </div>
 
-    <!-- TAB 3: Windows 11 Diagnostics & Error Fixer -->
+    <!-- TAB 3: MediaTek BROM (Camon 50 Pro) -->
+    <div id="tab-mtk" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">⚙️ MediaTek BootROM (BROM) / Preloader Service</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Select MediaTek SoC Family:</label>
+              <select id="mtkSoc" style="width:100%;">
+                <option value="MT6878" selected>MT6878 - Dimensity 7400 Ultimate (Tecno Camon 50 Pro 5G)</option>
+                <option value="MT6789">MT6789 - Helio G99 / Helio G200 (Tecno Camon 50 / Camon 30)</option>
+                <option value="MT6895">MT6895 - Dimensity 8200 / 8300 (Camon 30 Pro 5G / Premier)</option>
+                <option value="MT6877">MT6877 - Dimensity 900 / 1080 / 7050 (Infinix Note 30 Pro)</option>
+                <option value="MT6833">MT6833 - Dimensity 700 / 6020 (Samsung A14 5G, POCO M3 Pro)</option>
+                <option value="MT6768">MT6768 - Helio P65 / G85 (Tecno Spark 9 / Redmi Note 9)</option>
+                <option value="MT6765">MT6765 - Helio G35 / P35 (Samsung A12, Tecno Spark 8)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Target Action:</label>
+              <select id="mtkAction" style="width:100%;">
+                <option value="frp">One-Click Wipe FRP (Google Account Removal)</option>
+                <option value="userdata">Factory Reset + Remove Screen PIN / Pattern</option>
+                <option value="metadata">Clear Metadata / Fix Bootloop</option>
+                <option value="misc">Format Misc Block (Clear MDM / Demo Lock)</option>
+              </select>
+            </div>
+
+            <button class="btn-purple" style="padding:10px;" onclick="runMtkBrom()">⚡ Execute MediaTek BROM Bypass & Wipe</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">ℹ️ Tecno Camon 50 Pro Connection Instructions</div>
+          <div style="font-size:11px; line-height:1.6; color:var(--text-muted);">
+            <p><strong style="color:#fff;">NO PHONE DISASSEMBLY REQUIRED:</strong></p>
+            <p>1. Power off Tecno Camon 50 Pro completely. Ensure battery has at least 30% charge.</p>
+            <p style="margin-top:6px;">2. Press and hold <strong>Volume Up + Volume Down</strong> simultaneously.</p>
+            <p style="margin-top:6px;">3. Plug the Type-C USB cable into Windows 11 PC while continuing to hold the keys.</p>
+            <p style="margin-top:6px;">4. The tool synchronizes with the Dimensity 7400 Preloader VCOM port, bypasses DAA authorization in SRAM, and wipes the FRP block in 1.2 seconds.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Windows 11 Diagnostics & Error Fixer -->
     <div id="tab-win11" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -539,7 +584,7 @@
               <option value="DEVICE_NOT_FOUND">Device Not Detected (Yellow triangle in Device Manager)</option>
               <option value="FASTBOOT_AMD_USB3_BUG">Fastboot Hangs on Windows 11 (AMD Ryzen / USB 3.0)</option>
               <option value="WIN11_CORE_ISOLATION_BLOCK">Driver Blocked by Windows 11 Core Isolation (HVCI)</option>
-              <option value="FASTBOOT_DYNAMIC_PARTITION_ERROR">Fastboot Flash Error: Unknown Partition (Android 10-14 Super)</option>
+              <option value="FASTBOOT_DYNAMIC_PARTITION_ERROR">Fastboot Flash Error: Unknown Partition (Android 10-16 Super)</option>
               <option value="MTK_HANDSHAKE_TIMEOUT">MediaTek Handshake Drops After 2 Seconds</option>
             </select>
 
@@ -560,7 +605,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: Reboot & Modes -->
+    <!-- TAB 5: Reboot & Modes -->
     <div id="tab-reboot" class="tab-content">
       <div class="grid-3">
         <div class="action-card">
@@ -574,7 +619,7 @@
         <div class="action-card">
           <div class="action-info">
             <h4>Reboot Recovery</h4>
-            <p>Boots Stock / TWRP / OrangeFox.</p>
+            <p>Boots Stock / TWRP Recovery.</p>
           </div>
           <button class="btn-primary" onclick="executeReboot('recovery')">Recovery</button>
         </div>
@@ -590,7 +635,7 @@
         <div class="action-card">
           <div class="action-info">
             <h4>Reboot Fastbootd</h4>
-            <p>Userspace dynamic partition mode.</p>
+            <p>Dynamic 'super' partition mode.</p>
           </div>
           <button class="btn-primary" onclick="executeReboot('fastboot')">Fastbootd</button>
         </div>
@@ -629,7 +674,7 @@
       </div>
     </div>
 
-    <!-- TAB 5: FRP & Security -->
+    <!-- TAB 6: FRP & Security -->
     <div id="tab-frp" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -638,9 +683,17 @@
             <div class="action-card">
               <div class="action-info">
                 <h4>Universal Fastboot FRP Reset</h4>
-                <p>Erases persistent, frp, and config security blocks.</p>
+                <p>Erases persistent, frp, and config blocks (Tecno/Xiaomi).</p>
               </div>
               <button class="btn-danger" onclick="frpFastboot()">Reset FRP</button>
+            </div>
+
+            <div class="action-card">
+              <div class="action-info">
+                <h4>Tecno Camon MTK Preloader FRP</h4>
+                <p>1-click format for Dimensity 7400 & Helio G200.</p>
+              </div>
+              <button class="btn-purple" onclick="runMtkBrom()">Bypass Camon 50</button>
             </div>
 
             <div class="action-card">
@@ -654,7 +707,7 @@
             <div class="action-card">
               <div class="action-info">
                 <h4>Bypass Android Setup Wizard</h4>
-                <p>Injects provisioned flags and starts default launcher.</p>
+                <p>Injects user_setup_complete = 1 into settings provider.</p>
               </div>
               <button class="btn-success" onclick="bypassWizard()">Bypass Wizard</button>
             </div>
@@ -666,33 +719,25 @@
               </div>
               <button class="btn-secondary" onclick="removeLock()">Reset Lock</button>
             </div>
-
-            <div class="action-card">
-              <div class="action-info">
-                <h4>Trigger MTP Browser Intent</h4>
-                <p>Pushes notification to open YouTube / Chrome URL.</p>
-              </div>
-              <button class="btn-secondary" onclick="launchMTP()">Push URL</button>
-            </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-title">📋 Technician Exploit Reference</div>
           <div style="font-size: 11px; line-height: 1.6; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px;">
-            <p><strong style="color:#fff;">Samsung *#0*#:</strong> Connect phone on welcome screen. Tap Emergency Call, dial <code>*#0*#</code> to open service menu. Tool communicates over virtual COM modem to trigger ADB authorization.</p>
+            <p><strong style="color:#fff;">Tecno Camon 50 Pro (HiOS 15/16):</strong> Uses UFS storage. Fastboot erase frp or MTK Preloader bypass clears the FRP block. When bootloader is unlocked, <code>fastboot erase frp</code> works instantly.</p>
             <p><strong style="color:#fff;">Universal Fastboot:</strong> Hold Volume Down + Power. Tool issues fastboot erase commands against <code>config</code>, <code>frp</code>, <code>persistent</code>, and <code>devinfo</code>.</p>
-            <p><strong style="color:#fff;">Mi Account / Xiaomi:</strong> EDL mode format of the <code>persist</code> partition wipes corrupt cloud tokens while preserving baseband/IMEI.</p>
+            <p><strong style="color:#fff;">Samsung *#0*#:</strong> Connect phone on welcome screen. Tap Emergency Call, dial <code>*#0*#</code> to open service menu. Tool communicates over virtual COM modem.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 6: Root & Magisk -->
+    <!-- TAB 7: Root & Magisk -->
     <div id="tab-root" class="tab-content">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">🛡️ Root Operations & Magisk Engine</div>
+          <div class="card-title">🛡️ Root Operations & Magisk / KernelSU Engine</div>
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
@@ -704,10 +749,10 @@
 
             <div class="action-card">
               <div class="action-info">
-                <h4>Flash Magisk Patched Boot Image</h4>
-                <p>Flashes patched boot.img / init_boot.img in Fastboot.</p>
+                <h4>Flash Patched init_boot Image (Android 15/16)</h4>
+                <p>Flashes Magisk / KernelSU patched init_boot for Camon 50 Pro.</p>
               </div>
-              <button class="btn-danger" onclick="rootAction('flash_magisk_boot')">Flash Magisk Boot</button>
+              <button class="btn-danger" onclick="rootAction('flash_magisk_boot')">Flash init_boot</button>
             </div>
 
             <div class="action-card">
@@ -729,7 +774,7 @@
             <div class="action-card">
               <div class="action-info">
                 <h4>Install KernelSU Manager APK</h4>
-                <p>GKI kernel-based root manager for Android 12, 13, 14.</p>
+                <p>GKI kernel-based root manager for Android 15/16.</p>
               </div>
               <button class="btn-secondary" onclick="installApk('KernelSU_v0.9.5.apk')">Install KernelSU</button>
             </div>
@@ -737,21 +782,21 @@
         </div>
 
         <div class="card">
-          <div class="card-title">📖 Modern Rooting Architecture Explained</div>
+          <div class="card-title">📖 Rooting Tecno Camon 50 Pro (HiOS 16)</div>
           <div style="font-size: 11px; line-height: 1.6; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px;">
-            <p><strong style="color:#fff;">Why 1-Click KingoRoot is dead:</strong> Older Android (4-7) had system security holes that KingoRoot exploited. Android 8+ introduced dm-verity and Android 10+ introduced Dynamic Partitions & SAR (System-as-Root). Any direct modification to <code>/system</code> causes immediate hard-brick bootloop.</p>
-            <p><strong style="color:#fff;">How Modern Root Works (Magisk / KernelSU):</strong></p>
-            <p>1. Unlock bootloader using the <em>Fastboot Flasher</em> tab.</p>
-            <p>2. Extract <code>boot.img</code> (or <code>init_boot.img</code> on Android 13+) from firmware.</p>
-            <p>3. Patch the image with Magisk app.</p>
-            <p>4. Flash patched boot and disable vbmeta verification using this tab.</p>
-            <p>5. Result: 100% stable, systemless root that passes SafetyNet / Play Integrity!</p>
+            <p><strong style="color:#fff;">Modern Android 15/16 Partitioning:</strong></p>
+            <p>Devices running Android 13, 14, 15, and 16 place the ramdisk in <code>init_boot.img</code> rather than <code>boot.img</code>.</p>
+            <p>1. Unlock bootloader in the <em>Fastboot Flasher</em> tab (<code>fastboot flashing unlock</code>).</p>
+            <p>2. Extract <code>init_boot.img</code> from Tecno Camon 50 Pro stock ROM.</p>
+            <p>3. Patch with Magisk Manager or KernelSU.</p>
+            <p>4. Flash patched <code>init_boot.img</code> and disable vbmeta verification.</p>
+            <p>5. Result: 100% stable root with functioning banking apps and Play Integrity pass.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 7: EFS & Baseband Backup -->
+    <!-- TAB 8: EFS & Baseband Backup -->
     <div id="tab-efs" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -760,13 +805,13 @@
             <div>
               <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Target Baseband / Modem Partition:</label>
               <select id="efsPart" style="width:100%;">
+                <option value="nvram" selected>nvram (Tecno / MediaTek Radio Calibration)</option>
+                <option value="nvdata">nvdata (Tecno / MediaTek Dynamic Calibration)</option>
+                <option value="protect1">protect1 (Transsion SIM Calibration 1)</option>
+                <option value="protect2">protect2 (Transsion SIM Calibration 2)</option>
                 <option value="efs">efs (Samsung Cellular Calibration)</option>
-                <option value="sec_efs">sec_efs (Samsung Secondary EFS)</option>
                 <option value="modemst1">modemst1 (Qualcomm Modem NV Data 1)</option>
                 <option value="modemst2">modemst2 (Qualcomm Modem NV Data 2)</option>
-                <option value="fsg">fsg (Qualcomm Golden Modem Configuration)</option>
-                <option value="nvram">nvram (MediaTek Radio Calibration)</option>
-                <option value="nvdata">nvdata (MediaTek Dynamic Calibration)</option>
               </select>
             </div>
 
@@ -778,17 +823,17 @@
         </div>
 
         <div class="card">
-          <div class="card-title">ℹ️ Why EFS / NVRAM Backups Are Critical</div>
+          <div class="card-title">ℹ️ Why NVRAM Backups Are Critical for Tecno</div>
           <div style="font-size:11px; line-height:1.6; color:var(--text-muted);">
-            <p>When flashing custom ROMs, unbricking dead phones, or performing deep partition wipes, the radio frequency calibration blocks can get zeroed out.</p>
-            <p style="margin-top:6px;">This results in <strong>'Baseband Version: Unknown'</strong>, missing IMEI, or complete loss of cellular network reception.</p>
-            <p style="margin-top:6px;">Always create a backup of your device's <code>efs</code> / <code>nvram</code> / <code>modemst1/2</code> blocks before modifying partitions.</p>
+            <p>On MediaTek Dimensity devices like Tecno Camon 50 Pro, the cellular IMEI and baseband are stored in <code>nvram</code> and <code>nvdata</code>.</p>
+            <p style="margin-top:6px;">If these partitions are damaged during flashing, the phone will display <strong>'Baseband Unknown'</strong> or <strong>'No Service'</strong>.</p>
+            <p style="margin-top:6px;">Always create a backup of your Camon 50 Pro's <code>nvram</code> and <code>nvdata</code> before flashing custom recovery or firmware.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 8: Fastboot Flasher -->
+    <!-- TAB 9: Fastboot Flasher -->
     <div id="tab-fastboot" class="tab-content">
       <div class="grid-2">
         <div class="card">
@@ -797,22 +842,22 @@
             <div>
               <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Target Partition:</label>
               <select id="flashPart" style="width: 100%;">
+                <option value="init_boot">init_boot (Android 15/16 Camon 50 Pro Root)</option>
                 <option value="boot">boot (Kernel / Magisk Root)</option>
                 <option value="recovery" selected>recovery (TWRP / OrangeFox)</option>
                 <option value="vbmeta">vbmeta (Disable dm-verity)</option>
                 <option value="super">super (Dynamic Partitions)</option>
                 <option value="system">system (System Image / GSI)</option>
                 <option value="vendor">vendor</option>
-                <option value="dtbo">dtbo</option>
               </select>
             </div>
 
             <div>
               <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Image (.img / .bin):</label>
               <select id="flashFile" style="width: 100%;">
-                <option value="twrp-3.7.0-recovery.img">twrp-3.7.0-recovery.img (64 MB)</option>
-                <option value="magisk_patched_boot.img">magisk_patched_boot.img (32 MB)</option>
-                <option value="stock_boot.img">stock_boot.img (32 MB)</option>
+                <option value="magisk_patched_init_boot.img">magisk_patched_init_boot.img (32 MB)</option>
+                <option value="twrp-recovery.img">twrp-recovery.img (64 MB)</option>
+                <option value="stock_init_boot.img">stock_init_boot.img (32 MB)</option>
                 <option value="vbmeta_disabled.img">vbmeta_disabled.img (4 KB)</option>
               </select>
             </div>
@@ -826,8 +871,8 @@
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
-                <h4>Unlock Bootloader</h4>
-                <p>Executes flashing unlock / OEM unlock.</p>
+                <h4>Unlock Bootloader (Tecno / Transsion)</h4>
+                <p>Executes 'fastboot flashing unlock'.</p>
               </div>
               <button class="btn-danger" onclick="unlockBootloader()">Unlock</button>
             </div>
@@ -855,50 +900,6 @@
               </div>
               <button class="btn-secondary" onclick="logLine('Command: fastboot erase cache... OKAY', 'log-green')">Erase Cache</button>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 9: MediaTek BROM -->
-    <div id="tab-mtk" class="tab-content">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title">⚙️ MediaTek BootROM (BROM) / Preloader Service</div>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div>
-              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Select MediaTek SoC Family:</label>
-              <select id="mtkSoc" style="width:100%;">
-                <option value="MT6765">MT6765 - Helio G35 / P35 (Redmi 9C, Samsung A12, Tecno Spark 7)</option>
-                <option value="MT6768">MT6768 - Helio P65 / G85 (Redmi Note 9, Realme 6i)</option>
-                <option value="MT6785">MT6785 - Helio G90T / G95 (Redmi Note 8 Pro, Realme 7)</option>
-                <option value="MT6833">MT6833 - Dimensity 700 / 6020 (POCO M3 Pro 5G, Samsung A14 5G)</option>
-                <option value="MT6877">MT6877 - Dimensity 900 / 1080 (Redmi Note 12 Pro 5G)</option>
-                <option value="MT6761">MT6761 - Helio A22 (Infinix Smart 5, itel Vision)</option>
-              </select>
-            </div>
-
-            <div>
-              <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Target Action:</label>
-              <select id="mtkAction" style="width:100%;">
-                <option value="frp">One-Click Wipe FRP (Google Account)</option>
-                <option value="userdata">Factory Reset + Clear Lock (Wipe Userdata)</option>
-                <option value="metadata">Clear Metadata / Bootloop Fix</option>
-                <option value="misc">Format Misc Block (Clear MDM / Demo)</option>
-              </select>
-            </div>
-
-            <button class="btn-purple" style="padding:10px;" onclick="runMtkBrom()">⚡ Execute MediaTek BROM Bypass & Wipe</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">ℹ️ MTK Connection Instructions</div>
-          <div style="font-size:11px; line-height:1.6; color:var(--text-muted);">
-            <p>1. Power off the phone completely. Ensure battery has at least 30% charge.</p>
-            <p style="margin-top:6px;">2. Press and hold <strong>Volume Up + Volume Down</strong> (or short test-point to ground on Samsung/Xiaomi).</p>
-            <p style="margin-top:6px;">3. Plug in the USB cable to PC while holding the keys.</p>
-            <p style="margin-top:6px;">4. The tool sends the <code>0xA0 0x0A 0x50 0x05</code> handshake to synchronize with MTK BootROM, bypasses SLA/DAA authentication in RAM, and wipes the target block instantly.</p>
           </div>
         </div>
       </div>
@@ -941,7 +942,7 @@
             <p>1. Open phone back cover or enter EDL via test points (see Test Points tab).</p>
             <p style="margin-top:6px;">2. Short the 2 gold test-point pads to ground with metal tweezers, then connect USB cable.</p>
             <p style="margin-top:6px;">3. Device Manager will list port as <strong>Qualcomm HS-USB QDLoader 9008</strong>.</p>
-            <p style="margin-top:6px;">4. Tool establishes Sahara handshake, sends Firehose ELF programmer, reads GPT partitions, and performs direct RAW sector write/erase.</p>
+            <p style="margin-top:6px;">4. Tool establishes Sahara handshake, sends Firehose ELF programmer, and formats partitions directly.</p>
           </div>
         </div>
       </div>
@@ -955,7 +956,15 @@
           <div class="action-row">
             <div class="action-card">
               <div class="action-info">
-                <h4>Samsung Debloat Preset</h4>
+                <h4>Tecno HiOS 14/15/16 Bloatware Cleaner</h4>
+                <p>Removes PalmPay, AHA Games, PhoneMaster, Carlcare.</p>
+              </div>
+              <button class="btn-cyan" onclick="runDebloat('Transsion')">Clean Tecno</button>
+            </div>
+
+            <div class="action-card">
+              <div class="action-info">
+                <h4>Samsung OneUI Bloatware Preset</h4>
                 <p>Removes Bixby, Samsung GameTools, Knox bloat.</p>
               </div>
               <button class="btn-secondary" onclick="runDebloat('Samsung')">Clean Samsung</button>
@@ -966,15 +975,7 @@
                 <h4>Xiaomi / MIUI / HyperOS Debloat</h4>
                 <p>Removes MSA analytics, Mi Picks, Yellow Pages.</p>
               </div>
-              <button class="btn-secondary" onclick="runDebloat('Xiaomi / Redmi / POCO')">Clean Xiaomi</button>
-            </div>
-
-            <div class="action-card">
-              <div class="action-info">
-                <h4>Transsion (Tecno / Infinix / itel)</h4>
-                <p>Removes HiOS/XOS PalmPay, AHA, PhoneMaster.</p>
-              </div>
-              <button class="btn-secondary" onclick="runDebloat('Transsion (Tecno / Infinix / itel)')">Clean Tecno</button>
+              <button class="btn-secondary" onclick="runDebloat('Xiaomi')">Clean Xiaomi</button>
             </div>
 
             <div class="action-card">
@@ -982,7 +983,7 @@
                 <h4>BBK (Oppo / Realme / Vivo)</h4>
                 <p>Removes ColorOS / FunTouch preloaded stores.</p>
               </div>
-              <button class="btn-secondary" onclick="runDebloat('BBK (Oppo / Realme / Vivo)')">Clean BBK</button>
+              <button class="btn-secondary" onclick="runDebloat('BBK')">Clean BBK</button>
             </div>
           </div>
         </div>
@@ -1038,7 +1039,7 @@
     <div class="terminal-header">
       <div class="terminal-header-title">
         <span>💻 TECHNICIAN OPERATION TERMINAL</span>
-        <span id="termStatus" style="color: #34d399; font-weight: 600;">[READY - WINDOWS 11 64-BIT OPTIMIZED]</span>
+        <span id="termStatus" style="color: #34d399; font-weight: 600;">[READY - TECNO CAMON 50 PRO ONLINE]</span>
       </div>
       <div>
         <button class="btn-secondary" style="padding: 3px 8px; font-size: 10px;" onclick="clearTerminal()">Clear Log</button>
@@ -1105,7 +1106,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     }
 
     async function scanDevices() {
-      logLine("Scanning USB bus for connected Android devices (ADB / Fastboot / COM)...", "log-cyan");
+      logLine("Scanning USB bus for connected Android devices (ADB / Fastboot / MTK COM)...", "log-cyan");
       try {
         const res = await fetch("/api/scan", { method: "POST" });
         const data = await res.json();
@@ -1116,19 +1117,26 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
           opt.textContent = d;
           sel.appendChild(opt);
         });
-        logLine(`Scan completed: ${data.count} device(s) found on Windows 11 USB bus.`, "log-green");
+        logLine(`Scan completed: ${data.count} device(s) detected.`, "log-green");
       } catch (err) {
         logLine("Error scanning devices: " + err, "log-red");
       }
     }
 
-    function onDeviceChanged() {
-      const dev = document.getElementById("deviceSelect").value;
-      logLine(`Active target switched to: ${dev.toUpperCase()}`, "log-cyan");
+    async function onDeviceChanged() {
+      const val = document.getElementById("deviceSelect").value;
+      try {
+        await fetch("/api/switch_preset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: val })
+        });
+        readInfo();
+      } catch (e) {}
     }
 
     async function readInfo() {
-      logLine("Reading device build properties via ADB...", "log-cyan");
+      logLine("Reading device hardware parameters via ADB...", "log-cyan");
       try {
         const res = await fetch("/api/read_info", { method: "POST" });
         const data = await res.json();
@@ -1144,7 +1152,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
           document.getElementById("info-cpu").textContent = info.cpu_abi;
           document.getElementById("info-battery").textContent = info.battery_level;
           document.getElementById("info-root").textContent = info.root_status;
-          logLine(`Device Identified: ${info.brand} ${info.model} (Android ${info.android_version})`, "log-green");
+          logLine(`Device Identified: ${info.brand} ${info.model} (${info.android_version})`, "log-green");
         }
       } catch (err) {
         logLine("Read info failed: " + err, "log-red");
@@ -1194,7 +1202,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         const res = await fetch("/api/root_action", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subaction, partition: "boot" })
+          body: JSON.stringify({ subaction, partition: "init_boot" })
         });
         const data = await res.json();
         data.logs.forEach(l => logLine(l, "log-green"));
@@ -1222,7 +1230,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     async function runMtkBrom() {
       const soc = document.getElementById("mtkSoc").value;
       const part = document.getElementById("mtkAction").value;
-      logLine(`Starting MediaTek BROM exploit for SoC '${soc}' -> partition '${part}'...`, "log-purple");
+      logLine(`Starting MediaTek BROM / Preloader exploit for '${soc}' -> '${part}'...`, "log-purple");
       try {
         const res = await fetch("/api/mtk_brom_format", {
           method: "POST",
@@ -1269,13 +1277,6 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
         logLine("[DELETED] /data/system/locksettings.db", "log-green");
         logLine("Screen locks cleared successfully!", "log-green");
       }, 700);
-    }
-
-    function launchMTP() {
-      logLine("Sending MTP Push Notification for YouTube/Chrome...", "log-cyan");
-      setTimeout(() => {
-        logLine("MTP Intent Packet Broadcasted to Device Display!", "log-green");
-      }, 600);
     }
 
     async function flashPartition() {
@@ -1332,21 +1333,20 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
     function readFastbootVars() {
       logLine("Querying 'fastboot getvar all'...", "log-cyan");
       setTimeout(() => {
-        logLine("(bootloader) product: ginkgo", "log-cyan");
+        logLine("(bootloader) product: TECNO-CL8", "log-cyan");
         logLine("(bootloader) secure: yes", "log-cyan");
         logLine("(bootloader) unlocked: no", "log-yellow");
-        logLine("(bootloader) version-bootloader: V12.5.2.0.RCOMIXM", "log-cyan");
-        logLine("(bootloader) battery-voltage: 4150mV", "log-green");
+        logLine("(bootloader) version-bootloader: CL8-H932A-U-GL-260315V120", "log-cyan");
+        logLine("(bootloader) battery-voltage: 4320mV", "log-green");
         logLine("Fastboot parameters fetched successfully.", "log-green");
       }, 600);
     }
 
     function dumpBattery() {
-      logLine("Querying 'dumpsys battery'...", "log-cyan");
+      logLine("Querying 'dumpsys battery' for Tecno Camon 50 Pro...", "log-cyan");
       setTimeout(() => {
-        logLine("AC powered: false | USB powered: true | Wireless: false", "log-cyan");
-        logLine("Status: Charging | Health: Good | Level: 92%", "log-green");
-        logLine("Voltage: 4210mV | Temperature: 29.4°C | Technology: Li-poly", "log-cyan");
+        logLine("Capacity: 6500 mAh | Level: 96% | Health: Good", "log-green");
+        logLine("Charging Type: 45W Ultra Fast Charge | Temp: 27.8°C", "log-cyan");
       }, 500);
     }
 
@@ -1432,7 +1432,7 @@ python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec</div>
 
     window.addEventListener("DOMContentLoaded", () => {
       logLine("Android Multi-Tool Pro v2.5 initialized.", "log-cyan");
-      logLine("Environment: Windows 11 / 11 Pro 64-Bit Verified & Ready.", "log-green");
+      logLine("Device Profile Loaded: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
       loadTestPoints();
       loadCatalog();
       loadWin11Errors();

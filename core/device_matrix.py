@@ -1,23 +1,63 @@
 """
 Android Multi-Tool Pro - Comprehensive Device Compatibility Matrix
 Full catalog of supported devices, OEM models, chipsets, and servicing methods.
+Includes dedicated support for Tecno Camon 50 Pro / Camon 50 Pro 5G.
 """
 
 from typing import Dict, List, Optional
 
 SUPPORTED_DEVICE_CATALOG = [
+    # --- TRANSSION: TECNO (FLAGSHIP & CAMON SERIES) ---
+    {
+        "brand": "Tecno",
+        "series": "Camon Pro Series (Flagship Camera Line)",
+        "models": [
+            "Tecno Camon 50 Pro / Camon 50 Pro 5G",
+            "Tecno Camon 50 / Camon 50 Premier",
+            "Tecno Camon 30 / 30 Pro 5G / 30 Premier",
+            "Tecno Camon 20 / 20 Pro / 20 Premier 5G",
+            "Tecno Camon 19 / 19 Pro / 19 Neo",
+            "Tecno Camon 18 / 18 Premier / 18P"
+        ],
+        "chipset": "MediaTek Dimensity 7400 Ultimate / Dimensity 8200 / Helio G200 / G99 Ultimate (MT6878/MT6897/MT6789)",
+        "supported_ops": [
+            "1-Click MTK BROM / Preloader FRP Wipe",
+            "Userdata Hard Format (Screen PIN/Pattern Removal)",
+            "HiOS 14/15/16 Bloatware Auto-Cleaner",
+            "Fastbootd Dynamic 'super' Partition Flasher",
+            "Android 14/15/16 init_boot KernelSU & Magisk Root",
+            "VBMeta AVB Disabler (--disable-verity)",
+            "NVRAM & NVDATA Baseband / Radio Calibration Backup",
+            "OEM Bootloader Unlock (fastboot flashing unlock)"
+        ]
+    },
+    {
+        "brand": "Tecno",
+        "series": "Spark & Pova Series",
+        "models": ["Spark 20 / 20 Pro / 20 Pro+", "Spark 10 / 10 Pro / 10C", "Spark 9 / 8 / 7", "Pova 6 / 6 Pro 5G", "Pova 5 / 5 Pro / Neo 3"],
+        "chipset": "MediaTek Helio G85 / G88 / G99 & Dimensity 6080 / 7020",
+        "supported_ops": ["MTK BROM FRP Reset", "Userdata Wipe", "Preloader VCOM Connect", "Fastboot Flasher", "HiOS Telemetry Removal"]
+    },
+    {
+        "brand": "Infinix",
+        "series": "Hot, Note & Zero Series",
+        "models": ["Hot 40 / 40 Pro", "Hot 30 / 20 / 12", "Note 40 / 40 Pro 5G", "Note 30 / 30 Pro", "Zero 30 5G / Zero Ultra"],
+        "chipset": "MediaTek Helio G99 / Dimensity 7020 / Dimensity 8020",
+        "supported_ops": ["MTK Preloader Format", "XOS Bloatware Cleaner", "FRP Reset", "Fastbootd Flasher", "Magisk Root"]
+    },
+
     # --- SAMSUNG GALAXY ---
     {
         "brand": "Samsung",
         "series": "Galaxy S Series",
-        "models": ["Galaxy S24 / S24+ / S24 Ultra", "Galaxy S23 / S23+ / S23 Ultra", "Galaxy S22 / S22+ / S22 Ultra", "Galaxy S21 / S21 FE", "Galaxy S20 / S20 FE", "Galaxy S10 / S10+ / S10e"],
+        "models": ["Galaxy S24 / S24+ / S24 Ultra", "Galaxy S23 / S23+ / S23 Ultra", "Galaxy S22 / S22+ / S22 Ultra", "Galaxy S21 / S21 FE", "Galaxy S20 / S20 FE"],
         "chipset": "Snapdragon 8 Gen 1/2/3 & Exynos 2100/2200/2400",
         "supported_ops": ["ADB Diagnostics", "AT *#0*# Test Mode FRP", "Odin Download Mode", "CSC Switch", "Knox Telemetry", "OneUI Debloat"]
     },
     {
         "brand": "Samsung",
         "series": "Galaxy A & M Series (MediaTek)",
-        "models": ["Galaxy A02 / A03s / A04 / A04e", "Galaxy A12 (SM-A125F)", "Galaxy A13 (SM-A137F)", "Galaxy A14 5G", "Galaxy A22 / A22 5G", "Galaxy A31 / A32", "Galaxy A34 5G", "Galaxy M02 / M12 / M22"],
+        "models": ["Galaxy A02 / A03s / A04 / A04e", "Galaxy A12 (SM-A125F)", "Galaxy A13 (SM-A137F)", "Galaxy A14 5G", "Galaxy A22 / A22 5G", "Galaxy A32 / A34 5G", "Galaxy M12 / M22"],
         "chipset": "MediaTek Helio P35 / G80 / Dimensity 700 / 1080",
         "supported_ops": ["MTK BootROM 1-Click FRP", "Direct Userdata Wipe", "Samsung Test Mode", "Odin Download Mode", "Fastboot Flash"]
     },
@@ -33,7 +73,7 @@ SUPPORTED_DEVICE_CATALOG = [
     {
         "brand": "Xiaomi",
         "series": "Redmi Note Series",
-        "models": ["Redmi Note 13 / 13 Pro 5G", "Redmi Note 12 / 12 Pro / 12 Turbo", "Redmi Note 11 / 11S / 11 Pro", "Redmi Note 10 / 10 Pro / 10S", "Redmi Note 9 / 9S / 9 Pro", "Redmi Note 8 / 8 Pro / 8T", "Redmi Note 7 / 7 Pro"],
+        "models": ["Redmi Note 13 / 13 Pro 5G", "Redmi Note 12 / 12 Pro / 12 Turbo", "Redmi Note 11 / 11S / 11 Pro", "Redmi Note 10 / 10 Pro / 10S", "Redmi Note 9 / 9S / 9 Pro", "Redmi Note 8 / 8 Pro / 8T"],
         "chipset": "Qualcomm Snapdragon & MediaTek Helio / Dimensity",
         "supported_ops": ["Fastboot Flasher", "Fastbootd Super Dynamic Parts", "EDL 9008 Firehose", "MTK BROM Bypass", "Mi Cloud Persist Format", "MIUI/HyperOS Debloat", "OEM Unlock"]
     },
@@ -43,22 +83,6 @@ SUPPORTED_DEVICE_CATALOG = [
         "models": ["Redmi 9 / 9A / 9C", "Redmi 10 / 10A / 10C", "Redmi 12 / 12C / 13C", "POCO X3 NFC / X3 Pro", "POCO X4 / X5 / X6 Pro", "POCO F3 / F4 / F5", "POCO M3 / M4 / M5"],
         "chipset": "Snapdragon 860/778G/870 & MediaTek Helio G25/G35/G85/G99",
         "supported_ops": ["Fastboot Partition Flash", "EDL 9008 Partition Erase", "MTK SLA/DAA Auth Skip", "Anti-Rollback Check", "SafetyNet Pass Helper"]
-    },
-
-    # --- TRANSSION (TECNO / INFINIX / ITEL) ---
-    {
-        "brand": "Transsion",
-        "series": "Tecno Spark & Camon Series",
-        "models": ["Spark 7 / 8 / 9 / 10 / 20", "Camon 17 / 18 / 19 / 20 / 30 Pro", "Pova 2 / 3 / 4 / 5 / Neo"],
-        "chipset": "MediaTek Helio G35 / G70 / G85 / G96 / G99 & Dimensity 8050",
-        "supported_ops": ["MTK BROM 1-Click FRP", "Userdata Wipe (Lock Removal)", "Preloader VCOM Connect", "Fastboot OEM Unlock", "HiOS Telemetry Cleaner"]
-    },
-    {
-        "brand": "Transsion",
-        "series": "Infinix Hot, Note & Zero Series",
-        "models": ["Hot 9 / 10 / 11 / 12 / 20 / 30 / 40", "Note 10 / 11 / 12 / 30 / 40 Pro", "Zero 5G / Zero Ultra / Zero 30"],
-        "chipset": "MediaTek Helio G88 / G95 / G99 & Dimensity 920 / 8020",
-        "supported_ops": ["MTK BROM Fast Wipe", "XOS Bloatware Cleaner", "Fastboot Flasher", "FRP Reset", "Bootloader Unlock"]
     },
 
     # --- BBK GROUP (OPPO / REALME / VIVO / ONEPLUS) ---
@@ -118,10 +142,9 @@ SUPPORTED_DEVICE_CATALOG = [
 ]
 
 def find_device_matches(model_str: str) -> List[Dict[str, any]]:
-    """Searches catalog for model matches based on ADB getprop or Fastboot product query."""
     matches = []
     query = model_str.lower()
     for cat in SUPPORTED_DEVICE_CATALOG:
-        if query in cat["brand"].lower() or any(query in m.lower() for m in cat["models"]):
+        if query in cat["brand"].lower() or query in cat["series"].lower() or any(query in m.lower() for m in cat["models"]):
             matches.append(cat)
     return matches

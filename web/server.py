@@ -5,7 +5,6 @@ import time
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-# Add parent directory to path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parent_dir)
 
@@ -30,10 +29,21 @@ samsung_modem = SamsungModemEngine()
 root_engine = RootEngine(adb, fastboot)
 efs = EFSEngine(adb, fastboot)
 
-mock_state = {
-    "simulated": True,
-    "selected_device": "Samsung Galaxy S22 Ultra (ADB Mode)",
-    "device_info": {
+# Multi-device mock presets including Tecno Camon 50 Pro
+device_presets = {
+    "tecno": {
+        "brand": "Tecno Mobile (Transsion)",
+        "model": "Camon 50 Pro 5G (Tecno-CL8)",
+        "device": "TECNO-CL8",
+        "android_version": "16 (HiOS 16)",
+        "sdk_level": "36",
+        "build_id": "CL8-H932A-U-GL-260315V120",
+        "security_patch": "2026-04-05",
+        "cpu_abi": "arm64-v8a (MediaTek Dimensity 7400 Ultimate 4nm)",
+        "battery_level": "96% (6500 mAh)",
+        "root_status": "No (SELinux Enforcing)"
+    },
+    "samsung": {
         "brand": "Samsung",
         "model": "SM-S908B (Galaxy S22 Ultra)",
         "device": "b0s",
@@ -41,10 +51,28 @@ mock_state = {
         "sdk_level": "34",
         "build_id": "UP1A.231005.007.S908BXXU7ZXCD",
         "security_patch": "2026-04-01",
-        "cpu_abi": "arm64-v8a (Exynos 2200 / Snapdragon 8 Gen 1)",
+        "cpu_abi": "arm64-v8a (Snapdragon 8 Gen 1)",
         "battery_level": "92%",
         "root_status": "No (SELinux Enforcing)"
+    },
+    "xiaomi": {
+        "brand": "Xiaomi",
+        "model": "Redmi Note 11 (2201117TI)",
+        "device": "spes",
+        "android_version": "13 (HyperOS 1.0)",
+        "sdk_level": "33",
+        "build_id": "TKQ1.221114.001.V816.0.4.0.TGCMIXM",
+        "security_patch": "2026-02-01",
+        "cpu_abi": "arm64-v8a (Snapdragon 680)",
+        "battery_level": "84%",
+        "root_status": "No (Fastboot Mode)"
     }
+}
+
+mock_state = {
+    "simulated": True,
+    "current_key": "tecno",
+    "selected_device": "Tecno Camon 50 Pro 5G (Dimensity 7400 - MTK Preloader)",
 }
 
 class AMTRequestHandler(SimpleHTTPRequestHandler):
@@ -59,6 +87,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "os_target": "Windows 11 / Windows 11 Pro 64-bit",
                 "simulated": mock_state["simulated"],
                 "selected_device": mock_state["selected_device"],
+                "active_model": device_presets[mock_state["current_key"]]["model"],
                 "adb_path": adb.adb_path,
                 "fastboot_path": fastboot.fastboot_path
             })
@@ -95,7 +124,14 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
         action = parsed.path.replace("/api/", "")
 
-        if action == "scan":
+        if action == "switch_preset":
+            key = req.get("key", "tecno")
+            if key in device_presets:
+                mock_state["current_key"] = key
+                mock_state["selected_device"] = device_presets[key]["model"]
+            self.send_json_response({"success": True, "current": mock_state["selected_device"]})
+
+        elif action == "scan":
             adb_devs = adb.get_devices()
             fb_devs = fastboot.get_devices()
             devices = []
@@ -106,9 +142,9 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
             if not devices and mock_state["simulated"]:
                 devices = [
+                    "TECNO_CAMON_50_PRO_5G (MTK Preloader Port COM5)",
                     "SM-S908B_SIMULATED (Samsung Galaxy S22 Ultra - ADB)",
                     "REDMI_NOTE_11_SIMULATED (Xiaomi Redmi Note 11 - FASTBOOT)",
-                    "MTK_PRELOADER_PORT (COM5 - Tecno Camon 19)",
                     "QUALCOMM_EDL_9008 (COM7 - POCO X3 Pro)"
                 ]
 
@@ -116,7 +152,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
         elif action == "read_info":
             if mock_state["simulated"]:
-                info = mock_state["device_info"]
+                info = device_presets[mock_state["current_key"]]
                 matches = find_device_matches(info["brand"])
                 self.send_json_response({"success": True, "info": info, "catalog_matches": matches})
             else:
@@ -141,6 +177,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({
                     "success": True,
                     "logs": [
+                        "[FASTBOOT] Target: Tecno Camon 50 Pro (UFS Storage)",
                         "[FASTBOOT] Erasing 'frp'... OKAY [0.042s]",
                         "[FASTBOOT] Erasing 'config'... OKAY [0.031s]",
                         "[FASTBOOT] Erasing 'persistent'... OKAY [0.038s]",
@@ -165,18 +202,18 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             self.send_json_response({"success": True, "logs": logs})
 
         elif action == "mtk_brom_format":
-            soc = req.get("soc", "MT6765")
+            soc = req.get("soc", "MT6878")
             part = req.get("partition", "frp")
             plan = mtk.format_partition_plan(part)
             logs = [
-                f"Connecting to MediaTek BROM via Windows 11 USB VCOM Port...",
-                f"Sending sync handshake sequence: 0xA0 0x0A 0x50 0x05... [MATCH: 0x5F 0xF5 0xAF 0xFA]",
-                f"Target Chipset identified: MediaTek {soc}",
-                f"Injecting payload: Disabling Watchdog Timer (WDT) and SLA/DAA crypto checks...",
-                f"Security Authorization BYPASSED in SRAM!",
-                f"Formatting partition '{part}' at address 0x{plan['address']:X} (Length: 0x{plan['length']:X})...",
-                f"Write zeros to block... OKAY",
-                f"Partition '{part}' successfully erased! Clean disconnect."
+                f"Connecting to MediaTek BROM / Preloader on Windows 11...",
+                f"Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]",
+                f"Hardware Chipset: MediaTek {soc} (Dimensity 7400 Ultimate / Helio G200)",
+                f"Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...",
+                f"Authorization BYPASSED! Direct memory channel opened.",
+                f"Formatting partition '{part}' at offset 0x{plan['address']:X} (Length: 0x{plan['length']:X})...",
+                f"Writing zero blocks to UFS storage... OKAY [0.15s]",
+                f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!"
             ]
             time.sleep(1.2)
             self.send_json_response({"success": True, "logs": logs})
@@ -199,17 +236,17 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             self.send_json_response({"success": True, "logs": logs})
 
         elif action == "efs_backup":
-            part = req.get("partition", "efs")
+            part = req.get("partition", "nvram")
             time.sleep(1)
             self.send_json_response({
                 "success": True,
                 "logs": [
-                    f"Checking cellular baseband partition '{part}'...",
+                    f"Checking Transsion / MTK baseband partition '{part}'...",
                     f"Reading partition block from /dev/block/by-name/{part}...",
                     f"Dumping 8192 KB raw image to PC...",
-                    f"Integrity check SHA256: 8f4a1c9e... OKAY",
-                    f"Modem partition '{part}' successfully backed up to PC!",
-                    f"File saved: C:\\AndroidMultiTool\\Backups\\{part}_backup.img"
+                    f"Integrity check SHA256: 4e9a2b1f... OKAY",
+                    f"Tecno Camon 50 Pro modem calibration '{part}' backed up to PC!",
+                    f"File saved: C:\\AndroidMultiTool\\Backups\\Tecno_Camon50Pro_{part}.img"
                 ]
             })
 
@@ -231,13 +268,14 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     self.send_json_response({"success": ok, "logs": [msg]})
 
             elif sub == "flash_magisk_boot":
-                part = req.get("partition", "boot")
+                part = req.get("partition", "init_boot")
                 time.sleep(1)
                 self.send_json_response({
                     "success": True,
                     "logs": [
+                        f"Target: Android 15/16 Generic Kernel Image (GKI)",
                         f"Sending '{part}' (33554432 bytes)... OKAY [0.72s]",
-                        f"Writing '{part}' to slot A/B... OKAY [0.28s]",
+                        f"Writing '{part}' to Tecno Camon 50 Pro active slot... OKAY [0.28s]",
                         f"Flashing Magisk-patched {part}.img completed successfully!",
                         "Reboot phone to complete systemless root."
                     ]
@@ -251,7 +289,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                         "Executing: fastboot flash --disable-verity --disable-verification vbmeta vbmeta.img",
                         "Rewriting VBMeta header flags (0x02 -> 0x00)... OKAY",
                         "Writing 'vbmeta'... OKAY [0.08s]",
-                        "AVB (Android Verified Boot) & dm-verity successfully disabled!",
+                        "AVB (Android Verified Boot) & dm-verity successfully disabled on Camon 50 Pro!",
                         "Device will boot custom kernel without bootloop."
                     ]
                 })
@@ -276,17 +314,17 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "success": True,
                 "logs": [
                     "Sending: fastboot flashing unlock",
-                    "(bootloader) Device unlock requested",
-                    "(bootloader) Please verify unlock key on display",
+                    "(bootloader) Tecno Camon 50 Pro Bootloader Unlock Request",
+                    "(bootloader) Please press Volume Up on phone screen to verify unlock",
                     "OKAY [0.120s]",
-                    "Device bootloader unlocked successfully."
+                    "Tecno Camon 50 Pro bootloader unlocked successfully."
                 ]
             })
 
         elif action == "debloat":
-            brand = req.get("brand", "Samsung")
+            brand = "Transsion (Tecno / Infinix / itel - HiOS 14/15/16)"
             pkgs = BLOATWARE_PRESETS.get(brand, [])
-            logs = [f"Package disabled: {p}" for p in pkgs]
+            logs = [f"HiOS 16 Package disabled: {p}" for p in pkgs]
             self.send_json_response({
                 "success": True,
                 "brand": brand,

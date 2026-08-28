@@ -1,0 +1,74 @@
+name: Build Android Multi-Tool Windows EXE
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Allows manual click trigger in GitHub Actions tab
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Build Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Download Official Windows Platform Tools (adb & fastboot)
+        run: |
+          python download_windows_binaries.py
+
+      - name: Compile Standalone Executable via PyInstaller
+        run: |
+          python -m PyInstaller --clean --noconfirm AndroidMultiTool.spec
+
+      - name: Verify Executable Created
+        run: |
+          if (Test-Path "dist\AndroidMultiTool.exe") {
+            Write-Host "SUCCESS: dist\AndroidMultiTool.exe successfully compiled!"
+            Get-Item "dist\AndroidMultiTool.exe" | Select-Object Name, Length, LastWriteTime
+          } else {
+            Write-Error "Build failed: dist\AndroidMultiTool.exe was not found."
+            exit 1
+          }
+
+      - name: Prepare Release Package (EXE + Driver Tools)
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist\package"
+          Copy-Item "dist\AndroidMultiTool.exe" -Destination "dist\package\"
+          Copy-Item "install_drivers.bat" -Destination "dist\package\"
+          Copy-Item "README.md" -Destination "dist\package\"
+          Compress-Archive -Path "dist\package\*" -DestinationPath "dist\AndroidMultiTool-v2.5-Windows.zip"
+
+      - name: Upload Artifact (Downloadable EXE & ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AndroidMultiTool-Windows-v2.5
+          path: |
+            dist/AndroidMultiTool.exe
+            dist/AndroidMultiTool-v2.5-Windows.zip
+          retention-days: 30
+
+      - name: Create GitHub Release (On Tagged Push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/AndroidMultiTool.exe
+            dist/AndroidMultiTool-v2.5-Windows.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true

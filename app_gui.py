@@ -196,6 +196,13 @@ class AndroidMultiToolApp:
         )
         chk_sim.pack(side="left", padx=6)
 
+        # 1b. Hardware Status Diagnostics Strip
+        hw_strip = tk.Frame(self.root, bg=C_BORDER, padx=10, pady=3)
+        hw_strip.pack(fill="x", padx=15, pady=(0, 4))
+        tk.Label(hw_strip, text="TARGET: MediaTek MT6878 (Dimensity 7400 Ultimate)", font=("Segoe UI", 8, "bold"), fg=C_WHITE, bg=C_BORDER).pack(side="left")
+        tk.Label(hw_strip, text=" | TECNO-CN5c (Camon 50 Pro 5G) | UFS 3.1 | Android 16 (HiOS 16)", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_BORDER).pack(side="left")
+        tk.Label(hw_strip, text="SECURITY: AVB 2.0 ENFORCING", font=("Segoe UI", 8, "bold"), fg=C_GREEN, bg=C_BORDER).pack(side="right")
+
         # 2. Main Tabbed Notebook
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill="both", expand=True, padx=15, pady=5)
@@ -239,6 +246,8 @@ class AndroidMultiToolApp:
         self.lbl_busy = tk.Label(con_header, text="READY", font=("Consolas", 8, "bold"), fg=C_GREEN, bg=C_CARD)
         self.lbl_busy.pack(side="left", padx=10)
 
+        btn_copy = ttk.Button(con_header, text="Copy Logs", style="Secondary.TButton", command=self.copy_log)
+        btn_copy.pack(side="right", padx=3)
         btn_clear = ttk.Button(con_header, text="Clear", style="Secondary.TButton", command=self.clear_log)
         btn_clear.pack(side="right", padx=3)
 
@@ -741,6 +750,12 @@ class AndroidMultiToolApp:
 
     def clear_log(self):
         self.txt_console.delete("1.0", tk.END)
+
+    def copy_log(self):
+        text = self.txt_console.get("1.0", tk.END)
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self.log("All console logs copied to system clipboard!", "success")
 
     def set_busy(self, busy: bool, status_msg: str = "ACTIVE"):
         def _update():

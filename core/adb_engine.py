@@ -12,6 +12,8 @@ import re
 import platform
 from typing import Dict, List, Optional, Tuple
 
+from .connection_guide import classify_adb_state
+
 class ADBEngine:
     def __init__(self, custom_adb_path: Optional[str] = None):
         self.adb_path = custom_adb_path or self._find_adb()
@@ -19,7 +21,14 @@ class ADBEngine:
         self._ensure_vendor_ids()
 
     def _ensure_vendor_ids(self):
-        """Ensures Transsion (Tecno/Infinix) and MediaTek VIDs exist in adb_usb.ini."""
+        """Ensures Transsion (Tecno/Infinix) and MediaTek VIDs exist in adb_usb.ini.
+
+        NOTE: adb_usb.ini is only consulted by adb on Linux / macOS.
+        On Windows, ADB uses WinUSB drivers and ignores this file entirely —
+        the Windows fix is the bundled driver INF (install_drivers.bat).
+        """
+        if platform.system() == "Windows":
+            return
         try:
             home = os.path.expanduser("~")
             android_dir = os.path.join(home, ".android")
@@ -83,33 +92,62 @@ class ADBEngine:
             return -3, "", str(e)
 
     def get_devices(self) -> List[Dict[str, str]]:
-        code, out, _ = self.run_cmd(["devices", "-l"])
+        """Return REAL adb devices only (serial, state, details, kind, guidance).
+
+        Hardware-bus pseudo-serials are NOT merged here anymore — they live in
+        get_hardware_usb_devices() and are tagged diagnostic-only, because adb
+        cannot address them.
+        """
+        code, out, err = self.run_cmd(["devices", "-l"], timeout=12)
         devices = []
         if code == 0:
-            lines = out.splitlines()
-            for line in lines[1:]:
-                line = line.strip()
-                if not line:
-                    continue
-                parts = line.split()
-                if len(parts) >= 2:
-                    serial = parts[0]
-                    state = parts[1]
-                    details = " ".join(parts[2:]) if len(parts) > 2 else ""
-                    devices.append({
-                        "serial": serial,
-                        "state": state,
-                        "details": details
-                    })
+            devices = self._parse_devices_output(out)
 
-        # Android 16+ Enhanced Hardware Detection:
-        # If ADB returns empty (e.g. Android 16 USB Data Isolation or screen lock),
-        # query direct USB physical hardware bus to capture device serial number immediately!
-        if not devices:
-            hw_devices = self.get_hardware_usb_devices()
-            devices.extend(hw_devices)
+        # If the daemon was unreachable, (re)start it once and retry.
+        if not devices and self._looks_like_daemon_issue(out, err):
+            self._ensure_server()
+            code, out, _ = self.run_cmd(["devices", "-l"], timeout=12)
+            if code == 0:
+                devices = self._parse_devices_output(out)
 
+        for d in devices:
+            d["kind"] = "adb"
+            d["adb_usable"] = True
+            d["guidance"] = classify_adb_state(d.get("state", ""))
         return devices
+
+    def _parse_devices_output(self, out: str) -> List[Dict[str, str]]:
+        devices = []
+        for line in (out or "").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            low = line.lower()
+            if "list of devices" in low or "daemon" in low or line.startswith("*"):
+                continue
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            devices.append({
+                "serial": parts[0],
+                "state": parts[1],
+                "details": " ".join(parts[2:]) if len(parts) > 2 else "",
+            })
+        return devices
+
+    def _looks_like_daemon_issue(self, out: str, err: str) -> bool:
+        text = (out + "\n" + err).lower()
+        return any(k in text for k in ("daemon", "cannot connect", "connection refused", "adb server"))
+
+    def _ensure_server(self) -> bool:
+        code, _, _ = self.run_cmd(["start-server"], timeout=15)
+        return code == 0
+
+    def get_adb_version(self) -> str:
+        code, out, _ = self.run_cmd(["version"], timeout=8)
+        if code == 0 and out:
+            return out.splitlines()[0].strip()
+        return "unknown"
 
     def get_hardware_usb_devices(self) -> List[Dict[str, str]]:
         """
@@ -163,8 +201,11 @@ class ADBEngine:
                                                     name = f"{vendor} Device"
                                                 found.append({
                                                     "serial": ser_str,
-                                                    "state": "device (Android 16+ USB HW)",
-                                                    "details": f"{vendor} - {name} [Hardware Bus]"
+                                                    "state": "device (USB HW bus)",
+                                                    "details": f"{vendor} - {name} [Hardware Bus]",
+                                                    "vid": vid,
+                                                    "kind": "hardware",
+                                                    "adb_usable": False,
                                                 })
                                         except OSError:
                                             break
@@ -203,8 +244,11 @@ class ADBEngine:
                                     vendor = known_vids.get(vid, "Android Device")
                                     found.append({
                                         "serial": serial,
-                                        "state": "device (Android 16+ USB HW)",
-                                        "details": f"{vendor} - {name} [Hardware Bus]"
+                                        "state": "device (USB HW bus)",
+                                        "details": f"{vendor} - {name} [Hardware Bus]",
+                                        "vid": vid,
+                                        "kind": "hardware",
+                                        "adb_usable": False,
                                     })
                         except Exception:
                             pass
@@ -231,8 +275,11 @@ class ADBEngine:
                                 if vid in known_vids and ser:
                                     found.append({
                                         "serial": ser,
-                                        "state": "device (Android 16+ USB HW)",
-                                        "details": f"{known_vids[vid]} {prod} [Direct sysfs]"
+                                        "state": "device (USB HW bus)",
+                                        "details": f"{known_vids[vid]} {prod} [Direct sysfs]",
+                                        "vid": vid,
+                                        "kind": "hardware",
+                                        "adb_usable": False,
                                     })
                             except Exception:
                                 pass

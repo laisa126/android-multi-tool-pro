@@ -2,8 +2,6 @@ import os
 import sys
 import json
 import time
-import platform
-import subprocess
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -25,6 +23,8 @@ from core.workflow_guide import WORKFLOW_TUTORIALS, USB_PLUGGED_WIZARD
 from core.payload_extractor import PayloadExtractor
 from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
+from core.detection import run_full_detection, selectable_devices
+from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
 
 adb = ADBEngine()
 fastboot = FastbootEngine()
@@ -78,7 +78,7 @@ device_presets = {
 }
 
 mock_state = {
-    "simulated": True,
+    "simulated": False,  # default to REAL device detection
     "current_key": "tecno",
     "selected_device": "Tecno Camon 50 Pro 5G (Dimensity 7400 - MTK Preloader)",
 }
@@ -115,6 +115,13 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif parsed.path == "/api/testpoints":
             self.send_json_response(TEST_POINT_DATABASE)
             return
+        elif parsed.path == "/api/connection_guide":
+            self.send_json_response({
+                "scenarios": CONNECTION_SCENARIOS,
+                "state_guidance": ADB_STATE_GUIDANCE,
+                "simulated": mock_state["simulated"],
+            })
+            return
         elif parsed.path == "/api/bloatware":
             self.send_json_response(BLOATWARE_PRESETS)
             return
@@ -149,42 +156,57 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             self.send_json_response({"success": True, "current": mock_state["selected_device"]})
 
         elif action == "scan":
-            adb_devs = adb.get_devices()
-            fb_devs = fastboot.get_devices()
-            devices = []
-            for d in adb_devs:
-                tag = d.get("state", "device")
-                devices.append(f"{d['serial']} ({tag})")
-            for d in fb_devs:
-                devices.append(f"{d['serial']} (FASTBOOT - {d['mode']})")
-
-            # Check COM ports for MTK Preloader / BROM on Windows
-            if platform.system() == "Windows":
-                try:
-                    res = subprocess.run(
-                        ["powershell", "-NoProfile", "-Command", "Get-PnpDevice -PresentOnly -Class Ports 2>$null | Select-Object -ExpandProperty FriendlyName"],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        timeout=3
-                    )
-                    if res.returncode == 0 and res.stdout.strip():
-                        for line in res.stdout.splitlines():
-                            line = line.strip()
-                            if any(k in line.lower() for k in ["mediatek", "mtk", "preloader", "vcom", "qdloader", "9008"]):
-                                devices.append(f"{line} (COM PORT)")
-                except Exception:
-                    pass
-
+            result = run_full_detection(adb, fastboot, mtk)
+            devices = [d["label"] for d in selectable_devices(result)]
             if not devices and mock_state["simulated"]:
                 devices = [
-                    "0834212450001234 (TECNO-CN5c Android 16+ USB HW)",
-                    "TECNO_CAMON_50_PRO_5G (MTK Preloader Port COM5)",
+                    "0834212450001234 (TECNO-CN5c - ADB)",
                     "SM-S908B_SIMULATED (Samsung Galaxy S22 Ultra - ADB)",
                     "REDMI_NOTE_11_SIMULATED (Xiaomi Redmi Note 11 - FASTBOOT)"
                 ]
+            self.send_json_response({
+                "devices": devices,
+                "count": len(devices),
+                "mtk_ports": result["mtk_ports"],
+                "edl_ports": result["edl_ports"],
+                "hardware": result["hardware"],
+                "issues": result["issues"],
+                "simulated": mock_state["simulated"],
+            })
 
-            self.send_json_response({"devices": devices, "count": len(devices)})
+        elif action == "detect":
+            result = run_full_detection(adb, fastboot, mtk)
+            self.send_json_response({
+                "success": True,
+                "os": result["os"],
+                "pyserial": result["pyserial"],
+                "devices": selectable_devices(result),
+                "adb": result["adb"],
+                "fastboot": result["fastboot"],
+                "mtk_ports": result["mtk_ports"],
+                "edl_ports": result["edl_ports"],
+                "hardware": result["hardware"],
+                "issues": result["issues"],
+                "simulated": mock_state["simulated"],
+            })
+
+        elif action == "toggle_simulation":
+            mock_state["simulated"] = bool(req.get("enabled", not mock_state["simulated"]))
+            self.send_json_response({"success": True, "simulated": mock_state["simulated"]})
+
+        elif action == "select_device":
+            serial = req.get("serial", "")
+            kind = req.get("kind", "adb")
+            if not serial:
+                self.send_json_response({"success": False, "error": "no serial"})
+                return
+            if kind == "fastboot":
+                fastboot.set_active_device(serial)
+                adb.set_active_device(None)
+            else:
+                adb.set_active_device(serial)
+                fastboot.set_active_device(None)
+            self.send_json_response({"success": True, "serial": serial, "kind": kind})
 
         elif action == "read_info":
             if mock_state["simulated"]:

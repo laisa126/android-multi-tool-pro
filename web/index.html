@@ -600,6 +600,7 @@
     <button class="tab-btn" onclick="switchTab('tab-frp', this)">FRP & MDM Bypass</button>
     <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">Fastboot Flasher</button>
     <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">Process Tutorials</button>
+    <button class="tab-btn" onclick="switchTab('tab-connect', this)">🔌 Connection Guide</button>
     <button class="tab-btn" onclick="switchTab('tab-win11', this)">Windows 11 Fixer</button>
     <button class="tab-btn" onclick="switchTab('tab-reboot', this)">Reboot Modes</button>
     <button class="tab-btn" onclick="switchTab('tab-root', this)">Root & Magisk</button>
@@ -816,6 +817,41 @@
           <div class="card-title" id="tutTitle">Step-by-Step Next Action Roadmap</div>
           <div id="tutStatus" style="font-size:11px; color:var(--c8-white); margin-bottom:8px; font-weight:700;"></div>
           <div id="tutStepsContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Connection Guide -->
+    <div id="tab-connect" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Connection Scenarios</div>
+          <p style="font-size:11px; color:var(--c6-muted); margin-top:0;">Pick how you are connecting the device:</p>
+          <select id="connScenarioSelect" onchange="renderConnectionScenario()" style="width:100%; margin-bottom:10px;"></select>
+
+          <div class="action-card">
+            <div class="action-info">
+              <h4>Connection Diagnostics</h4>
+              <p>Scan ADB, Fastboot, MTK/EDL ports and the USB bus, then get an instant fix list.</p>
+            </div>
+            <button class="btn-white" onclick="runConnectionDiagnostics()">🔍 Troubleshoot Now</button>
+          </div>
+
+          <div id="connSimBadge" style="margin-top:10px; font-size:10px; color:var(--c6-muted);">Detecting mode...</div>
+          <button class="btn-dark" style="margin-top:6px;" onclick="toggleSimulation()">Toggle Simulation Mode</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="connScenarioTitle">ADB over USB</div>
+          <div id="connScenarioWhen" style="font-size:11px; color:var(--c6-muted); margin-bottom:10px;"></div>
+          <div id="connScenarioBody" style="font-size:12px; color:var(--c7-lightgray); line-height:1.55;"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="card-title">Live Detection &amp; Fix Suggestions</div>
+        <div id="connDiag" style="font-size:12px; color:var(--c7-lightgray); line-height:1.6;">
+          Click <b>Troubleshoot Now</b> to scan ADB, Fastboot, MTK/EDL ports and the USB bus.
         </div>
       </div>
     </div>
@@ -1882,6 +1918,7 @@ build.bat</div>
       // Guarantee instant rendering so tabs are never blank
       if (tabId === "tab-win11") showWin11Fix();
       if (tabId === "tab-tutorials") renderSelectedTutorial();
+      if (tabId === "tab-connect") renderConnectionGuide();
       if (tabId === "tab-catalog") renderCatalog(cachedCatalog);
       const tabName = tabId.replace("tab-", "").toUpperCase();
       logLine(`>> Navigation: Active View switched to [${tabName}]`, "log-white");
@@ -1927,18 +1964,26 @@ build.bat</div>
     }
 
     async function scanDevices() {
-      logLine("Scanning USB bus for connected Android devices...", "log-white");
+      logLine("Scanning USB bus for ADB, Fastboot, MTK/EDL ports...", "log-white");
       try {
-        const res = await fetch("/api/scan", { method: "POST" });
+        const res = await fetch("/api/detect", { method: "POST" });
         const data = await res.json();
         const sel = document.getElementById("deviceSelect");
         sel.innerHTML = "";
-        data.devices.forEach(d => {
+        const devs = data.devices || [];
+        if (devs.length) {
+          devs.forEach(d => {
+            const opt = document.createElement("option");
+            opt.textContent = d.label;
+            sel.appendChild(opt);
+          });
+        } else {
           const opt = document.createElement("option");
-          opt.textContent = d;
+          opt.textContent = "No device found";
           sel.appendChild(opt);
-        });
-        logLine(`Scan completed: ${data.count} device(s) detected.`, "log-green");
+        }
+        renderDiagnostics(data);
+        logLine(`Scan completed: ${devs.length} device(s), ${(data.mtk_ports||[]).length} MTK port(s), ${(data.edl_ports||[]).length} EDL port(s).`, "log-green");
       } catch (err) {
         logLine("Error scanning devices: " + err, "log-red");
       }
@@ -1947,13 +1992,148 @@ build.bat</div>
     async function onDeviceChanged() {
       const val = document.getElementById("deviceSelect").value;
       try {
-        await fetch("/api/switch_preset", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: val })
-        });
+        const m = val.match(/^(\S+)\s+\((ADB|FASTBOOT)/);
+        if (m) {
+          const serial = m[1];
+          const kind = m[2] === "FASTBOOT" ? "fastboot" : "adb";
+          await fetch("/api/select_device", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ serial: serial, kind: kind })
+          });
+        } else {
+          await fetch("/api/switch_preset", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: val })
+          });
+        }
         readInfo();
       } catch (e) {}
+    }
+
+    // ---- Connection Guide & Diagnostics ----
+    let cachedConnectionGuide = null;
+
+    async function loadConnectionGuide() {
+      if (cachedConnectionGuide) return cachedConnectionGuide;
+      const res = await fetch("/api/connection_guide");
+      cachedConnectionGuide = await res.json();
+      return cachedConnectionGuide;
+    }
+
+    async function renderConnectionGuide() {
+      const guide = await loadConnectionGuide();
+      const sel = document.getElementById("connScenarioSelect");
+      if (sel && sel.options.length === 0) {
+        (guide.scenarios || []).forEach(s => {
+          const o = document.createElement("option");
+          o.value = s.key;
+          o.textContent = `${s.icon} ${s.title} [${s.mode}]`;
+          sel.appendChild(o);
+        });
+      }
+      renderConnectionScenario();
+      const badge = document.getElementById("connSimBadge");
+      if (badge) badge.textContent = guide.simulated ? "⚠ SIMULATION MODE ON — showing simulated devices." : "● REAL DETECTION MODE — live device scan.";
+    }
+
+    function renderConnectionScenario() {
+      if (!cachedConnectionGuide) return;
+      const sel = document.getElementById("connScenarioSelect");
+      const key = sel.value;
+      const s = (cachedConnectionGuide.scenarios || []).find(x => x.key === key);
+      if (!s) return;
+      document.getElementById("connScenarioTitle").textContent = `${s.icon} ${s.title} [${s.mode}]`;
+      document.getElementById("connScenarioWhen").textContent = `When to use: ${s.use_when}`;
+      let html = "<b>PREREQUISITES</b><ul style='margin:4px 0 8px 18px;'>";
+      (s.prerequisites || []).forEach(p => html += `<li>${p}</li>`);
+      html += "</ul><b>STEP-BY-STEP</b><ol style='margin:4px 0 8px 18px;'>";
+      (s.steps || []).forEach(st => html += `<li>${st}</li>`);
+      html += "</ol><b>VERIFY</b><div style='margin:4px 0 8px;'>" + (s.verify || "") + "</div>";
+      if (s.failures && s.failures.length) {
+        html += "<b>COMMON FAILURES &amp; FIXES</b><ul style='margin:4px 0 8px 18px;'>";
+        s.failures.forEach(f => html += `<li><b>${f.symptom}</b> — ${f.fix}</li>`);
+        html += "</ul>";
+      }
+      document.getElementById("connScenarioBody").innerHTML = html;
+    }
+
+    function renderDiagnostics(data) {
+      const diag = document.getElementById("connDiag");
+      if (!diag) return;
+      let html = "";
+      const devs = data.devices || [];
+      if (devs.length) {
+        html += "<b>Detected devices</b><ul style='margin:4px 0 8px 18px;'>";
+        devs.forEach(d => {
+          const ok = d.state === "device" || d.state === "fastboot" || d.state === "fastbootd";
+          html += `<li>${d.label} — <span style='color:${ok ? "var(--c8-white)" : "var(--c6-muted)"}'>${d.state}</span></li>`;
+        });
+        html += "</ul>";
+      } else {
+        html += "<b>Detected devices:</b> none.<br>";
+      }
+      const mtk = data.mtk_ports || [];
+      if (mtk.length) {
+        html += "<b>MTK BROM/Preloader ports</b><ul style='margin:4px 0 8px 18px;'>";
+        mtk.forEach(p => html += `<li>${p.port} — ${p.description || p.hwid || "MediaTek"}</li>`);
+        html += "</ul>";
+      }
+      const edl = data.edl_ports || [];
+      if (edl.length) {
+        html += "<b>Qualcomm EDL 9008 ports</b><ul style='margin:4px 0 8px 18px;'>";
+        edl.forEach(p => html += `<li>${p.port} — ${p.description || p.hwid || "QDLoader"}</li>`);
+        html += "</ul>";
+      }
+      const issues = data.issues || [];
+      if (issues.length) {
+        html += "<b>FIX SUGGESTIONS</b><ul style='margin:4px 0 8px 18px;'>";
+        issues.forEach(iss => {
+          html += `<li><b>${iss.title}</b>`;
+          (iss.fix || []).forEach(f => html += `<div style='margin-left:10px; color:var(--c6-muted);'>→ ${f}</div>`);
+          html += "</li>";
+        });
+        html += "</ul>";
+        issues.forEach(iss => {
+          logLine("[GUIDE] " + iss.title, "log-white");
+          (iss.fix || []).forEach(f => logLine("   -> " + f, "log-white"));
+        });
+      } else {
+        html += "<span style='color:var(--c8-white);'>✓ No connection problems detected.</span>";
+      }
+      diag.innerHTML = html;
+    }
+
+    async function runConnectionDiagnostics() {
+      logLine("Running connection diagnostics...", "log-white");
+      const diag = document.getElementById("connDiag");
+      if (diag) diag.innerHTML = "Scanning...";
+      try {
+        const res = await fetch("/api/detect", { method: "POST" });
+        const data = await res.json();
+        renderDiagnostics(data);
+        logLine("Diagnostics complete.", "log-green");
+      } catch (err) {
+        if (diag) diag.innerHTML = "Error: " + err;
+        logLine("Error running diagnostics: " + err, "log-red");
+      }
+    }
+
+    async function toggleSimulation() {
+      try {
+        const res = await fetch("/api/toggle_simulation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}"
+        });
+        const data = await res.json();
+        logLine(`Simulation mode: ${data.simulated ? "ON" : "OFF"}`, "log-white");
+        const badge = document.getElementById("connSimBadge");
+        if (badge) badge.textContent = data.simulated ? "⚠ SIMULATION MODE ON — showing simulated devices." : "● REAL DETECTION MODE — live device scan.";
+      } catch (err) {
+        logLine("Toggle failed: " + err, "log-red");
+      }
     }
 
     async function readInfo() {

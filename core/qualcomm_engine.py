@@ -7,6 +7,8 @@ used for emergency flashing and partition manipulation without bootloader unlock
 from typing import Dict, List, Tuple
 import xml.etree.ElementTree as ET
 
+from .serial_ports import list_serial_ports, classify_port
+
 class QualcommEDLEngine:
     """
     Qualcomm Snapdragon Emergency Download Protocol (HS-USB QDLoader 9008)
@@ -58,3 +60,7 @@ class QualcommEDLEngine:
             {"chip": "SM8250", "name": "Snapdragon 865", "loader": "prog_firehose_ufs_sm8250.elf"},
             {"chip": "SM8450", "name": "Snapdragon 8 Gen 1", "loader": "prog_firehose_ufs_sm8450.elf"}
         ]
+
+    def detect_edl_ports(self) -> List[Dict[str, str]]:
+        """Enumerate serial ports classified as Qualcomm HS-USB QDLoader (EDL)."""
+        return [p for p in list_serial_ports() if classify_port(p) == "QUALCOMM_EDL"]

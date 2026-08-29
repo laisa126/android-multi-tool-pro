@@ -9,6 +9,13 @@ import time
 import struct
 from typing import Tuple, Optional, List, Dict
 
+from .serial_ports import list_serial_ports, classify_port, HAS_PYSERIAL
+
+try:
+    import serial
+except Exception:  # pyserial optional
+    serial = None
+
 class MTKEngine:
     """
     Communicates with MediaTek devices in BROM (BootROM) or Preloader mode.
@@ -62,3 +69,72 @@ class MTKEngine:
             "misc": {"address": 0x2f80000, "length": 0x80000}
         }
         return common_offsets.get(partition_name.lower(), {"address": 0x0, "length": 0x0})
+
+    # ------------------------------------------------------------------
+    # Real serial-port detection & probing (replaces the old fake listing)
+    # ------------------------------------------------------------------
+    def detect_ports(self) -> Dict[str, List[Dict[str, str]]]:
+        """Enumerate serial ports and bucket them into MTK / EDL / other."""
+        mtk, edl, other = [], [], []
+        for p in list_serial_ports():
+            kind = classify_port(p)
+            if kind == "MTK":
+                mtk.append(p)
+            elif kind == "QUALCOMM_EDL":
+                edl.append(p)
+            else:
+                other.append(p)
+        return {"mtk": mtk, "edl": edl, "other": other, "pyserial": HAS_PYSERIAL}
+
+    def probe_port(self, port: str, timeout: float = 2.0) -> Dict:
+        """Open a serial port, send the MTK BROM sync sequence, and read the reply.
+
+        Returns an honest result dict — this is a real port open/handshake,
+        not a simulated log line.
+        """
+        if not port:
+            return {"ok": False, "port": port, "error": "No port selected."}
+        if serial is None:
+            return {"ok": False, "port": port,
+                    "error": "pyserial is not installed. Run: pip install pyserial"}
+
+        try:
+            ser = serial.Serial(port, self.baudrate, timeout=timeout)
+        except Exception as e:
+            return {"ok": False, "port": port, "error": f"Cannot open {port}: {e}"}
+
+        reply = b""
+        try:
+            ser.reset_input_buffer()
+            ser.write(self.HANDSHAKE_START)
+            # BROM responds with the ready pattern 0x5F 0xF5 0xAF 0xFA
+            reply = ser.read(4)
+            # Some preloaders need the full sync sequence byte-by-byte
+            if reply != self.HANDSHAKE_REPLY:
+                for b in self.build_handshake_sequence():
+                    ser.write(b)
+                    time.sleep(0.02)
+                reply = ser.read(4)
+        except Exception as e:
+            try:
+                ser.close()
+            except Exception:
+                pass
+            return {"ok": False, "port": port, "error": f"IO error on {port}: {e}"}
+
+        try:
+            ser.close()
+        except Exception:
+            pass
+
+        matched = reply == self.HANDSHAKE_REPLY
+        return {
+            "ok": matched,
+            "port": port,
+            "reply": reply.hex().upper() if reply else "",
+            "handshake": "confirmed" if matched else "no-reply",
+            "error": None if matched else (
+                f"No BROM reply on {port} (read {len(reply)} bytes). "
+                "Port may be a Preloader that timed out, or the wrong mode."
+            ),
+        }

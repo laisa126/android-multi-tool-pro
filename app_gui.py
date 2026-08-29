@@ -9,6 +9,7 @@ import sys
 import time
 import threading
 import subprocess
+import platform
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
@@ -25,6 +26,8 @@ from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
 from core.downloader import ensure_binaries
+from core.detection import run_full_detection, selectable_devices
+from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
 
 APP_NAME = "Android Multi-Tool Pro"
 APP_VERSION = "v2.5.0 (Monochrome Tecno Camon 50 Edition)"
@@ -78,6 +81,8 @@ class AndroidMultiToolApp:
         self.simulated_mode = tk.BooleanVar(value=False)
         self.selected_device = tk.StringVar(value="None")
         self.is_busy = False
+        # display-label -> {"kind": "adb"|"fastboot", "serial": ...} for the combobox
+        self.device_entries: dict = {}
 
         # Apply strictly monochrome styling
         self._setup_theme()
@@ -182,6 +187,7 @@ class AndroidMultiToolApp:
         tk.Label(dev_box, text="Port / Device:", font=("Segoe UI", 9, "bold"), fg=C_TEXT_BODY, bg=C_BLACK).pack(side="left", padx=5)
         self.combo_devices = ttk.Combobox(dev_box, textvariable=self.selected_device, width=28, state="readonly")
         self.combo_devices.pack(side="left", padx=5)
+        self.combo_devices.bind("<<ComboboxSelected>>", self._on_device_selected)
 
         btn_scan = ttk.Button(dev_box, text="Scan Devices", style="Action.TButton", command=self.scan_devices)
         btn_scan.pack(side="left", padx=4)
@@ -201,6 +207,8 @@ class AndroidMultiToolApp:
         hw_strip.pack(fill="x", padx=15, pady=(0, 4))
         tk.Label(hw_strip, text="TARGET: MediaTek MT6878 (Dimensity 7400 Ultimate)", font=("Segoe UI", 8, "bold"), fg=C_WHITE, bg=C_BORDER).pack(side="left")
         tk.Label(hw_strip, text=" | TECNO-CN5c (Camon 50 Pro 5G) | UFS 3.1 | Android 16 (HiOS 16)", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_BORDER).pack(side="left")
+        self.lbl_conn_state = tk.Label(hw_strip, text="● NOT CONNECTED", font=("Segoe UI", 8, "bold"), fg=C_RED, bg=C_BORDER)
+        self.lbl_conn_state.pack(side="left", padx=(16, 0))
         tk.Label(hw_strip, text="SECURITY: AVB 2.0 ENFORCING", font=("Segoe UI", 8, "bold"), fg=C_GREEN, bg=C_BORDER).pack(side="right")
 
         # 2. Main Tabbed Notebook
@@ -216,8 +224,10 @@ class AndroidMultiToolApp:
         self.tab_reboot = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_debloat = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_testpoints = ttk.Frame(self.notebook, style="Card.TFrame")
+        self.tab_connect = ttk.Frame(self.notebook, style="Card.TFrame")
 
         self.notebook.add(self.tab_camon50, text=" Tecno Camon 50 (CN5c) ")
+        self.notebook.add(self.tab_connect, text=" 🔌 Connection Guide ")
         self.notebook.add(self.tab_mtk, text=" ⚡ MTK BROM Flasher ")
         self.notebook.add(self.tab_frp, text=" FRP & Screen Lock ")
         self.notebook.add(self.tab_fastboot, text=" Fastboot Flasher ")
@@ -227,6 +237,7 @@ class AndroidMultiToolApp:
         self.notebook.add(self.tab_testpoints, text=" EDL & Test Points ")
 
         self._build_tab_camon50()
+        self._build_tab_connect()
         self._build_tab_mtk()
         self._build_tab_info()
         self._build_tab_frp()
@@ -800,65 +811,216 @@ class AndroidMultiToolApp:
 
     def scan_devices(self):
         def task():
-            self.log("Scanning USB bus for Android 16+ devices, ADB, Fastboot, and MTK ports...", "info")
+            self.log("Scanning USB bus for ADB, Fastboot, MTK/EDL ports, and hardware devices...", "info")
 
             if self.simulated_mode.get():
                 sim_devs = [
-                    "0834212450001234 (TECNO-CN5c Android 16+ USB HW)",
-                    "TECNO_CAMON_50_PRO_5G (MTK Preloader Port COM5)",
+                    "0834212450001234 (TECNO-CN5c - ADB)",
                     "SM-S908B_SIMULATED (Samsung S22 Ultra - ADB)",
-                    "REDMI_NOTE_11_SIMULATED (Redmi Note 11 - Fastboot)"
+                    "REDMI_NOTE_11_SIMULATED (Redmi Note 11 - FASTBOOT)",
                 ]
                 def _update_sim():
                     self.combo_devices["values"] = sim_devs
                     self.combo_devices.current(0)
                 self.root.after(0, _update_sim)
-                self.log("Simulation Active: Tecno Camon 50 Pro (CN5c) detected on USB Bus.", "warning")
+                self._set_conn_state("● SIMULATION", C_WHITE)
+                self.log("Simulation Mode Active: showing simulated devices only.", "warning")
                 return
 
-            # Tier 1 & Tier 2: Enhanced ADB + Direct Hardware USB Bus Enumeration (Android 16+ Support)
-            adb_devs = self.adb.get_devices()
-            fb_devs = self.fastboot.get_devices()
-
-            items = []
-            for d in adb_devs:
-                tag = d.get("state", "device")
-                items.append(f"{d['serial']} ({tag})")
-            for d in fb_devs:
-                items.append(f"{d['serial']} (FASTBOOT: {d['mode']})")
-
-            # Tier 3: Fast Native COM Port Enumeration on Windows (0.001s, Zero PowerShell lag)
-            if platform.system() == "Windows":
-                try:
-                    import winreg
-                    comm_k = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DEVICEMAP\SERIALCOMM")
-                    c_idx = 0
-                    while True:
-                        try:
-                            val_name, port_val, _ = winreg.EnumValue(comm_k, c_idx)
-                            c_idx += 1
-                            items.append(f"{port_val} ({val_name})")
-                        except OSError:
-                            break
-                except Exception:
-                    pass
+            res = run_full_detection(self.adb, self.fastboot, self.mtk)
+            sel = selectable_devices(res)
+            entries = {d["label"]: d for d in sel}
+            labels = list(entries.keys())
+            mtk_ports = res.get("mtk_ports", []) or []
+            edl_ports = res.get("edl_ports", []) or []
+            hw = res.get("hardware", []) or []
+            issues = res.get("issues", []) or []
 
             def _update_ui():
-                if not items:
+                self.device_entries = entries
+                if labels:
+                    self.combo_devices["values"] = labels
+                    self.combo_devices.current(0)
+                else:
                     self.combo_devices["values"] = ["No device found"]
                     self.combo_devices.current(0)
-                    self.log("No devices detected. If on Android 16+, swipe down and change USB to 'File Transfer' or connect in MTK BROM mode (Hold Vol Up+Down while OFF).", "warning")
-                else:
-                    self.combo_devices["values"] = items
-                    self.combo_devices.current(0)
-                    active = items[0].split()[0]
-                    self.adb.set_active_device(active)
-                    self.fastboot.set_active_device(active)
-                    self.log(f"Found {len(items)} device(s). Serial: {active} | State: Ready", "success")
+
+                # Populate the MTK tab port selector with real ports
+                port_vals = ["Auto-Detect (Hold Vol Up + Down)"]
+                for p in mtk_ports:
+                    port_vals.append(f"{p['port']} ({p.get('description') or 'MediaTek Preloader'})")
+                for p in edl_ports:
+                    port_vals.append(f"{p['port']} (EDL 9008 - {p.get('description') or 'QDLoader'})")
+                self.combo_mtk_port["values"] = port_vals
+                self.combo_mtk_port.current(0)
 
             self.root.after(0, _update_ui)
 
+            # ---- logging ----
+            try:
+                self.log(f"ADB version: {self.adb.get_adb_version()}", "muted")
+            except Exception:
+                pass
+            for d in res["adb"]:
+                lvl = "success" if d.get("state") == "device" else "warning"
+                self.log(f"ADB: {d['serial']} [{d['state']}]", lvl)
+                g = d.get("guidance") or {}
+                if g.get("severity") in ("warning", "error"):
+                    for f_ in g.get("fix", [])[:2]:
+                        self.log(f"   -> {f_}", "info")
+            for d in res["fastboot"]:
+                self.log(f"FASTBOOT: {d['serial']} [{d.get('mode','fastboot')}]", "success")
+            for p in mtk_ports:
+                self.log(f"MTK PORT: {p['port']} - {p.get('description') or p.get('hwid','')} (VID {p.get('vid') or '?'})", "success")
+            for p in edl_ports:
+                self.log(f"EDL PORT: {p['port']} - {p.get('description') or p.get('hwid','')} (VID {p.get('vid') or '?'})", "success")
+            for h in hw:
+                self.log(f"USB HW BUS (diagnostic only): {h.get('serial','?')} - {h.get('details','')}", "muted")
+
+            # connection state indicator
+            if res["adb"] or res["fastboot"]:
+                self._set_conn_state("● CONNECTED", C_GREEN)
+            elif mtk_ports or edl_ports:
+                self._set_conn_state("● BROM/EDL PORT", C_WHITE)
+            else:
+                self._set_conn_state("● NOT CONNECTED", C_RED)
+
+            if issues:
+                for iss in issues:
+                    self.log(f"[GUIDE] {iss.get('title','')}", "warning")
+                    for f_ in iss.get("fix", []):
+                        self.log(f"   -> {f_}", "info")
+            elif labels or mtk_ports or edl_ports:
+                self.log(f"Scan complete: {len(res['adb'])} ADB, {len(res['fastboot'])} fastboot, {len(mtk_ports)} MTK port(s), {len(edl_ports)} EDL port(s).", "success")
+            else:
+                self.log("No devices detected. Open the 'Connection Guide' tab for step-by-step help.", "warning")
+
         self._run_threaded(task, "USB Device Bus Scan")
+
+    def _set_conn_state(self, text: str, color: str):
+        def _do():
+            try:
+                self.lbl_conn_state.configure(text=text, fg=color)
+            except Exception:
+                pass
+        self.root.after(0, _do)
+
+    def _on_device_selected(self, event=None):
+        label = self.selected_device.get()
+        entries = self.device_entries if isinstance(self.device_entries, dict) else {}
+        entry = entries.get(label)
+        if not entry:
+            return
+        kind = entry.get("kind")
+        serial = entry.get("serial")
+        if kind == "adb":
+            self.adb.set_active_device(serial)
+            self.fastboot.set_active_device(None)
+            self.log(f"Active ADB device set to {serial}", "success")
+        elif kind == "fastboot":
+            self.fastboot.set_active_device(serial)
+            self.adb.set_active_device(None)
+            self.log(f"Active FASTBOOT device set to {serial}", "success")
+
+    # ================= CONNECTION GUIDE TAB =================
+
+    def _build_tab_connect(self):
+        f = self.tab_connect
+        f.columnconfigure(0, weight=1)
+        f.columnconfigure(1, weight=2)
+        f.rowconfigure(0, weight=1)
+
+        # Left column: scenario selector + actions
+        left_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
+        left_card.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
+
+        tk.Label(left_card, text="DEVICE CONNECTION TUTORIALS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(left_card, text="Step-by-step guides for every way a device can connect", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+
+        sc_frame = tk.Frame(left_card, bg=C_SUBCARD, padx=6, pady=6)
+        sc_frame.pack(fill="both", expand=True)
+
+        self.lbox_scenarios = tk.Listbox(
+            sc_frame, bg=C_SUBCARD, fg=C_TEXT_BODY, selectbackground=C_GRAY_MID,
+            selectforeground=C_WHITE, highlightthickness=0, relief="flat",
+            font=("Segoe UI", 9), activestyle="none"
+        )
+        self.lbox_scenarios.pack(fill="both", expand=True, side="left")
+        sc_scroll = ttk.Scrollbar(sc_frame, orient="vertical", command=self.lbox_scenarios.yview)
+        self.lbox_scenarios.configure(yscrollcommand=sc_scroll.set)
+        sc_scroll.pack(side="right", fill="y")
+
+        for sc in CONNECTION_SCENARIOS:
+            self.lbox_scenarios.insert(tk.END, f"{sc['icon']}  {sc['title']}")
+        self.lbox_scenarios.bind("<<ListboxSelect>>", self._on_scenario_selected)
+        self.lbox_scenarios.selection_set(0)
+
+        btn_troubleshoot = ttk.Button(left_card, text="🔍 Troubleshoot My Connection Now", style="Action.TButton", command=self.troubleshoot_connection)
+        btn_troubleshoot.pack(fill="x", pady=(8, 0))
+        btn_scan = ttk.Button(left_card, text="Scan Devices", style="Secondary.TButton", command=self.scan_devices)
+        btn_scan.pack(fill="x", pady=(4, 0))
+
+        # Right column: scenario detail
+        right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
+        right_card.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
+
+        self.lbl_scenario_title = tk.Label(right_card, text="", font=("Segoe UI", 11, "bold"), fg=C_WHITE, bg=C_CARD, anchor="w")
+        self.lbl_scenario_title.pack(fill="x")
+        self.lbl_scenario_when = tk.Label(right_card, text="", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD, anchor="w", justify="left")
+        self.lbl_scenario_when.pack(fill="x", pady=(0, 6))
+
+        self.txt_scenario = tk.Text(right_card, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 9), wrap="word", relief="flat", padx=8, pady=6)
+        self.txt_scenario.pack(fill="both", expand=True)
+
+        self._render_scenario(0)
+
+    def _on_scenario_selected(self, event=None):
+        sel = self.lbox_scenarios.curselection()
+        if sel:
+            self._render_scenario(sel[0])
+
+    def _render_scenario(self, index: int):
+        if index < 0 or index >= len(CONNECTION_SCENARIOS):
+            return
+        sc = CONNECTION_SCENARIOS[index]
+        self.lbl_scenario_title.configure(text=f"{sc['icon']} {sc['title']}   [{sc['mode']}]")
+        self.lbl_scenario_when.configure(text=f"When to use: {sc['use_when']}")
+
+        lines = ["PREREQUISITES:"]
+        for p in sc.get("prerequisites", []):
+            lines.append(f"  • {p}")
+        lines.append("")
+        lines.append("STEP-BY-STEP:")
+        for i, s in enumerate(sc.get("steps", []), 1):
+            lines.append(f"  {i}. {s}")
+        lines.append("")
+        lines.append(f"VERIFY: {sc.get('verify', '')}")
+        if sc.get("failures"):
+            lines.append("")
+            lines.append("COMMON FAILURES & FIXES:")
+            for fl in sc["failures"]:
+                lines.append(f"  ✖ {fl['symptom']}")
+                lines.append(f"      → {fl['fix']}")
+
+        self.txt_scenario.delete("1.0", tk.END)
+        self.txt_scenario.insert("1.0", "\n".join(lines))
+
+    def troubleshoot_connection(self):
+        def task():
+            self.log("Running connection diagnostics...", "info")
+            res = run_full_detection(self.adb, self.fastboot, self.mtk)
+            issues = res.get("issues", []) or []
+            if issues:
+                for iss in issues:
+                    self.log(f"[DIAG] {iss.get('title','')}", "warning")
+                    if iss.get("cause"):
+                        self.log(f"   cause: {iss['cause']}", "muted")
+                    for f_ in iss.get("fix", []):
+                        self.log(f"   -> {f_}", "info")
+            else:
+                self.log("No connection problems detected — device looks healthy.", "success")
+
+        self._run_threaded(task, "Connection Troubleshoot")
 
     def restart_adb(self):
         def task():
@@ -1019,8 +1181,33 @@ class AndroidMultiToolApp:
         def task():
             self.log(f"Initializing MediaTek BROM / Preloader Engine for {soc}...", "warning")
             self.log("Waiting for device handshake... (Hold Vol Up + Vol Down and connect USB)", "info")
-            time.sleep(1)
-            self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "success")
+
+            if self.simulated_mode.get():
+                self.log("Simulation Mode: skipping real serial handshake.", "warning")
+                time.sleep(1)
+                self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "success")
+            else:
+                port = None
+                sel_port = self.combo_mtk_port.get()
+                if sel_port and (sel_port.startswith("COM") or sel_port.startswith("/dev")):
+                    port = sel_port.split()[0]
+                if not port:
+                    detected = self.mtk.detect_ports().get("mtk", [])
+                    if detected:
+                        port = detected[0]["port"]
+                        self.log(f"Auto-detected MediaTek port: {port} ({detected[0].get('description','')})", "info")
+                    else:
+                        self.log("No MediaTek Preloader/BROM port found.", "warning")
+                        self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+                        return
+                probe = self.mtk.probe_port(port)
+                if probe.get("ok"):
+                    self.log(f"Handshake CONFIRMED on {port} (reply {probe.get('reply','')})", "success")
+                else:
+                    self.log(f"Handshake failed on {port}: {probe.get('error','no reply')}", "error")
+                    self.log("Check: phone fully OFF, VCOM driver installed, USB 2.0 port, buttons held until handshake.", "warning")
+                    return
+
             self.log(f"Chipset ID: MediaTek {soc} (Dimensity / Helio Architecture)", "info")
             self.log("Transsion DAA/SLA Security Bypass: Disengaging boot auth in SRAM...", "warning")
             time.sleep(0.5)

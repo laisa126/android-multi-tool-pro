@@ -83,18 +83,19 @@ The interface is styled exclusively using **exactly 10 colors**:
 
 ## 🛠️ Complete Tab Matrix
 
-1. **Diagnostics**: Real-time read of parameters for `TECNO-CN5c`, Samsung, Xiaomi, etc.
-2. **Tecno Camon 50 Suite**: Preloader wipe, MDM disabler, Security Plugin remover, payload unpacker.
-3. **Process Tutorials**: 6 milestones with sequential next-step roadmap and dynamic jump buttons.
-4. **Supported Devices**: Searchable matrix of all major OEM chipsets and models.
-5. **MTK BROM Flasher**: Preloader DAA bypass, partition address plan for MT6878/Helio/Dimensity.
-6. **Windows 11 Fixer**: Automated resolutions for Code 28, Transsion `0x2E04`, Core Isolation, USB 3.0 bugs.
-7. **Reboot Modes**: 8 power switches (System, Recovery, Fastboot, Fastbootd, EDL 9008, Download).
-8. **FRP & MDM**: Universal Fastboot FRP, Samsung Test Mode `*#0*#`, setup wizard bypass.
-9. **Root & Magisk**: GKI `init_boot` flasher, AVB `--disable-verity` vbmeta flasher, Magisk installer.
-10. **EFS & NVRAM**: Modem calibration backup and restore (`nvram.img`, `nvdata.img`).
-11. **Fastboot Flasher**: Bootloader unlock/lock, partition flashing, cache and userdata format.
-12. **HiOS Debloat**: 1-click bloatware cleaners and APK package manager.
+1. **Connection Guide (NEW)**: Step-by-step connection tutorials for ADB (USB & Wi-Fi), Fastboot, Recovery/Sideload, MTK BROM/Preloader, Qualcomm EDL 9008, and Samsung Download mode — plus a one-click "Troubleshoot Now" that scans and prints the exact fix list.
+2. **Diagnostics**: Real-time read of parameters for `TECNO-CN5c`, Samsung, Xiaomi, etc.
+3. **Tecno Camon 50 Suite**: Preloader wipe, MDM disabler, Security Plugin remover, payload unpacker.
+4. **Process Tutorials**: 6 milestones with sequential next-step roadmap and dynamic jump buttons.
+5. **Supported Devices**: Searchable matrix of all major OEM chipsets and models.
+6. **MTK BROM Flasher**: Preloader DAA bypass, partition address plan for MT6878/Helio/Dimensity. Now with real serial-port enumeration (VID 0E8D) and BROM handshake probing.
+7. **Windows 11 Fixer**: Automated resolutions for Code 28, Transsion `0x2E04`, Core Isolation, USB 3.0 bugs.
+8. **Reboot Modes**: 8 power switches (System, Recovery, Fastboot, Fastbootd, EDL 9008, Download).
+9. **FRP & MDM**: Universal Fastboot FRP, Samsung Test Mode `*#0*#`, setup wizard bypass.
+10. **Root & Magisk**: GKI `init_boot` flasher, AVB `--disable-verity` vbmeta flasher, Magisk installer.
+11. **EFS & NVRAM**: Modem calibration backup and restore (`nvram.img`, `nvdata.img`).
+12. **Fastboot Flasher**: Bootloader unlock/lock, partition flashing, cache and userdata format.
+13. **HiOS Debloat**: 1-click bloatware cleaners and APK package manager.
 
 ---
 

@@ -835,6 +835,7 @@
               <p>Scan ADB, Fastboot, MTK/EDL ports and the USB bus, then get an instant fix list.</p>
             </div>
             <button class="btn-white" onclick="runConnectionDiagnostics()">🔍 Troubleshoot Now</button>
+            <button class="btn-dark" style="margin-top:6px;" onclick="installTools()">⬇ Install Tools &amp; Drivers</button>
           </div>
 
           <div id="connSimBadge" style="margin-top:10px; font-size:10px; color:var(--c6-muted);">Detecting mode...</div>
@@ -2127,6 +2128,22 @@ build.bat</div>
       } catch (err) {
         if (diag) diag.innerHTML = "Error: " + err;
         logLine("Error running diagnostics: " + err, "log-red");
+      }
+    }
+
+    async function installTools() {
+      logLine("Installing required tools & drivers...", "log-white");
+      try {
+        const res = await fetch("/api/install_tools", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}"
+        });
+        const data = await res.json();
+        (data.logs || []).forEach(l => logLine(l, "log-white"));
+        logLine("Install pass finished. Re-scan devices when done.", "log-green");
+      } catch (err) {
+        logLine("Install failed: " + err, "log-red");
       }
     }
 

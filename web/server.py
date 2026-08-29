@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import threading
+import platform
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -26,6 +27,7 @@ from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
 from core.detection import run_full_detection, selectable_devices
 from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
+from core.dependency_installer import ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance
 
 adb = ADBEngine()
 fastboot = FastbootEngine()
@@ -223,6 +225,18 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             mock_state["simulated"] = bool(req.get("enabled", not mock_state["simulated"]))
             self.send_json_response({"success": True, "simulated": mock_state["simulated"]})
 
+        elif action == "install_tools":
+            server_log("install_tools: ensuring runtime dependencies")
+            report = ensure_runtime_dependencies(os.path.join(parent_dir, "bin"))
+            logs = [f"[{'OK' if ok else 'WARN'}] {msg}" for ok, msg in report]
+            driver_launched = False
+            if platform.system() == "Windows":
+                driver_launched, driver_msg = run_windows_driver_installer(parent_dir)
+                logs.append(driver_msg)
+            else:
+                logs.append(driver_install_guidance())
+            self.send_json_response({"success": True, "logs": logs, "driver_launched": driver_launched})
+
         elif action == "select_device":
             serial = req.get("serial", "")
             kind = req.get("kind", "adb")
@@ -273,6 +287,8 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     ]
                 })
             else:
+                if not self._require_fastboot():
+                    return
                 results = frp.reset_frp_fastboot()
                 logs = [f"[{part}] {msg}" for part, ok, msg in results]
                 self.send_json_response({"success": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
@@ -294,29 +310,47 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     ]
                 })
             else:
-                self.send_json_response({
-                    "success": True,
-                    "workflow": "FRP_BYPASS_COMPLETE",
-                    "logs": ["Executed Samsung Modem AT FRP Bypass via COM port."]
-                })
+                ok, logs = samsung_modem.send_at_sequence()
+                self.send_json_response({"success": ok, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
 
         elif action == "mtk_brom_format":
             soc = req.get("soc", "MT6878")
             part = req.get("partition", "frp")
             plan = mtk.format_partition_plan(part)
             wf = "FACTORY_RESET_COMPLETE" if part == "userdata" else "FRP_BYPASS_COMPLETE"
-            logs = [
-                f"Connecting to MediaTek BROM / Preloader on Windows 11...",
-                f"Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]",
-                f"Hardware Chipset: MediaTek {soc} (Dimensity 7400 Ultimate / Helio G200)",
-                f"Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...",
-                f"Authorization BYPASSED! Direct memory channel opened.",
-                f"Formatting partition '{part}' at offset 0x{plan['address']:X} (Length: 0x{plan['length']:X})...",
-                f"Writing zero blocks to UFS storage... OKAY [0.15s]",
-                f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!"
-            ]
-            time.sleep(0.15)
-            self.send_json_response({"success": True, "workflow": wf, "logs": logs})
+            if mock_state["simulated"]:
+                logs = [
+                    f"Connecting to MediaTek BROM / Preloader on Windows 11...",
+                    f"Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]",
+                    f"Hardware Chipset: MediaTek {soc} (Dimensity 7400 Ultimate / Helio G200)",
+                    f"Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...",
+                    f"Authorization BYPASSED! Direct memory channel opened.",
+                    f"Formatting partition '{part}' at offset 0x{plan['address']:X} (Length: 0x{plan['length']:X})...",
+                    f"Writing zero blocks to UFS storage... OKAY [0.15s]",
+                    f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!"
+                ]
+                time.sleep(0.15)
+                self.send_json_response({"success": True, "workflow": wf, "logs": logs})
+                return
+            logs = []
+            ports = mtk.detect_ports().get("mtk", [])
+            if not ports:
+                logs.append("No MediaTek BROM/Preloader port found.")
+                logs.append("Power the phone OFF, hold Vol Up + Vol Down, plug USB into a USB 2.0 port.")
+                self.send_json_response({"success": False, "workflow": wf, "logs": logs})
+                return
+            port = ports[0]["port"]
+            logs.append(f"Found MediaTek port: {port} ({ports[0].get('description','')})")
+            probe = mtk.probe_port(port)
+            if probe.get("ok"):
+                logs.append(f"Handshake CONFIRMED on {port} (reply {probe.get('reply','')})")
+                logs.append(f"Target partition '{part}' at offset 0x{plan['address']:X}.")
+                logs.append("NOTE: the direct BROM write channel is not implemented yet — no blocks were written.")
+                logs.append("Use SP Flash Tool / MTK client with the DA bypass for the actual erase.")
+                self.send_json_response({"success": False, "workflow": wf, "logs": logs, "handshake": True})
+            else:
+                logs.append(f"Handshake failed on {port}: {probe.get('error','no reply')}")
+                self.send_json_response({"success": False, "workflow": wf, "logs": logs})
 
         elif action == "extract_payload":
             time.sleep(0.15)
@@ -334,21 +368,28 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             })
 
         elif action == "transsion_mdm":
-            time.sleep(0.15)
-            self.send_json_response({
-                "success": True,
-                "workflow": "DEBLOAT_COMPLETE",
-                "logs": [
-                    "Target: Tecno Camon 50 Pro (HiOS 16 Enterprise Management)",
-                    "[OK] Disabled com.transsion.palmpay (PalmPay Framework)",
-                    "[OK] Disabled com.transsion.carlcare (Carlcare MDM Agent)",
-                    "[OK] Disabled com.payjoy.access (PayJoy Device Lock)",
-                    "[OK] Disabled com.transsion.magicshow (Remote Provisioning)",
-                    "[OK] Injected: settings put global device_provisioned 1",
-                    "[OK] Injected: settings put secure user_setup_complete 1",
-                    "HiOS Financing and MDM background locks successfully bypassed!"
-                ]
-            })
+            if mock_state["simulated"]:
+                time.sleep(0.15)
+                self.send_json_response({
+                    "success": True,
+                    "workflow": "DEBLOAT_COMPLETE",
+                    "logs": [
+                        "Target: Tecno Camon 50 Pro (HiOS 16 Enterprise Management)",
+                        "[OK] Disabled com.transsion.palmpay (PalmPay Framework)",
+                        "[OK] Disabled com.transsion.carlcare (Carlcare MDM Agent)",
+                        "[OK] Disabled com.payjoy.access (PayJoy Device Lock)",
+                        "[OK] Disabled com.transsion.magicshow (Remote Provisioning)",
+                        "[OK] Injected: settings put global device_provisioned 1",
+                        "[OK] Injected: settings put secure user_setup_complete 1",
+                        "HiOS Financing and MDM background locks successfully bypassed!"
+                    ]
+                })
+                return
+            logs = ["Target: Tecno Camon 50 Pro (HiOS 16 Enterprise Management)"]
+            for pkg, ok, desc in transsion_mdm.disable_mdm_services():
+                logs.append(f"[{'OK' if ok else 'SKIP'}] {pkg} - {desc}")
+            logs.extend(transsion_mdm.freeze_provisioning_intents())
+            self.send_json_response({"success": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
 
         elif action == "neutralize_security_plugin":
             pkg = req.get("package", "com.android.security.plugin").strip() or "com.android.security.plugin"
@@ -406,18 +447,22 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
         elif action == "efs_backup":
             part = req.get("partition", "nvram")
-            time.sleep(0.15)
-            self.send_json_response({
-                "success": True,
-                "logs": [
-                    f"Checking Transsion / MTK baseband partition '{part}'...",
-                    f"Reading partition block from /dev/block/by-name/{part}...",
-                    f"Dumping 8192 KB raw image to PC...",
-                    f"Integrity check SHA256: 4e9a2b1f... OKAY",
-                    f"Tecno Camon 50 Pro modem calibration '{part}' backed up to PC!",
-                    f"File saved: C:\\AndroidMultiTool\\Backups\\Tecno_Camon50Pro_{part}.img"
-                ]
-            })
+            if mock_state["simulated"]:
+                time.sleep(0.15)
+                self.send_json_response({
+                    "success": True,
+                    "logs": [
+                        f"Checking Transsion / MTK baseband partition '{part}'...",
+                        f"Reading partition block from /dev/block/by-name/{part}...",
+                        f"Dumping 8192 KB raw image to PC...",
+                        f"Integrity check SHA256: 4e9a2b1f... OKAY",
+                        f"Tecno Camon 50 Pro modem calibration '{part}' backed up to PC!",
+                        f"File saved: C:\\AndroidMultiTool\\Backups\\Tecno_Camon50Pro_{part}.img"
+                    ]
+                })
+            else:
+                ok, msg = efs.backup_partition(part, os.path.join(parent_dir, "backups"))
+                self.send_json_response({"success": ok, "logs": [msg]})
 
         elif action == "root_action":
             sub = req.get("subaction", "check")
@@ -468,40 +513,71 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "flash_partition":
             part = req.get("partition", "boot")
             img = req.get("filename", "boot.img")
-            time.sleep(0.15)
-            self.send_json_response({
-                "success": True,
-                "message": f"Flashed '{part}' with '{img}' successfully.",
-                "logs": [
-                    f"Sending '{part}' (32768 KB)... OKAY [0.652s]",
-                    f"Writing '{part}'... OKAY [0.241s]",
-                    f"Finished. Total time: 0.893s"
-                ]
-            })
+            if mock_state["simulated"]:
+                time.sleep(0.15)
+                self.send_json_response({
+                    "success": True,
+                    "message": f"Flashed '{part}' with '{img}' successfully.",
+                    "logs": [
+                        f"Sending '{part}' (32768 KB)... OKAY [0.652s]",
+                        f"Writing '{part}'... OKAY [0.241s]",
+                        f"Finished. Total time: 0.893s"
+                    ]
+                })
+            else:
+                if not self._require_fastboot():
+                    return
+                path = img
+                if not os.path.isabs(path):
+                    path = os.path.join(parent_dir, img)
+                ok, msg = fastboot.flash_partition(part, path)
+                self.send_json_response({"success": ok, "message": msg, "logs": [msg]})
 
         elif action == "unlock_bootloader":
-            time.sleep(0.15)
-            self.send_json_response({
-                "success": True,
-                "workflow": "BOOTLOADER_UNLOCK_COMPLETE",
-                "logs": [
-                    "Sending: fastboot flashing unlock",
-                    "(bootloader) Tecno Camon 50 Pro Bootloader Unlock Request",
-                    "(bootloader) Please press Volume Up on phone screen to verify unlock",
-                    "OKAY [0.120s]",
-                    "Tecno Camon 50 Pro bootloader unlocked successfully."
-                ]
-            })
+            if mock_state["simulated"]:
+                time.sleep(0.15)
+                self.send_json_response({
+                    "success": True,
+                    "workflow": "BOOTLOADER_UNLOCK_COMPLETE",
+                    "logs": [
+                        "Sending: fastboot flashing unlock",
+                        "(bootloader) Tecno Camon 50 Pro Bootloader Unlock Request",
+                        "(bootloader) Please press Volume Up on phone screen to verify unlock",
+                        "OKAY [0.120s]",
+                        "Tecno Camon 50 Pro bootloader unlocked successfully."
+                    ]
+                })
+            else:
+                if not self._require_fastboot():
+                    return
+                ok, msg = fastboot.unlock_bootloader()
+                self.send_json_response({"success": ok, "workflow": "BOOTLOADER_UNLOCK_COMPLETE", "logs": [msg]})
 
         elif action == "debloat":
-            brand = "Transsion (Tecno / Infinix / itel - HiOS 14/15/16)"
+            brand = req.get("brand") or "Transsion (Tecno / Infinix / itel - HiOS 14/15/16)"
             pkgs = BLOATWARE_PRESETS.get(brand, [])
-            logs = [f"HiOS 16 Package disabled/uninstalled: {p}" for p in pkgs]
+            if mock_state["simulated"]:
+                logs = [f"HiOS 16 Package disabled/uninstalled: {p}" for p in pkgs]
+                self.send_json_response({
+                    "success": True,
+                    "workflow": "DEBLOAT_COMPLETE",
+                    "brand": brand,
+                    "count": len(pkgs),
+                    "logs": logs
+                })
+                return
+            logs = []
+            ok_count = 0
+            for pkg in pkgs:
+                ok, msg = adb.disable_package(pkg)
+                if ok:
+                    ok_count += 1
+                logs.append(msg)
             self.send_json_response({
-                "success": True,
+                "success": ok_count > 0,
                 "workflow": "DEBLOAT_COMPLETE",
                 "brand": brand,
-                "count": len(pkgs),
+                "count": ok_count,
                 "logs": logs
             })
 
@@ -516,6 +592,16 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
+
+    def _require_fastboot(self):
+        """Bail out fast if no fastboot device is connected (avoids multi-second waits)."""
+        if not fastboot.get_devices():
+            self.send_json_response({
+                "success": False,
+                "logs": ["No fastboot device connected. Boot the phone into Fastboot mode and re-scan."]
+            })
+            return False
+        return True
 
 def run():
     port = 3000

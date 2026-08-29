@@ -109,6 +109,14 @@ The interface is styled exclusively using **exactly 10 colors**:
 
 ---
 
+## 🛠️ Self-Installing Tools & Real Command Execution
+
+* On launch (and via the **"Install Tools & Drivers"** button in the Connection Guide tab), the app verifies and, if needed, **auto-installs** everything it needs: bundled adb/fastboot platform-tools, `pyserial` (for MTK/Samsung serial work), and on Windows it launches `install_drivers.bat` (elevated) to register the Transsion `0x2E04` and MediaTek `0x0E8D` drivers.
+* **Operations run real commands** against the device (not simulated text): FRP fastboot erases, bootloader unlock/lock, partition flash/erase, HiOS debloat (`pm disable-user`), APK install, setup-wizard bypass, screen-lock file removal, NVRAM/EFS backup, root/battery/verified-boot checks — every command is echoed to the console and session log.
+* **Locked phone (no USB debugging possible):** when a device is on the USB bus but invisible to ADB, the tool now says so explicitly and points you to the **⚡ MTK BROM** path — BROM runs before Android and clears FRP/screen-lock with **no USB debugging needed**. Use "Detect BROM Port & Handshake" to verify the preloader link first. (The full DA/SLA write channel for flashing is still a work-in-progress; the tool reports this honestly instead of pretending success.)
+
+---
+
 ## 🚀 Building from Source
 
 ```cmd

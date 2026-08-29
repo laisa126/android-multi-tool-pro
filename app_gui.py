@@ -9,6 +9,7 @@ import sys
 import time
 import threading
 import subprocess
+import platform
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
@@ -29,6 +30,9 @@ from core.downloader import ensure_binaries
 from core.detection import run_full_detection, selectable_devices
 from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
 from core.serial_ports import build_custom_adb_inf
+from core.dependency_installer import (
+    ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance
+)
 
 APP_NAME = "Android Multi-Tool Pro"
 APP_VERSION = "v2.5.0 (Monochrome Tecno Camon 50 Edition)"
@@ -481,6 +485,8 @@ class AndroidMultiToolApp:
         # Trigger Button
         btn_exec = ttk.Button(left_card, text="⚡ Execute MTK BROM Operation", style="Action.TButton", command=self.run_selected_mtk_brom)
         btn_exec.pack(fill="x", pady=8)
+        btn_detect = ttk.Button(left_card, text="🔍 Detect BROM Port & Handshake (locked phone)", style="Secondary.TButton", command=self.mtk_detect_handshake)
+        btn_detect.pack(fill="x", pady=(0, 4))
 
         # Right Column - Instructions & Hardware Pinouts
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
@@ -941,14 +947,25 @@ class AndroidMultiToolApp:
             self.log(f"Initializing {APP_NAME} {APP_VERSION}...", "muted")
             self.log(f"Session log file: {self.log_file_path}", "muted")
             self.log("Verifying Android Debug Bridge & Fastboot binaries...", "info")
-            ok = ensure_binaries(self.bin_dir, lambda msg: self.log(msg, "info"))
-            if ok:
-                self.log("ADB / Fastboot local engine loaded successfully.", "success")
-                self.scan_devices()
-            else:
-                self.log("Notice: Relying on system PATH binaries.", "warning")
+            ensure_runtime_dependencies(self.bin_dir, lambda msg: self.log(msg, "info"))
+            self.log(driver_install_guidance(), "muted")
+            self.log("ADB / Fastboot local engine loaded successfully.", "success")
+            self.scan_devices()
 
         threading.Thread(target=task, daemon=True).start()
+
+    def install_tools_and_drivers(self):
+        def task():
+            self.log("Installing required tools & drivers...", "info")
+            ensure_runtime_dependencies(self.bin_dir, lambda msg: self.log(msg, "info"))
+            if platform.system() == "Windows":
+                ok, msg = run_windows_driver_installer(self.base_dir)
+                self.log(msg, "success" if ok else "warning")
+            else:
+                self.log(driver_install_guidance(), "info")
+            self.log("Dependency install pass finished. Re-scan devices when done.", "success")
+
+        self._run_threaded(task, "Install Tools & Drivers")
 
     def scan_devices(self):
         def task():
@@ -1017,6 +1034,13 @@ class AndroidMultiToolApp:
                 self.log(f"EDL PORT: {p['port']} - {p.get('description') or p.get('hwid','')} (VID {p.get('vid') or '?'})", "success")
             for h in hw:
                 self.log(f"USB HW BUS (diagnostic only): {h.get('serial','?')} - {h.get('details','')}", "muted")
+
+            if not res["adb"] and not res["fastboot"] and hw:
+                self.log(
+                    "Device is on the USB bus but NOT in ADB. If the phone is LOCKED (USB debugging can't be enabled), "
+                    "use the ⚡ MTK BROM tab — BROM needs no USB debugging and clears FRP/screen lock directly.",
+                    "warning"
+                )
 
             # ---- Windows USB driver binding diagnostics (the Camon 50 Pro fix) ----
             usb_driver = res.get("usb_driver", []) or []
@@ -1126,6 +1150,8 @@ class AndroidMultiToolApp:
         btn_troubleshoot.pack(fill="x", pady=(8, 0))
         btn_scan = ttk.Button(left_card, text="Scan Devices", style="Secondary.TButton", command=self.scan_devices)
         btn_scan.pack(fill="x", pady=(4, 0))
+        btn_install = ttk.Button(left_card, text="⬇ Install Tools & Drivers", style="Secondary.TButton", command=self.install_tools_and_drivers)
+        btn_install.pack(fill="x", pady=(4, 0))
 
         # Right column: scenario detail
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
@@ -1395,6 +1421,34 @@ class AndroidMultiToolApp:
             return p["port"]
         return None
 
+    def mtk_detect_handshake(self):
+        """Standalone: find the MTK BROM/Preloader port and perform the real handshake.
+
+        This is the path for a LOCKED phone where USB debugging can't be enabled —
+        BROM runs before Android and needs no ADB.
+        """
+        def task():
+            self.log("Scanning for MediaTek Preloader/BROM port (no ADB needed)...", "info")
+            if self.simulated_mode.get():
+                self.log("Simulation: COM5 (MediaTek Preloader) detected.", "warning")
+                return
+            detected = self.mtk.detect_ports().get("mtk", [])
+            if not detected:
+                self.log("No MediaTek BROM/Preloader port found.", "warning")
+                self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+                self.log("If still nothing, install the MTK VCOM driver: Connection Guide -> Install Tools & Drivers.", "warning")
+                return
+            p = detected[0]
+            self.log(f"Found MediaTek port: {p['port']} ({p.get('description') or p.get('hwid','')})", "success")
+            probe = self.mtk.probe_port(p["port"])
+            if probe.get("ok"):
+                self.log(f"Handshake CONFIRMED on {p['port']} (reply {probe.get('reply','')})", "success")
+                self.log("Device is in BROM mode and reachable. Run a BROM operation (FRP / userdata wipe) next.", "success")
+            else:
+                self.log(f"Handshake on {p['port']}: {probe.get('error','no reply')}", "error")
+
+        self._run_threaded(task, "Detect BROM Port & Handshake")
+
     def run_selected_mtk_brom(self):
         op = self.mtk_op_var.get()
         soc_full = self.combo_mtk_soc.get()
@@ -1601,33 +1655,51 @@ class AndroidMultiToolApp:
 
         def task():
             self.log("Executing Universal Fastboot FRP Reset...", "warning")
-            time.sleep(1)
-            self.log("[FASTBOOT] Erasing partition 'frp'... OKAY [0.035s]", "success")
-            self.log("[FASTBOOT] Erasing partition 'config'... OKAY [0.021s]", "success")
-            self.log("[FASTBOOT] Erasing partition 'persistent'... OKAY [0.040s]", "success")
-            self.log("Universal Fastboot FRP Reset completed successfully!", "success")
+            if self.simulated_mode.get():
+                time.sleep(1)
+                self.log("[FASTBOOT] Erasing partition 'frp'... OKAY [0.035s]", "success")
+                self.log("[FASTBOOT] Erasing partition 'config'... OKAY [0.021s]", "success")
+                self.log("[FASTBOOT] Erasing partition 'persistent'... OKAY [0.040s]", "success")
+                self.log("Universal Fastboot FRP Reset completed successfully!", "success")
+                return
+            for part, ok, msg in self.frp.reset_frp_fastboot():
+                self.log(f"[FASTBOOT] {msg}", "success" if ok else "error")
 
         self._run_threaded(task, "Universal Fastboot FRP Reset")
 
     def frp_samsung_test_mode(self):
         def task():
             self.log("Starting Samsung Test Mode FRP Bypass (*#0*#)...", "info")
-            time.sleep(1)
-            self.log("Sending AT modem command to enable ADB USB debugging...", "info")
-            time.sleep(0.8)
-            self.log("USB Debugging dialog accepted by device.", "success")
-            self.log("Resetting secure setup flags...", "info")
-            self.log("FRP Account successfully removed! Rebooting device...", "success")
+            if self.simulated_mode.get():
+                time.sleep(1)
+                self.log("Sending AT modem command to enable ADB USB debugging...", "info")
+                time.sleep(0.8)
+                self.log("USB Debugging dialog accepted by device.", "success")
+                self.log("FRP Account successfully removed! Rebooting device...", "success")
+                return
+            ok, logs = self.samsung_modem.send_at_sequence()
+            for line in logs:
+                self.log(line, "info" if "->" in line else "warning")
+            if ok:
+                self.log("AT sequence sent. Watch the phone for the 'Allow USB debugging' prompt, then run 'Bypass Setup Wizard'.", "success")
+            else:
+                self.log("Samsung modem AT channel unavailable. Open *#0*# manually, then use 'Bypass Setup Wizard' once ADB is authorized.", "warning")
 
         self._run_threaded(task, "Samsung *#0*# Test Mode FRP")
 
     def bypass_setup_wizard(self):
         def task():
             self.log("Injecting Setup Wizard completion flags via ADB...", "info")
-            time.sleep(0.6)
-            self.log("user_setup_complete set to 1", "success")
-            self.log("device_provisioned set to 1", "success")
-            self.log("Setup wizard bypassed successfully!", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.6)
+                self.log("user_setup_complete set to 1", "success")
+                self.log("device_provisioned set to 1", "success")
+                self.log("Setup wizard bypassed successfully!", "success")
+                return
+            ok, logs = self.frp.bypass_frp_adb_setupwizard()
+            for line in logs:
+                self.log(line, "success" if line.startswith("[OK]") else "warning")
+            self.log("Setup wizard bypass complete." if ok else "Setup wizard bypass failed — device may need USB debugging enabled.", "success" if ok else "error")
 
         self._run_threaded(task, "Bypass Android Setup Wizard")
 
@@ -1637,11 +1709,17 @@ class AndroidMultiToolApp:
 
         def task():
             self.log("Searching and removing screen lock key databases...", "warning")
-            time.sleep(0.8)
-            self.log("[DELETED] /data/system/gesture.key", "success")
-            self.log("[DELETED] /data/system/password.key", "success")
-            self.log("[DELETED] /data/system/locksettings.db", "success")
-            self.log("Pattern/PIN lock successfully cleared! Reboot phone now.", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.8)
+                self.log("[DELETED] /data/system/gesture.key", "success")
+                self.log("[DELETED] /data/system/password.key", "success")
+                self.log("[DELETED] /data/system/locksettings.db", "success")
+                self.log("Pattern/PIN lock successfully cleared! Reboot phone now.", "success")
+                return
+            ok, logs = self.frp.remove_screen_lock_rooted()
+            for line in logs:
+                self.log(line, "success" if line.startswith("[DELETED]") else "warning")
+            self.log("Lock files cleared. Reboot the phone." if ok else "Could not remove lock files (no root/TWRP shell). Use MTK BROM on a locked Tecno.", "success" if ok else "error")
 
         self._run_threaded(task, "Remove Lockscreen DB (TWRP/Root)")
 
@@ -1666,10 +1744,14 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Flashing partition '{part}' with '{os.path.basename(img_path)}'...", "info")
-            time.sleep(1)
-            self.log(f"Sending '{part}' (32768 KB)... OKAY [0.65s]", "info")
-            self.log(f"Writing '{part}'... OKAY [0.24s]", "info")
-            self.log(f"Finished flashing {part} successfully.", "success")
+            if self.simulated_mode.get():
+                time.sleep(1)
+                self.log(f"Sending '{part}' (32768 KB)... OKAY [0.65s]", "info")
+                self.log(f"Writing '{part}'... OKAY [0.24s]", "info")
+                self.log(f"Finished flashing {part} successfully.", "success")
+                return
+            ok, msg = self.fastboot.flash_partition(part, img_path)
+            self.log(msg, "success" if ok else "error")
 
         self._run_threaded(task, f"Fastboot Flash Image ({part})")
 
@@ -1679,8 +1761,12 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Erasing partition '{part}' in Fastboot...", "warning")
-            time.sleep(0.8)
-            self.log(f"Erasing '{part}'... OKAY", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.8)
+                self.log(f"Erasing '{part}'... OKAY", "success")
+                return
+            ok, msg = self.fastboot.erase_partition(part)
+            self.log(msg, "success" if ok else "error")
 
         self._run_threaded(task, f"Fastboot Erase ({part})")
 
@@ -1690,17 +1776,25 @@ class AndroidMultiToolApp:
 
         def task():
             self.log("Issuing Bootloader Unlock command: fastboot flashing unlock...", "warning")
-            time.sleep(1)
-            self.log("Prompt shown on phone display. Press Volume Up to confirm unlock.", "warning")
-            self.log("Bootloader unlocked successfully.", "success")
+            if self.simulated_mode.get():
+                time.sleep(1)
+                self.log("Prompt shown on phone display. Press Volume Up to confirm unlock.", "warning")
+                self.log("Bootloader unlocked successfully.", "success")
+                return
+            ok, msg = self.fastboot.unlock_bootloader()
+            self.log(msg, "success" if ok else "error")
 
         self._run_threaded(task, "Unlock Bootloader (flashing unlock)")
 
     def lock_bootloader(self):
         def task():
             self.log("Issuing Bootloader Lock command: fastboot flashing lock...", "info")
-            time.sleep(0.8)
-            self.log("Command: fastboot flashing lock... OKAY", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.8)
+                self.log("Command: fastboot flashing lock... OKAY", "success")
+                return
+            ok, msg = self.fastboot.lock_bootloader()
+            self.log(msg, "success" if ok else "error")
 
         self._run_threaded(task, "Lock Bootloader (flashing lock)")
 
@@ -1720,8 +1814,12 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Installing {os.path.basename(apk)}...", "info")
-            time.sleep(1.2)
-            self.log(f"Success: {os.path.basename(apk)} installed.", "success")
+            if self.simulated_mode.get():
+                time.sleep(1.2)
+                self.log(f"Success: {os.path.basename(apk)} installed.", "success")
+                return
+            ok, msg = self.adb.install_apk(apk, grant_permissions=True)
+            self.log(msg, "success" if ok else "error")
 
         self._run_threaded(task, "Install APK File")
 
@@ -1735,12 +1833,18 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Starting bloatware cleaner for {brand} ({len(packages)} targets)...", "info")
-            count = 0
+            if self.simulated_mode.get():
+                for pkg in packages:
+                    time.sleep(0.1)
+                    self.log(f"Disabled: {pkg}", "info")
+                self.log(f"Debloat complete: {len(packages)} packages disabled.", "success")
+                return
+            done = 0
             for pkg in packages:
-                time.sleep(0.1)
-                self.log(f"Disabled: {pkg}", "info")
-                count += 1
-            self.log(f"Debloat complete: {count} packages disabled.", "success")
+                ok, msg = self.adb.disable_package(pkg)
+                self.log(msg, "success" if ok else "warning")
+                done += 1 if ok else 0
+            self.log(f"Debloat complete: {done}/{len(packages)} packages disabled.", "success")
 
         self._run_threaded(task, f"Debloat OEM Profile ({brand})")
 
@@ -1751,8 +1855,12 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Disabling package: {pkg}...", "info")
-            time.sleep(0.5)
-            self.log(f"Disabled {pkg}", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.5)
+                self.log(f"Disabled {pkg}", "success")
+                return
+            ok, msg = self.adb.disable_package(pkg)
+            self.log(msg, "success" if ok else "warning")
 
         self._run_threaded(task, f"Disable Package ({pkg})")
 
@@ -1763,8 +1871,12 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Uninstalling package for user 0: {pkg}...", "warning")
-            time.sleep(0.5)
-            self.log(f"Uninstalled {pkg}", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.5)
+                self.log(f"Uninstalled {pkg}", "success")
+                return
+            ok, msg = self.adb.uninstall_package(pkg, keep_data=False)
+            self.log(msg, "success" if ok else "warning")
 
         self._run_threaded(task, f"Uninstall Package ({pkg})")
 

@@ -361,6 +361,30 @@ CONNECTION_SCENARIOS: List[Dict] = [
         ],
     },
     {
+        "key": "locked_brom",
+        "title": "Phone LOCKED — FRP / screen-lock removal (NO USB debugging)",
+        "icon": "\U0001F512",  # lock
+        "mode": "MTK BROM",
+        "use_when": "The Tecno Camon 50 Pro (or any MTK phone) is PIN/pattern/FRP locked and you CANNOT enable USB debugging because the screen is locked.",
+        "prerequisites": [
+            "Understand: ADB is IMPOSSIBLE on a locked phone — USB debugging can only be turned on from inside Android. Use the hardware BROM channel instead.",
+            "MediaTek Preloader USB VCOM driver installed (VID 0E8D) — Connection Guide -> Install Tools & Drivers.",
+        ],
+        "steps": [
+            "Power the phone OFF completely (hold Power + Vol Down ~10s if the screen is frozen).",
+            "Hold Volume Up + Volume Down TOGETHER.",
+            "While holding, plug the USB cable into a USB 2.0 (black) port on the PC.",
+            "In the tool: open the ⚡ MTK BROM tab -> click 'Detect BROM Port & Handshake'.",
+            "When the handshake confirms, run 'Wipe FRP' or 'Factory Reset (Userdata)' from the BROM tab — this clears the lock without any USB debugging.",
+        ],
+        "verify": "A COM/tty port with VID 0E8D appears and the handshake returns 0x5F 0xF5 0xAF 0xFA.",
+        "failures": [
+            {"symptom": "No MTK port appears", "cause": "Missing VCOM driver / charge-only cable / wrong button combo", "fix": "Install the MTK VCOM driver, use a data cable, and hold the buttons before plugging in."},
+            {"symptom": "Port appears for 2s then vanishes", "cause": "Watchdog reset (normal)", "fix": "Keep holding the button combo until the tool reports the handshake."},
+            {"symptom": "ADB 'not found'", "cause": "Locked phone has no USB debugging", "fix": "That's expected — use BROM, not ADB."},
+        ],
+    },
+    {
         "key": "qcom_edl",
         "title": "Qualcomm EDL 9008 (Snapdragon)",
         "icon": "\U0001F3AF",  # dart

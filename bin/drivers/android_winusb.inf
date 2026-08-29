@@ -3,6 +3,20 @@
 ; Specifically includes Transsion Holdings (Tecno / Infinix) VID 0x2E04
 ; and MediaTek Preloader VID 0x0E8D
 ;
+; NOTE: This INF is UNSIGNED. On Windows 11 with driver signature enforcement
+; ON (default), pnputil will refuse it. To install:
+;   1) Windows Security -> Device Security -> Core Isolation -> Memory Integrity OFF
+;   2) Reboot with signature enforcement disabled (Shift+Restart -> Troubleshoot ->
+;      Advanced -> Startup Settings -> 7)
+;   3) pnputil /add-driver android_winusb.inf /install
+; OR (no signature hassle): Device Manager -> device -> Update driver -> Browse ->
+;   Let me pick from a list -> Android Device -> Android Composite ADB Interface.
+;
+; The hardware IDs below must match the device. If your Tecno enumerates with a
+; different PID, add a line:  %CompositeAdbInterface% = USB_Install, USB\VID_2E04&PID_XXXX&MI_01
+; (find the exact ID in Device Manager -> Details -> Hardware Ids, or use the
+;  tool's "USB driver binding" diagnostic which generates a matching INF.)
+;
 
 [Version]
 Signature           = "$Windows NT$"
@@ -33,9 +47,13 @@ HKR,,Icon,,-1
 [Google.NTamd64]
 ; Transsion Holdings (Tecno Camon 50 Pro 5G / CN5c)
 %CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C001&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C001&MI_00
 %CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C002&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C002&MI_00
 %CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C003&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C003&MI_00
 %CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C004&MI_01
+%CompositeAdbInterface%     = USB_Install, USB\VID_2E04&PID_C004&MI_00
 ; MediaTek Inc. Android Bootloader & Fastboot
 %CompositeAdbInterface%     = USB_Install, USB\VID_0E8D&PID_201D
 %SingleBootLoaderInterface% = USB_Install, USB\VID_0E8D&PID_201C

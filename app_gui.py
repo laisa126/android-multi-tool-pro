@@ -28,6 +28,7 @@ from core.device_matrix import SUPPORTED_DEVICE_CATALOG, find_device_matches
 from core.downloader import ensure_binaries
 from core.detection import run_full_detection, selectable_devices
 from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
+from core.serial_ports import build_custom_adb_inf
 
 APP_NAME = "Android Multi-Tool Pro"
 APP_VERSION = "v2.5.0 (Monochrome Tecno Camon 50 Edition)"
@@ -1016,6 +1017,32 @@ class AndroidMultiToolApp:
                 self.log(f"EDL PORT: {p['port']} - {p.get('description') or p.get('hwid','')} (VID {p.get('vid') or '?'})", "success")
             for h in hw:
                 self.log(f"USB HW BUS (diagnostic only): {h.get('serial','?')} - {h.get('details','')}", "muted")
+
+            # ---- Windows USB driver binding diagnostics (the Camon 50 Pro fix) ----
+            usb_driver = res.get("usb_driver", []) or []
+            for d in usb_driver:
+                state = "ADB OK" if d.get("adb_visible") else "NOT ADB"
+                lvl = "success" if d.get("adb_visible") else "warning"
+                self.log(
+                    f"USB DRIVER: {d.get('hardware_id','?')} [{d.get('description','?')}] -> service={d.get('service') or 'none'} ({state})",
+                    lvl
+                )
+
+            tecno_driver_issue = any(
+                (d.get("vid") or "").upper() == "2E04" and not d.get("adb_visible")
+                for d in usb_driver
+            )
+            tecno_on_bus = any((h.get("vid") or "").upper() == "2E04" for h in hw)
+            if tecno_driver_issue or (tecno_on_bus and not res["adb"]):
+                hwids = [d.get("hardware_id", "") for d in usb_driver if (d.get("vid") or "").upper() == "2E04"]
+                if not hwids:
+                    hwids = [f"USB\\VID_{h.get('vid','2E04')}&PID_????&MI_01" for h in hw if (h.get('vid') or '').upper() == '2E04']
+                try:
+                    inf_path = build_custom_adb_inf(hwids, os.path.join(self.logs_dir, "tecno_adb_driver_custom.inf"))
+                    self.log(f"Generated device-specific Tecno ADB driver INF: {inf_path}", "info")
+                    self.log("Install it (admin, signature enforcement OFF): pnputil /add-driver \"%s\" /install" % inf_path, "info")
+                except Exception as e:
+                    self.log(f"Could not generate custom INF: {e}", "error")
 
             # connection state indicator
             if res["adb"] or res["fastboot"]:

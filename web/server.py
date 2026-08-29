@@ -197,6 +197,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "mtk_ports": result["mtk_ports"],
                 "edl_ports": result["edl_ports"],
                 "hardware": result["hardware"],
+                "usb_driver": result["usb_driver"],
                 "issues": result["issues"],
                 "simulated": mock_state["simulated"],
             })
@@ -213,6 +214,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "mtk_ports": result["mtk_ports"],
                 "edl_ports": result["edl_ports"],
                 "hardware": result["hardware"],
+                "usb_driver": result["usb_driver"],
                 "issues": result["issues"],
                 "simulated": mock_state["simulated"],
             })

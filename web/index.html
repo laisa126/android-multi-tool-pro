@@ -2086,6 +2086,16 @@ build.bat</div>
         edl.forEach(p => html += `<li>${p.port} — ${p.description || p.hwid || "QDLoader"}</li>`);
         html += "</ul>";
       }
+      const usbd = data.usb_driver || [];
+      if (usbd.length) {
+        html += "<b>USB driver binding</b><ul style='margin:4px 0 8px 18px;'>";
+        usbd.forEach(d => {
+          const ok = d.adb_visible;
+          html += `<li>${d.hardware_id} — service <b>${d.service || "none"}</b> ` +
+            `<span style='color:${ok ? "var(--c8-white)" : "var(--c6-muted)"}'>${ok ? "(ADB OK)" : "(NOT ADB)"}</span></li>`;
+        });
+        html += "</ul>";
+      }
       const issues = data.issues || [];
       if (issues.length) {
         html += "<b>FIX SUGGESTIONS</b><ul style='margin:4px 0 8px 18px;'>";

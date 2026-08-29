@@ -10,7 +10,7 @@ diagnostic-only and are never passed to adb/fastboot.
 import platform
 from typing import Dict, List
 
-from .serial_ports import list_serial_ports, classify_port, HAS_PYSERIAL
+from .serial_ports import list_serial_ports, classify_port, HAS_PYSERIAL, get_windows_usb_driver_status
 from .connection_guide import generate_issues
 
 
@@ -41,6 +41,7 @@ def run_full_detection(adb_engine, fastboot_engine, mtk_engine=None, qcom_engine
         "edl_ports": edl_ports,
         "other_ports": other_ports,
         "hardware": hardware,
+        "usb_driver": get_windows_usb_driver_status() if platform.system() == "Windows" else [],
         "pyserial": HAS_PYSERIAL,
         "issues": [],
     }

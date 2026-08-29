@@ -18,7 +18,15 @@ class ADBEngine:
     def __init__(self, custom_adb_path: Optional[str] = None):
         self.adb_path = custom_adb_path or self._find_adb()
         self.connected_device = None
+        self.log_callback = None  # optional: fn(line: str, level: str) for live command echo
         self._ensure_vendor_ids()
+
+    def _emit(self, line: str, level: str = "info"):
+        if self.log_callback:
+            try:
+                self.log_callback(line, level)
+            except Exception:
+                pass
 
     def _ensure_vendor_ids(self):
         """Ensures Transsion (Tecno/Infinix) and MediaTek VIDs exist in adb_usb.ini.
@@ -73,6 +81,7 @@ class ADBEngine:
         if self.connected_device and args and args[0] not in ["devices", "start-server", "kill-server", "version"]:
             cmd.extend(["-s", self.connected_device])
         cmd.extend(args)
+        self._emit(f"$ {' '.join(cmd)}", "muted")
 
         try:
             res = subprocess.run(
@@ -83,13 +92,32 @@ class ADBEngine:
                 timeout=timeout,
                 shell=False
             )
+            self._emit_output(res.stdout, res.returncode, res.stderr)
             return res.returncode, res.stdout.strip(), res.stderr.strip()
         except FileNotFoundError:
-            return -1, "", f"ADB executable not found at '{self.adb_path}'. Please install platform-tools."
+            msg = f"ADB executable not found at '{self.adb_path}'. Please install platform-tools."
+            self._emit(msg, "error")
+            return -1, "", msg
         except subprocess.TimeoutExpired:
-            return -2, "", f"Command timed out after {timeout} seconds (device not responding or USB disconnected)."
+            msg = f"Command timed out after {timeout} seconds (device not responding or USB disconnected)."
+            self._emit(msg, "error")
+            return -2, "", msg
         except Exception as e:
+            self._emit(str(e), "error")
             return -3, "", str(e)
+
+    def _emit_output(self, stdout: str, returncode: int, stderr: str = "", cap: int = 15):
+        """Echo command output to the log callback, capped to avoid flooding."""
+        if not self.log_callback:
+            return
+        out_lines = (stdout or "").splitlines()
+        for ln in out_lines[:cap]:
+            self._emit(ln, "info")
+        if len(out_lines) > cap:
+            self._emit(f"... ({len(out_lines) - cap} more output lines suppressed)", "muted")
+        if returncode != 0 and stderr and stderr.strip():
+            for ln in stderr.strip().splitlines()[:cap]:
+                self._emit(ln, "error")
 
     def get_devices(self) -> List[Dict[str, str]]:
         """Return REAL adb devices only (serial, state, details, kind, guidance).

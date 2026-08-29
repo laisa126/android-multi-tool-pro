@@ -14,6 +14,14 @@ class FastbootEngine:
     def __init__(self, custom_fastboot_path: Optional[str] = None):
         self.fastboot_path = custom_fastboot_path or self._find_fastboot()
         self.connected_device = None
+        self.log_callback = None  # optional: fn(line: str, level: str) for live command echo
+
+    def _emit(self, line: str, level: str = "info"):
+        if self.log_callback:
+            try:
+                self.log_callback(line, level)
+            except Exception:
+                pass
 
     def _find_fastboot(self) -> str:
         local_bin = os.path.join(os.path.dirname(os.path.dirname(__file__)), "bin")
@@ -33,6 +41,7 @@ class FastbootEngine:
         if self.connected_device and args and args[0] != "devices":
             cmd.extend(["-s", self.connected_device])
         cmd.extend(args)
+        self._emit(f"$ {' '.join(cmd)}", "muted")
 
         try:
             res = subprocess.run(
@@ -45,12 +54,20 @@ class FastbootEngine:
             )
             # Fastboot frequently outputs info to stderr
             combined = (res.stdout + "\n" + res.stderr).strip()
+            if self.log_callback:
+                for ln in combined.splitlines()[:15]:
+                    self._emit(ln, "error" if res.returncode != 0 else "info")
             return res.returncode, res.stdout.strip(), res.stderr.strip()
         except FileNotFoundError:
-            return -1, "", f"Fastboot executable not found at '{self.fastboot_path}'."
+            msg = f"Fastboot executable not found at '{self.fastboot_path}'."
+            self._emit(msg, "error")
+            return -1, "", msg
         except subprocess.TimeoutExpired:
-            return -2, "", f"Fastboot command timed out after {timeout} seconds."
+            msg = f"Fastboot command timed out after {timeout} seconds."
+            self._emit(msg, "error")
+            return -2, "", msg
         except Exception as e:
+            self._emit(str(e), "error")
             return -3, "", str(e)
 
     def get_devices(self) -> List[Dict[str, str]]:

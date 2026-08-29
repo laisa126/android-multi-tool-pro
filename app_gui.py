@@ -9,7 +9,6 @@ import sys
 import time
 import threading
 import subprocess
-import platform
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
@@ -76,6 +75,25 @@ class AndroidMultiToolApp:
         self.payload_extractor = PayloadExtractor()
         self.scatter_flasher = ScatterFlasher()
         self.transsion_mdm = TranssionMDMEngine(self.adb)
+
+        # ---- Persistent session logging (audit trail for every op) ----
+        self.logs_dir = os.path.join(self.base_dir, "logs")
+        try:
+            os.makedirs(self.logs_dir, exist_ok=True)
+        except Exception:
+            self.logs_dir = self.base_dir
+        self._log_lock = threading.Lock()
+        self.log_file_path = os.path.join(
+            self.logs_dir, time.strftime("amt_pro_%Y%m%d_%H%M%S.log")
+        )
+        try:
+            self._log_file = open(self.log_file_path, "a", encoding="utf-8", errors="replace")
+        except Exception:
+            self._log_file = None
+
+        # Live command echo: engine -> console/file log
+        self.adb.log_callback = self._engine_log
+        self.fastboot.log_callback = self._engine_log
 
         # State
         self.simulated_mode = tk.BooleanVar(value=False)
@@ -261,6 +279,10 @@ class AndroidMultiToolApp:
         btn_copy.pack(side="right", padx=3)
         btn_clear = ttk.Button(con_header, text="Clear", style="Secondary.TButton", command=self.clear_log)
         btn_clear.pack(side="right", padx=3)
+        btn_open = ttk.Button(con_header, text="Open Logs Folder", style="Secondary.TButton", command=self.open_logs_folder)
+        btn_open.pack(side="right", padx=3)
+        btn_save = ttk.Button(con_header, text="Save Log", style="Secondary.TButton", command=self.save_log)
+        btn_save.pack(side="right", padx=3)
 
         # Text Console
         con_box = tk.Frame(console_frame, bg=C_BLACK)
@@ -748,7 +770,18 @@ class AndroidMultiToolApp:
     # ================= LOGGING & CONSOLE =================
 
     def log(self, text: str, level: str = "info"):
+        """Log a line to BOTH the on-screen console and the session log file."""
         timestamp = time.strftime("[%H:%M:%S] ")
+        # 1. Persist to file (synchronous, thread-safe)
+        try:
+            with self._log_lock:
+                if self._log_file is not None:
+                    full_ts = time.strftime("%Y-%m-%d %H:%M:%S")
+                    self._log_file.write(f"[{full_ts}] [{level.upper():<7}] {text}\n")
+                    self._log_file.flush()
+        except Exception:
+            pass
+        # 2. Update console (thread-safe via main loop)
         def _append():
             try:
                 self.txt_console.insert(tk.END, timestamp, "muted")
@@ -759,14 +792,56 @@ class AndroidMultiToolApp:
                 pass
         self.root.after(0, _append)
 
+    def _engine_log(self, line: str, level: str = "info"):
+        """Callback used by ADB/Fastboot engines to echo real command output."""
+        self.log(line, level)
+
     def clear_log(self):
         self.txt_console.delete("1.0", tk.END)
+        self.log("Console cleared (session log file retained).", "muted")
 
     def copy_log(self):
         text = self.txt_console.get("1.0", tk.END)
         self.root.clipboard_clear()
         self.root.clipboard_append(text)
         self.log("All console logs copied to system clipboard!", "success")
+
+    def save_log(self):
+        dest = filedialog.asksaveasfilename(
+            title="Save Session Log",
+            defaultextension=".log",
+            initialfile=os.path.basename(self.log_file_path),
+            filetypes=[("Log files", "*.log"), ("Text files", "*.txt"), ("All files", "*.*")],
+        )
+        if not dest:
+            return
+        try:
+            with self._log_lock:
+                if self._log_file is not None:
+                    self._log_file.flush()
+            text = ""
+            try:
+                with open(self.log_file_path, "r", encoding="utf-8", errors="replace") as f:
+                    text = f.read()
+            except Exception:
+                text = self.txt_console.get("1.0", tk.END)
+            with open(dest, "w", encoding="utf-8") as f:
+                f.write(text)
+            self.log(f"Session log exported to: {dest}", "success")
+        except Exception as e:
+            self.log(f"Failed to save log: {e}", "error")
+
+    def open_logs_folder(self):
+        try:
+            if os.name == "nt":
+                os.startfile(self.logs_dir)  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.run(["open", self.logs_dir])
+            else:
+                subprocess.run(["xdg-open", self.logs_dir])
+            self.log(f"Opened logs folder: {self.logs_dir}", "success")
+        except Exception as e:
+            self.log(f"Could not open logs folder: {e}", "warning")
 
     def set_busy(self, busy: bool, status_msg: str = "ACTIVE"):
         def _update():
@@ -783,7 +858,7 @@ class AndroidMultiToolApp:
         # Instant feedback on click: Never leave user wondering if click worked!
         self.log(f">> [ACTION] Initiated: {action_name}...", "info")
         def wrapper():
-            self.set_busy(True, "ACTIVE")
+            self.set_busy(True, f"ACTIVE: {action_name}")
             try:
                 target(*args)
             except Exception as e:
@@ -799,6 +874,7 @@ class AndroidMultiToolApp:
     def _check_dependencies_async(self):
         def task():
             self.log(f"Initializing {APP_NAME} {APP_VERSION}...", "muted")
+            self.log(f"Session log file: {self.log_file_path}", "muted")
             self.log("Verifying Android Debug Bridge & Fastboot binaries...", "info")
             ok = ensure_binaries(self.bin_dir, lambda msg: self.log(msg, "info"))
             if ok:
@@ -1049,13 +1125,21 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Inspecting payload.bin archive: {path}...", "info")
-            time.sleep(1)
-            self.log("Magic header 'CrAU' verified OKAY [Payload v2 format]", "success")
-            self.log("Decompressing partition: init_boot.img (Android 15/16 Kernel Ramdisk)... OKAY", "info")
-            self.log("Decompressing partition: vbmeta.img (AVB 2.0 flags)... OKAY", "info")
-            self.log("Decompressing partition: boot.img (Kernel)... OKAY", "info")
-            self.log("Decompressing partition: md1img.img (Modem Radio Baseband)... OKAY", "info")
-            self.log("Extraction completed! Files ready for Magisk patching and direct flashing.", "success")
+            ok, partitions, msg = self.payload_extractor.inspect_payload(path)
+            if not ok:
+                self.log(msg, "error")
+                return
+            self.log(msg, "success")
+            self.log(f"Partitions found in payload: {', '.join(partitions)}", "info")
+
+            out_folder = os.path.join(self.base_dir, "extracted")
+            try:
+                extracted = self.payload_extractor.extract_critical_partitions(path, out_folder)
+                for f in extracted:
+                    self.log(f"Extracted: {f}", "success")
+                self.log(f"Extraction complete -> {out_folder}", "success")
+            except Exception as e:
+                self.log(f"Extraction failed: {e}", "error")
 
         self._run_threaded(task, "Extract OTA payload.bin")
 
@@ -1065,24 +1149,41 @@ class AndroidMultiToolApp:
 
         def task():
             self.log("Starting Transsion HiOS MDM & Financing Lock Remover...", "info")
-            time.sleep(1)
-            self.log("[OK] Disabled com.transsion.palmpay (PalmPay Framework)", "success")
-            self.log("[OK] Disabled com.transsion.carlcare (Carlcare MDM Agent)", "success")
-            self.log("[OK] Disabled com.payjoy.access (PayJoy Device Lock)", "success")
-            self.log("[OK] Disabled com.transsion.magicshow (Remote Provisioning)", "success")
-            self.log("[OK] Injected: settings put global device_provisioned 1", "success")
-            self.log("[OK] Injected: settings put secure user_setup_complete 1", "success")
-            self.log("HiOS Financing and MDM background locks successfully bypassed!", "success")
+            if self.simulated_mode.get():
+                time.sleep(1)
+                self.log("[OK] Disabled com.transsion.palmpay (PalmPay Framework)", "success")
+                self.log("[OK] Disabled com.transsion.carlcare (Carlcare MDM Agent)", "success")
+                self.log("[OK] Disabled com.payjoy.access (PayJoy Device Lock)", "success")
+                self.log("[OK] Disabled com.transsion.magicshow (Remote Provisioning)", "success")
+                self.log("[OK] Injected: settings put global device_provisioned 1", "success")
+                self.log("[OK] Injected: settings put secure user_setup_complete 1", "success")
+                self.log("HiOS Financing and MDM background locks successfully bypassed!", "success")
+                return
+
+            for pkg, ok, desc in self.transsion_mdm.disable_mdm_services():
+                lvl = "success" if ok else "warning"
+                self.log(f"[{'OK' if ok else 'SKIP'}] {pkg} - {desc}", lvl)
+            for line in self.transsion_mdm.freeze_provisioning_intents():
+                self.log(line, "success" if line.startswith("[OK]") else "info")
+            self.log("HiOS Financing and MDM background locks bypass process complete.", "success")
 
         self._run_threaded(task, "Freeze Transsion MDM & PayJoy")
 
     def lock_provisioning(self):
         def task():
             self.log("Locking Android setup wizard provisioning state...", "info")
-            time.sleep(0.6)
-            self.log("user_setup_complete set to 1", "success")
-            self.log("device_provisioned set to 1", "success")
-            self.log("Provisioning state locked. Device will skip initial setup wizard on boot.", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.6)
+                self.log("user_setup_complete set to 1", "success")
+                self.log("device_provisioned set to 1", "success")
+                self.log("Provisioning state locked. Device will skip initial setup wizard on boot.", "success")
+                return
+            c1, _, e1 = self.adb.run_cmd(["shell", "settings", "put", "global", "device_provisioned", "1"])
+            c2, _, e2 = self.adb.run_cmd(["shell", "settings", "put", "secure", "user_setup_complete", "1"])
+            if c1 == 0 and c2 == 0:
+                self.log("device_provisioned=1 and user_setup_complete=1 applied via ADB.", "success")
+            else:
+                self.log(f"Provisioning write failed: {e1 or e2 or 'device not reachable'}", "error")
 
         self._run_threaded(task, "Lock Provisioning Intent")
 
@@ -1163,15 +1264,45 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Connecting to MediaTek MT6878 (Dimensity 7400) Preloader port...", "info")
-            time.sleep(0.8)
-            self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "info")
-            self.log("Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...", "warning")
-            self.log("Authorization BYPASSED! Direct memory channel opened.", "success")
-            self.log(f"Writing zero blocks to UFS storage partition '{part}'...", "info")
-            time.sleep(0.6)
-            self.log(f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.8)
+                self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "info")
+                self.log("Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...", "warning")
+                self.log("Authorization BYPASSED! Direct memory channel opened.", "success")
+                self.log(f"Partition '{part}' successfully erased (SIMULATED).", "success")
+                return
+
+            port = self._mtk_resolve_port()
+            if not port:
+                self.log("No MediaTek Preloader/BROM port found.", "warning")
+                self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+                return
+            probe = self.mtk.probe_port(port)
+            if not probe.get("ok"):
+                self.log(f"Handshake failed on {port}: {probe.get('error','no reply')}", "error")
+                self.log("Check: phone fully OFF, VCOM driver installed, USB 2.0 port, buttons held until handshake.", "warning")
+                return
+            self.log(f"Handshake CONFIRMED on {port} (reply {probe.get('reply','')})", "success")
+            self.log(
+                f"NOTE: direct BROM write channel for '{part}' is not implemented yet — no blocks were written. "
+                "Use the MTK BROM Flasher tab once the write channel is available.", "warning")
 
         self._run_threaded(task, f"Preloader BROM Wipe ({part})")
+
+    def _mtk_resolve_port(self):
+        """Resolve an MTK BROM/Preloader port from the UI selection or auto-detect.
+
+        Returns the port string (e.g. 'COM5') or None if none found.
+        """
+        sel_port = self.combo_mtk_port.get()
+        if sel_port and (sel_port.startswith("COM") or sel_port.startswith("/dev")):
+            return sel_port.split()[0]
+        detected = self.mtk.detect_ports().get("mtk", [])
+        if detected:
+            p = detected[0]
+            self.log(f"Auto-detected MediaTek port: {p['port']} ({p.get('description','')})", "info")
+            return p["port"]
+        return None
 
     def run_selected_mtk_brom(self):
         op = self.mtk_op_var.get()
@@ -1187,19 +1318,11 @@ class AndroidMultiToolApp:
                 time.sleep(1)
                 self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "success")
             else:
-                port = None
-                sel_port = self.combo_mtk_port.get()
-                if sel_port and (sel_port.startswith("COM") or sel_port.startswith("/dev")):
-                    port = sel_port.split()[0]
+                port = self._mtk_resolve_port()
                 if not port:
-                    detected = self.mtk.detect_ports().get("mtk", [])
-                    if detected:
-                        port = detected[0]["port"]
-                        self.log(f"Auto-detected MediaTek port: {port} ({detected[0].get('description','')})", "info")
-                    else:
-                        self.log("No MediaTek Preloader/BROM port found.", "warning")
-                        self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
-                        return
+                    self.log("No MediaTek Preloader/BROM port found.", "warning")
+                    self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+                    return
                 probe = self.mtk.probe_port(port)
                 if probe.get("ok"):
                     self.log(f"Handshake CONFIRMED on {port} (reply {probe.get('reply','')})", "success")
@@ -1239,11 +1362,13 @@ class AndroidMultiToolApp:
 
         def task():
             self.log(f"Checking Transsion / MTK baseband partition '{part}'...", "info")
-            time.sleep(0.8)
-            self.log(f"Reading block data from /dev/block/by-name/{part}...", "info")
-            time.sleep(0.6)
-            out_file = os.path.join(dest_dir, f"Tecno_Camon50Pro_{part}.img")
-            self.log(f"Tecno Camon 50 Pro modem calibration '{part}' backed up to: {out_file}", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.8)
+                out_file = os.path.join(dest_dir, f"Tecno_Camon50Pro_{part}.img")
+                self.log(f"Tecno Camon 50 Pro modem calibration '{part}' backed up to: {out_file}", "success")
+                return
+            ok, msg = self.efs.backup_partition(part, dest_dir)
+            self.log(msg, "success" if ok else "error")
 
         self._run_threaded(task, f"Backup NV Calibration ({part})")
 
@@ -1303,29 +1428,60 @@ class AndroidMultiToolApp:
 
     def check_root_status(self):
         def task():
-            self.log("Checking su binary and SELinux enforcement status...", "info")
-            time.sleep(0.5)
-            self.log("su binary: not found in /system/bin or /system/xbin", "info")
-            self.log("SELinux: Enforcing (AVB dm-verity active)", "info")
-            self.log("Magisk Status: Not installed. Patch init_boot.img to root.", "warning")
+            self.log("Checking su binary and root privileges...", "info")
+            if self.simulated_mode.get():
+                time.sleep(0.5)
+                self.log("su binary: not found in /system/bin or /system/xbin", "info")
+                self.log("Magisk Status: Not installed. Patch init_boot.img to root.", "warning")
+                return
+            ok, msg = self.root_engine.check_root_status()
+            self.log(msg, "success" if ok else "info")
 
         self._run_threaded(task, "Check Root & Magisk Status")
 
     def check_security(self):
         def task():
-            self.log("Querying bootloader lock and security verification flags...", "info")
-            time.sleep(0.5)
-            self.log("Bootloader Locked: YES", "info")
-            self.log("Warranty Bit / Tamper Flag: 0x0", "info")
-            self.log("Android Verified Boot (AVB 2.0): ACTIVE", "info")
+            self.log("Querying bootloader lock and verified-boot flags...", "info")
+            if self.simulated_mode.get():
+                time.sleep(0.5)
+                self.log("Bootloader Locked: YES", "info")
+                self.log("Warranty Bit / Tamper Flag: 0x0", "info")
+                self.log("Android Verified Boot (AVB 2.0): ACTIVE", "info")
+                return
+            props = {
+                "verifiedbootstate": "ro.boot.verifiedbootstate",
+                "vbmeta_state": "ro.boot.vbmeta.device_state",
+                "bootloader_lock": "ro.boot.flash.locked",
+                "warranty_bit": "ro.warranty_bit",
+            }
+            any_found = False
+            for label, prop in props.items():
+                code, out, _ = self.adb.run_cmd(["shell", "getprop", prop])
+                val = out.strip() if code == 0 else ""
+                if val:
+                    any_found = True
+                    self.log(f"{label}: {val}", "info")
+            if not any_found:
+                self.log("Could not read security props (device locked or no ADB). Check in Fastboot via 'fastboot getvar all'.", "warning")
 
         self._run_threaded(task, "Check Knox & Verified Boot")
 
     def dump_battery(self):
         def task():
             self.log("Dumping power subsystem stats...", "info")
-            time.sleep(0.5)
-            self.log("Battery: AC: false, USB: true, Level: 96%, Health: Good, Temp: 27.2 C", "success")
+            if self.simulated_mode.get():
+                time.sleep(0.5)
+                self.log("Battery: AC: false, USB: true, Level: 96%, Health: Good, Temp: 27.2 C", "success")
+                return
+            code, out, _ = self.adb.run_cmd(["shell", "dumpsys", "battery"])
+            if code != 0 or not out:
+                self.log("Battery dump failed (device not reachable).", "error")
+                return
+            interesting = ("level:", "health:", "temperature:", "AC powered:", "USB powered:", "status:")
+            for line in out.splitlines():
+                s = line.strip()
+                if any(s.startswith(k) for k in interesting):
+                    self.log(s, "info")
 
         self._run_threaded(task, "Dump Battery & Thermals")
 

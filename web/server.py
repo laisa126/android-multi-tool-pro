@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+import threading
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -83,12 +84,37 @@ mock_state = {
     "selected_device": "Tecno Camon 50 Pro 5G (Dimensity 7400 - MTK Preloader)",
 }
 
+# ---- Server-side audit logging (persisted to logs/web_server.log) ----
+LOGS_DIR = os.path.join(parent_dir, "logs")
+try:
+    os.makedirs(LOGS_DIR, exist_ok=True)
+except Exception:
+    LOGS_DIR = parent_dir
+_SERVER_LOG_LOCK = threading.Lock()
+
+
+def server_log(msg: str):
+    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+    line = f"[{ts}] {msg}"
+    try:
+        print(line, flush=True)
+    except Exception:
+        pass
+    try:
+        with _SERVER_LOG_LOCK:
+            with open(os.path.join(LOGS_DIR, "web_server.log"), "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+    except Exception:
+        pass
+
 class AMTRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=os.path.join(parent_dir, "web"), **kwargs)
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        if parsed.path.startswith("/api/"):
+            server_log(f"GET {parsed.path}")
         if parsed.path == "/api/status":
             self.send_json_response({
                 "status": "online",
@@ -147,6 +173,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             req = {}
 
         action = parsed.path.replace("/api/", "")
+        server_log(f"POST /api/{action} {json.dumps(req)[:200]}")
 
         if action == "switch_preset":
             key = req.get("key", "tecno")

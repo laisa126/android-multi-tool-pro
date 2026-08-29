@@ -99,6 +99,15 @@ The interface is styled exclusively using **exactly 10 colors**:
 
 ---
 
+## 📜 Session Logs & Operation Audit Trail
+
+* Every connection scan, every ADB/Fastboot command, and every operation is logged **live** to the on-screen console **and** persisted to a timestamped file in the `logs/` folder next to the app (e.g. `logs/amt_pro_20260829_141530.log`).
+* The desktop GUI exposes **Save Log** and **Open Logs Folder** buttons in the console header.
+* The web suite also writes an audit log to `logs/web_server.log`.
+* Every tap responds immediately: the status strip shows `ACTIVE: <operation>` while work runs, and each operation logs `>> [ACTION] Initiated` and `>> [DONE]` markers.
+
+---
+
 ## 🚀 Building from Source
 
 ```cmd

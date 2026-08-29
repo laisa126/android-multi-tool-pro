@@ -237,6 +237,46 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 logs.append(driver_install_guidance())
             self.send_json_response({"success": True, "logs": logs, "driver_launched": driver_launched})
 
+        elif action == "sideload":
+            ota = req.get("filename", "")
+            if not ota:
+                self.send_json_response({"success": False, "logs": ["No OTA filename supplied."]})
+                return
+            if not os.path.isabs(ota):
+                ota = os.path.join(parent_dir, ota)
+            if mock_state["simulated"]:
+                time.sleep(0.15)
+                self.send_json_response({"success": True, "logs": ["Serving: 100%", "Install from ADB complete (simulated)."]})
+                return
+            ok, msg = adb.sideload_ota(ota)
+            self.send_json_response({"success": ok, "logs": [msg]})
+
+        elif action == "brom_info":
+            if mock_state["simulated"]:
+                self.send_json_response({
+                    "success": True,
+                    "logs": ["HW Code: 0x0788", "HW SW Version: 0x0000", "Target Config: UFS | SLA: True | DAA: True"],
+                })
+                return
+            ports = mtk.detect_ports().get("mtk", [])
+            logs = []
+            if not ports:
+                logs.append("No MediaTek BROM/Preloader port found. Power off, hold Vol Up + Vol Down, plug USB.")
+                self.send_json_response({"success": False, "logs": logs})
+                return
+            port = ports[0]["port"]
+            logs.append(f"Port: {port} ({ports[0].get('description','')})")
+            hw = mtk.read_hw_code(port)
+            sw = mtk.read_hw_sw_ver(port)
+            cfg = mtk.read_target_config(port)
+            logs.append(f"HW Code: {hw.get('reply','-')}" + (f" (0x{hw['value']:X})" if hw.get("ok") else f" — {hw.get('error','')}"))
+            logs.append(f"HW SW Version: {sw.get('reply','-')}" + (f" (0x{sw['value']:X})" if sw.get("ok") else f" — {sw.get('error','')}"))
+            if cfg.get("ok"):
+                logs.append(f"Target Config: 0x{cfg['value']:X} | Storage: {cfg.get('storage','?')} | SLA: {cfg.get('sla')} | DAA: {cfg.get('daa')}")
+            else:
+                logs.append(f"Target Config read failed: {cfg.get('error','')}")
+            self.send_json_response({"success": bool(hw.get("ok")), "logs": logs})
+
         elif action == "select_device":
             serial = req.get("serial", "")
             kind = req.get("kind", "adb")

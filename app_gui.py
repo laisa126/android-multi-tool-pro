@@ -487,6 +487,19 @@ class AndroidMultiToolApp:
         btn_exec.pack(fill="x", pady=8)
         btn_detect = ttk.Button(left_card, text="🔍 Detect BROM Port & Handshake (locked phone)", style="Secondary.TButton", command=self.mtk_detect_handshake)
         btn_detect.pack(fill="x", pady=(0, 4))
+        btn_info = ttk.Button(left_card, text="🆔 Read BROM Chip Info (HW code / target config)", style="Secondary.TButton", command=self.brom_read_info)
+        btn_info.pack(fill="x", pady=(0, 4))
+
+        # Download Agent upload (advanced — SLA/DAA gated)
+        da_card = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=8)
+        da_card.pack(fill="x", pady=4)
+        tk.Label(da_card, text="Download Agent (DA) upload:", font=("Segoe UI", 8, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        da_row = tk.Frame(da_card, bg=C_SUBCARD)
+        da_row.pack(fill="x", pady=4)
+        self.entry_da_path = ttk.Entry(da_row, width=20)
+        self.entry_da_path.pack(side="left", padx=(0, 4), fill="x", expand=True)
+        ttk.Button(da_row, text="Browse", style="Secondary.TButton", command=self.browse_da).pack(side="left", padx=2)
+        ttk.Button(da_row, text="Upload DA", style="Secondary.TButton", command=self.run_send_da).pack(side="left", padx=2)
 
         # Right Column - Instructions & Hardware Pinouts
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
@@ -655,6 +668,19 @@ class AndroidMultiToolApp:
         ttk.Button(w_btns, text="Erase Userdata (Wipe Device)", style="Danger.TButton", command=lambda: self.erase_fb_part("userdata")).pack(side="left", padx=(0, 8))
         ttk.Button(w_btns, text="Erase Cache", style="Secondary.TButton", command=lambda: self.erase_fb_part("cache")).pack(side="left", padx=5)
         ttk.Button(w_btns, text="Erase Metadata", style="Secondary.TButton", command=lambda: self.erase_fb_part("metadata")).pack(side="left", padx=5)
+
+        # Recovery Sideload (works with USB debugging DISABLED)
+        sl_card = tk.Frame(p, bg=C_SUBCARD, padx=12, pady=12)
+        sl_card.pack(fill="x", pady=6)
+        tk.Label(sl_card, text="Recovery ADB Sideload (no USB debugging needed)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(sl_card, text="Boot to Recovery -> 'Apply update from ADB'. Recovery adbd needs NO USB debugging.", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+
+        sl_row = tk.Frame(sl_card, bg=C_SUBCARD)
+        sl_row.pack(fill="x", pady=4)
+        self.entry_ota_path = ttk.Entry(sl_row, width=32)
+        self.entry_ota_path.pack(side="left", padx=(0, 5), fill="x", expand=True)
+        ttk.Button(sl_row, text="Browse", style="Secondary.TButton", command=self.browse_ota).pack(side="left", padx=3)
+        ttk.Button(sl_row, text="Sideload OTA", style="Action.TButton", command=self.run_sideload).pack(side="left", padx=3)
 
     # ================= REBOOT SWITCHER TAB =================
 
@@ -1449,6 +1475,62 @@ class AndroidMultiToolApp:
 
         self._run_threaded(task, "Detect BROM Port & Handshake")
 
+    def brom_read_info(self):
+        """Read hardware code / SW version / target config from BROM (no debugging needed)."""
+        def task():
+            self.log("Reading MediaTek BROM chip info (no USB debugging needed)...", "info")
+            if self.simulated_mode.get():
+                self.log("Simulation: HW code 0x0788, SW ver 0x0000, UFS, SLA+DAA.", "warning")
+                return
+            port = self._mtk_resolve_port()
+            if not port:
+                self.log("No MediaTek BROM/Preloader port found. Power off, hold Vol Up + Vol Down, plug USB.", "warning")
+                return
+            hw = self.mtk.read_hw_code(port)
+            sw = self.mtk.read_hw_sw_ver(port)
+            cfg = self.mtk.read_target_config(port)
+            self.log(f"HW Code: {hw.get('reply','-')}" + (f" (0x{hw['value']:X})" if hw.get("ok") else f" — {hw.get('error','')}"), "success" if hw.get("ok") else "warning")
+            self.log(f"HW SW Version: {sw.get('reply','-')}" + (f" (0x{sw['value']:X})" if sw.get("ok") else f" — {sw.get('error','')}"), "success" if sw.get("ok") else "warning")
+            if cfg.get("ok"):
+                self.log(f"Target Config: 0x{cfg['value']:X} | Storage: {cfg.get('storage','?')} | SLA: {cfg.get('sla')} | DAA: {cfg.get('daa')}", "info")
+            else:
+                self.log(f"Target Config read failed: {cfg.get('error','')}", "warning")
+
+        self._run_threaded(task, "Read BROM Chip Info")
+
+    def browse_da(self):
+        f = filedialog.askopenfilename(filetypes=[("Download Agent", "*.bin *.da"), ("All Files", "*.*")])
+        if f:
+            self.entry_da_path.delete(0, tk.END)
+            self.entry_da_path.insert(0, f)
+
+    def run_send_da(self):
+        da_path = self.entry_da_path.get().strip()
+        if not da_path:
+            messagebox.showerror("Missing File", "Select a Download Agent (DA) binary for this chipset first.")
+            return
+
+        def task():
+            self.log(f"Uploading Download Agent: {os.path.basename(da_path)}...", "warning")
+            self.log("NOTE: the chip will only accept a DA signed for this SoC and an SLA/DAA bypass. Results are reported verbatim.", "info")
+            if self.simulated_mode.get():
+                self.log("Simulation: DA uploaded and jumped.", "warning")
+                return
+            port = self._mtk_resolve_port()
+            if not port:
+                self.log("No MediaTek BROM/Preloader port found.", "warning")
+                return
+            res = self.mtk.send_da(da_path, port)
+            for line in res.get("log", []):
+                self.log(line, "info")
+            if res.get("ok"):
+                self.log(f"DA uploaded ({res.get('bytes', 0)} bytes) and JUMP_DA issued on {port}.", "success")
+            else:
+                self.log(f"DA upload failed: {res.get('error','unknown error')}", "error")
+                self.log("Typical causes: SLA/DAA lock (needs a per-SoC auth-bypass payload), or the DA isn't signed for this chip.", "warning")
+
+        self._run_threaded(task, "Upload DA to BROM")
+
     def run_selected_mtk_brom(self):
         op = self.mtk_op_var.get()
         soc_full = self.combo_mtk_soc.get()
@@ -1722,6 +1804,33 @@ class AndroidMultiToolApp:
             self.log("Lock files cleared. Reboot the phone." if ok else "Could not remove lock files (no root/TWRP shell). Use MTK BROM on a locked Tecno.", "success" if ok else "error")
 
         self._run_threaded(task, "Remove Lockscreen DB (TWRP/Root)")
+
+    # ================= RECOVERY SIDELOAD (no USB debugging needed) =================
+
+    def browse_ota(self):
+        f = filedialog.askopenfilename(filetypes=[("OTA / Update ZIP", "*.zip"), ("All Files", "*.*")])
+        if f:
+            self.entry_ota_path.delete(0, tk.END)
+            self.entry_ota_path.insert(0, f)
+
+    def run_sideload(self):
+        ota = self.entry_ota_path.get().strip()
+        if not ota:
+            messagebox.showerror("Missing File", "Select an OTA/update ZIP to sideload first.")
+            return
+
+        def task():
+            self.log(f"Sideloading OTA: {os.path.basename(ota)}...", "info")
+            self.log("Recovery sideload works with USB debugging DISABLED — boot to recovery -> 'Apply update from ADB'.", "info")
+            if self.simulated_mode.get():
+                time.sleep(1.2)
+                self.log("Serving: 100% | Total xfer: 2.10x", "success")
+                self.log("Install from ADB complete.", "success")
+                return
+            ok, msg = self.adb.sideload_ota(ota)
+            self.log(msg, "success" if ok else "error")
+
+        self._run_threaded(task, "ADB Sideload OTA")
 
     # ================= FASTBOOT OPERATIONS =================
 

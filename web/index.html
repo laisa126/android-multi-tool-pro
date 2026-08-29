@@ -912,6 +912,7 @@
             </div>
 
             <button class="btn-white" onclick="runMtkBrom()">Execute BROM Operation</button>
+            <button class="btn-dark" onclick="readBromInfo()">🆔 Read BROM Chip Info</button>
           </div>
         </div>
 
@@ -1178,6 +1179,12 @@
             </div>
 
             <button class="btn-white" onclick="flashPartition()">Flash Partition Now</button>
+
+            <div style="margin-top:10px;">
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Recovery Sideload — OTA ZIP path (no USB debugging needed):</label>
+              <input type="text" id="sideloadPath" placeholder="e.g. update.zip (in app folder)" style="width:100%; margin-bottom:6px;">
+              <button class="btn-dark" onclick="sideloadOta()">Sideload OTA</button>
+            </div>
           </div>
         </div>
 
@@ -2277,6 +2284,34 @@ build.bat</div>
         data.logs.forEach(l => logLine(l, "log-green"));
       } catch (err) {
         logLine("EFS backup failed: " + err, "log-red");
+      }
+    }
+
+    async function readBromInfo() {
+      logLine("Reading MediaTek BROM chip info (no USB debugging needed)...", "log-white");
+      try {
+        const res = await fetch("/api/brom_info", { method: "POST" });
+        const data = await res.json();
+        (data.logs || []).forEach(l => logLine(l, "log-white"));
+      } catch (err) {
+        logLine("BROM read failed: " + err, "log-red");
+      }
+    }
+
+    async function sideloadOta() {
+      const filename = document.getElementById("sideloadPath").value.trim();
+      if (!filename) { logLine("Enter an OTA ZIP filename first.", "log-white"); return; }
+      logLine(`Sideloading ${filename} via recovery ADB (no USB debugging needed)...`, "log-white");
+      try {
+        const res = await fetch("/api/sideload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename })
+        });
+        const data = await res.json();
+        (data.logs || []).forEach(l => logLine(l, "log-white"));
+      } catch (err) {
+        logLine("Sideload failed: " + err, "log-red");
       }
     }
 

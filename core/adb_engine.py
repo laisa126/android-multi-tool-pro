@@ -429,3 +429,38 @@ class ADBEngine:
         if pull_code == 0:
             return True, f"Screenshot saved to {destination_path}"
         return False, f"Failed downloading screenshot: {pull_err}"
+
+    def sideload_ota(self, ota_zip: str, progress_cb=None, timeout: int = 600) -> Tuple[bool, str]:
+        """Push an OTA zip to a device in recovery 'sideload' mode.
+
+        IMPORTANT: this is the channel that works with USB debugging DISABLED —
+        recovery's adbd is authorized by the 'Apply update from ADB' menu item,
+        not by Developer Options. Returns (ok, message).
+        """
+        if not os.path.isfile(ota_zip):
+            return False, f"OTA zip not found: {ota_zip}"
+
+        # Confirm the device is actually in sideload mode
+        code, out, _ = self.run_cmd(["devices", "-l"], timeout=12)
+        sideload_serials = []
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) >= 2 and parts[1].lower() == "sideload":
+                sideload_serials.append(parts[0])
+        if code != 0 or not sideload_serials:
+            return False, (
+                "No device in 'sideload' mode. Boot to recovery -> 'Apply update from ADB', "
+                "then connect USB. (This needs NO USB debugging.)"
+            )
+
+        # Target the sideload serial directly (run_cmd adds -s automatically when
+        # connected_device is set, but here we want the exact sideload device).
+        if self.connected_device:
+            args = ["sideload", ota_zip]
+        else:
+            args = ["-s", sideload_serials[0], "sideload", ota_zip]
+        code, out, err = self.run_cmd(args, timeout=timeout)
+        combined = (out + "\n" + err).strip()
+        if code == 0 and ("success" in combined.lower() or "100%" in combined or "done" in combined.lower()):
+            return True, f"OTA sideload complete: {combined}"
+        return False, f"Sideload failed: {combined or 'unknown error'}"

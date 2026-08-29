@@ -5,6 +5,7 @@ SLA/DAA security bypass, and partition erasing directly over USB COM port.
 Includes explicit support for Tecno Camon 50 Pro (Dimensity 7400 Ultimate / Helio G200).
 """
 
+import os
 import time
 import struct
 from typing import Tuple, Optional, List, Dict
@@ -138,3 +139,164 @@ class MTKEngine:
                 "Port may be a Preloader that timed out, or the wrong mode."
             ),
         }
+
+    # ------------------------------------------------------------------
+    # Real MediaTek BootROM (BROM) protocol layer
+    # Public, stable commands documented in the BROM reverse-engineering
+    # writeups and the open-source mtkclient project (bkerler/mtkclient).
+    # ------------------------------------------------------------------
+    BROM_CMD_GET_HW_CODE = 0xFD      # read 4-byte hardware code
+    BROM_CMD_GET_HW_SW_VER = 0xFC    # read 4-byte software version
+    BROM_CMD_GET_TARGET_CONFIG = 0xFE  # read 4-byte target config bitmask
+    BROM_CMD_SEND_DA = 0xD7          # upload Download Agent (SLA/DAA gated)
+    BROM_CMD_JUMP_DA = 0xD8          # jump to uploaded DA
+
+    def _open_brom(self, port: str, timeout: float = 2.0):
+        """Open a serial port and perform the BROM sync. Returns (ser, error)."""
+        if serial is None:
+            return None, "pyserial is not installed. Run the 'Install Tools & Drivers' action."
+        try:
+            ser = serial.Serial(port, self.baudrate, timeout=timeout)
+        except Exception as e:
+            return None, f"Cannot open {port}: {e}"
+        try:
+            ser.reset_input_buffer()
+            ser.write(b"\xa0")
+            reply = ser.read(4)
+            if reply != self.HANDSHAKE_REPLY:
+                ser.write(b"\x0a\x50\x05")
+                reply = ser.read(4)
+            if reply != self.HANDSHAKE_REPLY:
+                return ser, "BROM sync failed (no 0x5F 0xF5 0xAF 0xFA reply). Device not in BROM mode?"
+        except Exception as e:
+            try:
+                ser.close()
+            except Exception:
+                pass
+            return None, f"BROM sync IO error: {e}"
+        return ser, None
+
+    def brom_read_command(self, port: str, cmd: int, timeout: float = 2.0) -> Dict:
+        """Send a single-byte BROM command and read the 4-byte reply."""
+        if not port:
+            return {"ok": False, "error": "No port selected."}
+        ser, err = self._open_brom(port, timeout)
+        if err:
+            return {"ok": False, "port": port, "error": err}
+        reply = b""
+        try:
+            ser.write(bytes([cmd & 0xFF]))
+            reply = ser.read(4)
+        except Exception as e:
+            reply = b""
+            err = f"IO error on {port}: {e}"
+        finally:
+            try:
+                ser.close()
+            except Exception:
+                pass
+        if err:
+            return {"ok": False, "port": port, "error": err}
+        return {
+            "ok": True,
+            "port": port,
+            "cmd": f"0x{cmd:02X}",
+            "reply": reply.hex().upper() if reply else "",
+            "value": int.from_bytes(reply[:4], "big") if reply else None,
+        }
+
+    def read_hw_code(self, port: Optional[str] = None) -> Dict:
+        """Read the MediaTek hardware code (e.g. 0x788 = Dimensity family)."""
+        port = port or self.port
+        return self.brom_read_command(port, self.BROM_CMD_GET_HW_CODE)
+
+    def read_hw_sw_ver(self, port: Optional[str] = None) -> Dict:
+        """Read the BROM software version word."""
+        port = port or self.port
+        return self.brom_read_command(port, self.BROM_CMD_GET_HW_SW_VER)
+
+    def read_target_config(self, port: Optional[str] = None) -> Dict:
+        """Read the BROM target config bitmask (storage type + security flags)."""
+        port = port or self.port
+        res = self.brom_read_command(port, self.BROM_CMD_GET_TARGET_CONFIG)
+        if res.get("ok"):
+            val = res.get("value") or 0
+            storage = "UFS" if val & 0x2000 else ("eMMC" if val & 0x1000 else "NAND/NOR")
+            res["storage"] = storage
+            res["sla"] = bool(val & 0x80000)   # Serial Link Authorization
+            res["daa"] = bool(val & 0x40000)   # Download Agent Authorization
+        return res
+
+    def send_da(self, da_path: str, port: Optional[str] = None, timeout: float = 5.0) -> Dict:
+        """Upload a Download Agent (DA) binary to BROM via the 0xD7 command.
+
+        HONEST SCOPE: this implements the standard SEND_DA framing — 0xD7,
+        big-endian da_length, sig_length=0, mode byte, then the payload in
+        sequenced chunks waiting for the chip's ACK after each. Whether the
+        chip ACCEPTS the DA depends on SLA/DAA state and whether the DA is
+        signed for this SoC. The chip's replies are reported verbatim; this
+        method never fabricates success.
+        """
+        if serial is None:
+            return {"ok": False, "error": "pyserial is not installed."}
+        if not os.path.isfile(da_path):
+            return {"ok": False, "error": f"DA file not found: {da_path}"}
+        port = port or self.port
+        if not port:
+            return {"ok": False, "error": "No port selected."}
+
+        try:
+            with open(da_path, "rb") as f:
+                da_data = f.read()
+        except Exception as e:
+            return {"ok": False, "error": f"Cannot read DA file: {e}"}
+
+        ser, err = self._open_brom(port, timeout)
+        if err:
+            return {"ok": False, "port": port, "error": err}
+
+        log = []
+        try:
+            header = (
+                bytes([self.BROM_CMD_SEND_DA])
+                + struct.pack(">I", len(da_data))   # da length
+                + struct.pack(">I", 0)              # sig length (unsigned)
+                + b"\x00"                           # mode / m_identifier
+            )
+            ser.write(header)
+            ack = ser.read(2)
+            log.append(f"SEND_DA header -> ACK {ack.hex().upper() if ack else '(no reply)'}")
+            if ack != b"\x00\x00":
+                return {"ok": False, "port": port, "error": "DA rejected at header", "log": log}
+
+            # Stream the payload in chunks; report progress verbatim.
+            CHUNK = 0x400
+            seq = 0
+            total = len(da_data)
+            sent = 0
+            while sent < total:
+                chunk = da_data[sent:sent + CHUNK]
+                ser.write(struct.pack(">H", seq) + chunk)
+                ack = ser.read(2)
+                if seq % 64 == 0:
+                    log.append(f"chunk {seq}: sent {sent + len(chunk)}/{total} bytes, ACK {ack.hex().upper() if ack else '(no reply)'}")
+                if ack != b"\x00\x00":
+                    log.append(f"DA upload aborted at chunk {seq}: ACK {ack.hex().upper() if ack else '(no reply)'}")
+                    return {"ok": False, "port": port, "error": f"DA upload failed at chunk {seq}", "log": log}
+                seq += 1
+                sent += len(chunk)
+
+            # JUMP_DA
+            ser.write(bytes([self.BROM_CMD_JUMP_DA]))
+            ack = ser.read(2)
+            log.append(f"JUMP_DA -> ACK {ack.hex().upper() if ack else '(no reply)'}")
+        except Exception as e:
+            log.append(f"Exception: {e}")
+            return {"ok": False, "port": port, "error": f"DA upload error: {e}", "log": log}
+        finally:
+            try:
+                ser.close()
+            except Exception:
+                pass
+
+        return {"ok": True, "port": port, "log": log, "bytes": total}

@@ -24,6 +24,7 @@ from core.payload_extractor import PayloadExtractor
 from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
+from core.device_matrix import SUPPORTED_DEVICE_CATALOG, find_device_matches
 from core.downloader import ensure_binaries
 from core.detection import run_full_detection, selectable_devices
 from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
@@ -243,9 +244,11 @@ class AndroidMultiToolApp:
         self.tab_debloat = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_testpoints = ttk.Frame(self.notebook, style="Card.TFrame")
         self.tab_connect = ttk.Frame(self.notebook, style="Card.TFrame")
+        self.tab_devices = ttk.Frame(self.notebook, style="Card.TFrame")
 
         self.notebook.add(self.tab_camon50, text=" Tecno Camon 50 (CN5c) ")
         self.notebook.add(self.tab_connect, text=" 🔌 Connection Guide ")
+        self.notebook.add(self.tab_devices, text=" Supported Devices ")
         self.notebook.add(self.tab_mtk, text=" ⚡ MTK BROM Flasher ")
         self.notebook.add(self.tab_frp, text=" FRP & Screen Lock ")
         self.notebook.add(self.tab_fastboot, text=" Fastboot Flasher ")
@@ -256,6 +259,7 @@ class AndroidMultiToolApp:
 
         self._build_tab_camon50()
         self._build_tab_connect()
+        self._build_tab_devices()
         self._build_tab_mtk()
         self._build_tab_info()
         self._build_tab_frp()
@@ -766,6 +770,66 @@ class AndroidMultiToolApp:
             tree.insert("", "end", values=(tp["brand"], tp["model"], tp["chipset"], tp["mode"], tp["instructions"]))
 
         tree.pack(fill="both", expand=True)
+
+    # ================= SUPPORTED DEVICES TAB =================
+
+    def _build_tab_devices(self):
+        f = self.tab_devices
+        f.columnconfigure(0, weight=1)
+        f.rowconfigure(1, weight=1)
+
+        header = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
+        header.grid(row=0, column=0, sticky="ew", padx=8, pady=(8, 0))
+
+        tk.Label(header, text="SUPPORTED DEVICE MATRIX", font=("Segoe UI", 11, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w")
+        tk.Label(header, text=f"{len(SUPPORTED_DEVICE_CATALOG)} categories | ADB, Fastboot, MTK BROM, EDL & test-point servicing",
+                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(2, 0))
+
+        search_row = tk.Frame(header, bg=C_CARD)
+        search_row.pack(fill="x", pady=(8, 0))
+        tk.Label(search_row, text="Search:", font=("Segoe UI", 9, "bold"), fg=C_TEXT_BODY, bg=C_CARD).pack(side="left", padx=(0, 6))
+        self.entry_device_search = ttk.Entry(search_row)
+        self.entry_device_search.pack(side="left", fill="x", expand=True)
+        self.entry_device_search.bind("<KeyRelease>", self._on_device_search)
+
+        body = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
+        body.grid(row=1, column=0, sticky="nsew", padx=8, pady=8)
+
+        cols = ("brand", "series", "models", "chipset")
+        self.tree_devices = ttk.Treeview(body, columns=cols, show="headings")
+        self.tree_devices.heading("brand", text="Brand")
+        self.tree_devices.heading("series", text="Series")
+        self.tree_devices.heading("models", text="Models")
+        self.tree_devices.heading("chipset", text="Chipset")
+        self.tree_devices.column("brand", width=100, stretch=False)
+        self.tree_devices.column("series", width=190, stretch=False)
+        self.tree_devices.column("models", width=360)
+        self.tree_devices.column("chipset", width=230)
+
+        vsb = ttk.Scrollbar(body, orient="vertical", command=self.tree_devices.yview)
+        self.tree_devices.configure(yscrollcommand=vsb.set)
+        self.tree_devices.pack(side="left", fill="both", expand=True)
+        vsb.pack(side="right", fill="y")
+
+        self._populate_device_tree("")
+
+    def _populate_device_tree(self, query: str):
+        self.tree_devices.delete(*self.tree_devices.get_children())
+        q = query.strip().lower()
+        for cat in SUPPORTED_DEVICE_CATALOG:
+            if q and not (
+                q in cat["brand"].lower()
+                or q in cat["series"].lower()
+                or any(q in m.lower() for m in cat["models"])
+                or q in cat["chipset"].lower()
+            ):
+                continue
+            self.tree_devices.insert("", "end", values=(
+                cat["brand"], cat["series"], ", ".join(cat["models"]), cat["chipset"]
+            ))
+
+    def _on_device_search(self, event=None):
+        self._populate_device_tree(self.entry_device_search.get())
 
     # ================= LOGGING & CONSOLE =================
 

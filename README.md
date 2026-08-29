@@ -40,6 +40,7 @@
   * Direct memory formatting of `frp` (offset `0x5A00000`) and `userdata` via MediaTek MT6878 Preloader port without cloud dongles.
 * **UFS 3.1 Hardware Partition Map**:
   * Complete partition table (`preloader_tecno_cn5c.bin`, `init_boot`, `vbmeta`, `super`, `nvram`, `nvdata`).
+  * A ready-to-use MTK-format scatter template for the CN5c ships with the app at `bin/scatter/tecno_camon50_pro_cn5c_scatter.txt` (replace template addresses with your firmware package's official scatter before flashing).
 
 ---
 
@@ -87,7 +88,7 @@ The interface is styled exclusively using **exactly 10 colors**:
 2. **Diagnostics**: Real-time read of parameters for `TECNO-CN5c`, Samsung, Xiaomi, etc.
 3. **Tecno Camon 50 Suite**: Preloader wipe, MDM disabler, Security Plugin remover, payload unpacker.
 4. **Process Tutorials**: 6 milestones with sequential next-step roadmap and dynamic jump buttons.
-5. **Supported Devices**: Searchable matrix of all major OEM chipsets and models.
+5. **Supported Devices**: Searchable matrix of all major OEM chipsets and models — available in **both** the desktop GUI (new tab) and the web suite.
 6. **MTK BROM Flasher**: Preloader DAA bypass, partition address plan for MT6878/Helio/Dimensity. Now with real serial-port enumeration (VID 0E8D) and BROM handshake probing.
 7. **Windows 11 Fixer**: Automated resolutions for Code 28, Transsion `0x2E04`, Core Isolation, USB 3.0 bugs.
 8. **Reboot Modes**: 8 power switches (System, Recovery, Fastboot, Fastbootd, EDL 9008, Download).

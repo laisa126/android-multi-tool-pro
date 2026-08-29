@@ -19,6 +19,8 @@ if os.path.isfile('bin/fastboot'):
     added_files.append(('bin/fastboot', 'bin'))
 if os.path.isdir('bin/drivers'):
     added_files.append(('bin/drivers', 'bin/drivers'))
+if os.path.isdir('bin/scatter'):
+    added_files.append(('bin/scatter', 'bin/scatter'))
 
 a = Analysis(
     ['app_gui.py'],
@@ -46,7 +48,12 @@ a = Analysis(
         'core.workflow_guide',
         'core.payload_extractor',
         'core.scatter_flasher',
-        'core.transsion_mdm'
+        'core.transsion_mdm',
+        'core.serial_ports',
+        'core.detection',
+        'core.connection_guide',
+        'serial',
+        'serial.tools.list_ports'
     ],
     hookspath=[],
     hooksconfig={},

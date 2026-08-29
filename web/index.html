@@ -2131,9 +2131,22 @@ build.bat</div>
         logLine(`Simulation mode: ${data.simulated ? "ON" : "OFF"}`, "log-white");
         const badge = document.getElementById("connSimBadge");
         if (badge) badge.textContent = data.simulated ? "⚠ SIMULATION MODE ON — showing simulated devices." : "● REAL DETECTION MODE — live device scan.";
+        refreshHeaderStatus();
       } catch (err) {
         logLine("Toggle failed: " + err, "log-red");
       }
+    }
+
+    async function refreshHeaderStatus() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+        const pill = document.getElementById("connState");
+        if (pill) {
+          pill.textContent = data.simulated ? "SIMULATION MODE" : "LIVE DETECTION READY";
+          pill.style.color = data.simulated ? "var(--c6-muted)" : "var(--c8-white)";
+        }
+      } catch (e) {}
     }
 
     async function readInfo() {
@@ -2662,6 +2675,7 @@ build.bat</div>
     window.addEventListener("DOMContentLoaded", () => {
       logLine("Android Multi-Tool Pro Monochrome Edition initialized.", "log-white");
       logLine("Device Profile: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
+      refreshHeaderStatus();
       loadCatalog();
       loadWorkflows();
       loadWin11Errors();

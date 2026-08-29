@@ -138,6 +138,102 @@ SUPPORTED_DEVICE_CATALOG = [
         "models": ["Realme C30 / C33", "Infinix Smart 7 / 8", "Tecno Pop 5 / 6 / 7", "Nokia C20 / C30 / G11 / G21", "itel A58 / A60 / S18"],
         "chipset": "Unisoc SC9863A / T606 / T610 / T612 / T616 / T700",
         "supported_ops": ["SPD Diag Port Reader", "Universal Fastboot Erase FRP", "PAC Firmware Flasher", "Userdata Wipe"]
+    },
+
+    # --- TECNO PHANTOM & CAMON 40 (FOLDABLES / 2025 FLAGSHIPS) ---
+    {
+        "brand": "Tecno",
+        "series": "Phantom & Camon 40 Series (Foldables & 2025 Flagships)",
+        "models": ["Phantom V Fold 2 / V Flip 2", "Phantom V2 Flip", "Camon 40 / 40 Pro / 40 Premier 5G", "Camon 30s / 30 Pro+"],
+        "chipset": "MediaTek Dimensity 9000+ / 8200 Ultimate / 7300 / Helio G100",
+        "supported_ops": ["MTK BROM FRP Wipe", "HiOS Bloatware Cleaner", "Fastbootd Super Flasher", "Magisk init_boot Root", "Userdata Format"]
+    },
+    {
+        "brand": "Tecno",
+        "series": "Pova & Spark 2025 Series",
+        "models": ["Pova 7 / 7 Pro 5G", "Spark 30 / 30 Pro / 30C", "Spark 20 Pro+"],
+        "chipset": "MediaTek Dimensity 7025 / Helio G100 / G85",
+        "supported_ops": ["MTK Preloader Format", "FRP Reset", "Fastboot Flasher", "HiOS Telemetry Removal"]
+    },
+
+    # --- INFINIX & ITEL ---
+    {
+        "brand": "Infinix",
+        "series": "Note, Zero & GT Series",
+        "models": ["Note 50 / 50 Pro 5G", "Zero 40 / 40 5G", "GT 20 Pro / GT 10 Pro", "Hot 50 / 50i"],
+        "chipset": "MediaTek Dimensity 8020 / 7200 / 7020 & Helio G100 / G99",
+        "supported_ops": ["MTK SLA Auth Skip", "XOS Bloatware Cleaner", "FRP Reset", "Fastbootd Flasher", "Magisk Root"]
+    },
+    {
+        "brand": "itel",
+        "series": "S & P Series (Transsion)",
+        "models": ["itel S24 / S24 Ultra", "itel P55 / P55+", "itel A70 / A80"],
+        "chipset": "Unisoc T606 / T612 & MediaTek Helio G85",
+        "supported_ops": ["SPD Diag Port Reader", "Fastboot FRP Erase", "PAC Firmware Flasher", "Userdata Wipe"]
+    },
+
+    # --- SAMSUNG 2024/2025 FLAGSHIPS & MIDRANGE ---
+    {
+        "brand": "Samsung",
+        "series": "Galaxy S24 / S25 & Foldables",
+        "models": ["Galaxy S25 / S25+ / S25 Ultra", "Galaxy S24 FE", "Galaxy Z Fold 6 / Z Flip 6"],
+        "chipset": "Snapdragon 8 Gen 3 / 8 Elite & Exynos 2400",
+        "supported_ops": ["ADB Diagnostics", "Odin Download Mode", "CSC Switch", "Knox Telemetry", "OneUI Debloat"]
+    },
+    {
+        "brand": "Samsung",
+        "series": "Galaxy A & M 2024-2025 Series",
+        "models": ["Galaxy A55 / A35 5G", "Galaxy A25 / A15", "Galaxy M55 / M35 5G"],
+        "chipset": "Exynos 1480 / 1380 / 1330",
+        "supported_ops": ["ADB Diagnostics", "Samsung Test Mode FRP", "EDL 9008 (QC models)", "Odin Flashing", "EFS Backup"]
+    },
+
+    # --- XIAOMI / REDMI / POCO 2024-2025 ---
+    {
+        "brand": "Xiaomi",
+        "series": "Redmi Note & K 2024-2025 Series",
+        "models": ["Redmi Note 14 / 14 Pro 5G", "Redmi Note 13 Pro+", "Redmi K80 / K80 Pro"],
+        "chipset": "Qualcomm Snapdragon 7s Gen 2 / 8 Gen 3 & MediaTek Dimensity 7300",
+        "supported_ops": ["Fastboot Flasher", "EDL 9008 Firehose", "MTK BROM Bypass", "HyperOS Debloat", "OEM Unlock"]
+    },
+    {
+        "brand": "Xiaomi",
+        "series": "POCO & Xiaomi Number Series",
+        "models": ["POCO X7 / X7 Pro", "POCO F7 / F7 Pro", "Xiaomi 15 / 15 Ultra", "Redmi 14C / 13C"],
+        "chipset": "Snapdragon 7+ Gen 3 / 8 Elite & MediaTek Dimensity 8400",
+        "supported_ops": ["Fastboot Partition Flash", "EDL 9008 Partition Erase", "Anti-Rollback Check", "SafetyNet Pass Helper"]
+    },
+
+    # --- MOTOROLA & GOOGLE 2024-2025 ---
+    {
+        "brand": "Motorola",
+        "series": "Moto G, Edge & Razr 2024-2025",
+        "models": ["Moto G75 / G85 / G100 5G", "Moto Edge 60 / Edge 60 Fusion", "Moto Razr 50 / 50 Ultra"],
+        "chipset": "Snapdragon 7 Gen 3 / 8 Gen 3 & MediaTek Dimensity 7300",
+        "supported_ops": ["Fastboot Sparse Flasher", "Fastboot FRP Erase", "OEM Unlock", "Blankflash EDL Unbrick"]
+    },
+    {
+        "brand": "Google",
+        "series": "Pixel 9 & Pixel 8 Series",
+        "models": ["Pixel 9 / 9 Pro / 9 Pro XL / 9 Pro Fold", "Pixel 8a"],
+        "chipset": "Google Tensor G4",
+        "supported_ops": ["Standard Fastboot Flasher", "OEM Bootloader Unlock", "Factory Image Sideload", "Magisk / KernelSU Root"]
+    },
+
+    # --- ONEPLUS & NOKIA / HMD ---
+    {
+        "brand": "OnePlus",
+        "series": "OnePlus 13 & Nord 2024-2025",
+        "models": ["OnePlus 13 / 13R", "OnePlus Nord 5 / Nord CE 5", "OnePlus Ace 5"],
+        "chipset": "Snapdragon 8 Elite / 8 Gen 3 & Dimensity 8350",
+        "supported_ops": ["Fastboot Flashing Unlock", "MSMDownloadTool EDL Helper", "Fastbootd Super Flasher", "Magisk Boot Root"]
+    },
+    {
+        "brand": "Nokia / HMD",
+        "series": "HMD Pulse & Nokia G / C Series",
+        "models": ["HMD Pulse / Pulse Pro", "Nokia G42 / G60", "Nokia C32 / C22"],
+        "chipset": "Unisoc T606 / T610 & Snapdragon 480+",
+        "supported_ops": ["SPD Diag Port Reader", "Fastboot FRP Erase", "PAC Firmware Flasher", "Userdata Wipe"]
     }
 ]
 

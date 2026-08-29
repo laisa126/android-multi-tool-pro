@@ -1,8 +1,8 @@
-"""
+""" 
 Android Multi-Tool Pro - MediaTek Scatter File Flasher Engine
 Specifically designed for Transsion Tecno Camon 50 Pro.
-NOTE: Camon 50 Pro 5G (CN7c) = MT6878 Dimensity 7400 Ultimate; Camon 50 Pro 4G
-(CN5c) = MT6789 Helio G200. The template scatter below targets the 5G (CN7c/MT6878).
+Variants: Camon 50 Pro 4G (CN5c) = MT6789 Helio G200 Ultimate (default target);
+          Camon 50 Pro 5G (CN7c) = MT6878 Dimensity 7400 Ultimate.
 Parses scatter.txt, maps UFS partition offsets, and orchestrates multi-partition flashing.
 """
 
@@ -51,9 +51,9 @@ class ScatterFlasher:
             return False, [], f"Scatter parse error: {e}"
 
     def build_tecno_camon50_partition_map(self) -> List[Dict[str, str]]:
-        """Default hardware partition map for Tecno Camon 50 Pro 5G (TECNO CN7c - UFS Storage)."""
+        """Default hardware partition map for Tecno Camon 50 Pro 4G (TECNO CN5c - UFS 2.2)."""
         return [
-            {"partition": "preloader", "file": "preloader_tecno_cn7c.bin", "target": "UFS Boot1"},
+            {"partition": "preloader", "file": "preloader_tecno_cn5c.bin", "target": "UFS Boot1"},
             {"partition": "init_boot", "file": "init_boot.img", "target": "Android 15/16 Kernel Ramdisk"},
             {"partition": "boot", "file": "boot.img", "target": "Kernel & Drivers"},
             {"partition": "vbmeta", "file": "vbmeta.img", "target": "AVB 2.0 Security Header"},
@@ -65,11 +65,31 @@ class ScatterFlasher:
         ]
 
     # ------------------------------------------------------------------
-    # Tecno Camon 50 Pro 5G (CN7c) scatter file generation
+    # Tecno Camon 50 Pro scatter file generation (variant-aware)
     # ------------------------------------------------------------------
+    CAMON50_VARIANTS: Dict[str, Dict[str, str]] = {
+        "cn5c": {
+            "label": "Tecno Camon 50 Pro 4G (TECNO-CN5c)",
+            "platform": "MT6789",
+            "platform_desc": "MT6789 (Helio G200 Ultimate)",
+            "project": "tecno_cn5c",
+            "preloader": "preloader_tecno_cn5c.bin",
+            "storage": "UFS 2.2",
+        },
+        "cn7c": {
+            "label": "Tecno Camon 50 Pro 5G (TECNO-CN7c)",
+            "platform": "MT6878",
+            "platform_desc": "MT6878 (Dimensity 7400 Ultimate)",
+            "project": "tecno_cn7c",
+            "preloader": "preloader_tecno_cn7c.bin",
+            "storage": "UFS 3.1",
+        },
+    }
+
     TECNO_CAMON50_SCATTER_LAYOUT: List[Tuple[str, str, int, int]] = [
         # (partition_name, file_name, linear_start_addr, partition_size)
-        ("preloader",      "preloader_tecno_cn7c.bin", 0x0,         0x400000),
+        # "__PRELOADER__" is substituted with the variant's preloader file name.
+        ("preloader",      "__PRELOADER__",            0x0,         0x400000),
         ("init_boot",      "init_boot.img",            0x400000,    0x800000),
         ("boot",           "boot.img",                 0x1000000,   0x2000000),
         ("recovery",       "recovery.img",             0x3000000,   0x2000000),
@@ -92,17 +112,22 @@ class ScatterFlasher:
     @staticmethod
     def default_scatter_output_path() -> str:
         base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        return os.path.join(base, "bin", "scatter", "tecno_camon50_pro_5g_cn7c_scatter.txt")
+        return os.path.join(base, "bin", "scatter", "tecno_camon50_pro_4g_cn5c_scatter.txt")
 
-    def generate_tecno_camon50_scatter(self, output_path: Optional[str] = None) -> Tuple[bool, str]:
-        """Write a real MTK-format scatter file for Tecno Camon 50 Pro 5G (CN7c).
+    def generate_tecno_camon50_scatter(self, output_path: Optional[str] = None,
+                                       variant: str = "cn5c") -> Tuple[bool, str]:
+        """Write a real MTK-format scatter file for Tecno Camon 50 Pro.
 
-        The file is parseable by ScatterFlasher.parse_scatter() and serves as the
-        canonical CN7c (MT6878) partition template. Addresses are a template — replace
-        with the firmware package's official scatter for production flashing.
-        The 4G (CN5c / MT6789) variant needs the scatter from its own firmware package.
+        Default variant is CN5c (4G, MT6789 — the primary target). Pass variant="cn7c"
+        for the 5G (MT6878) template. Addresses are a template — replace with the
+        firmware package's official scatter for production flashing.
         """
-        path = output_path or self.default_scatter_output_path()
+        info = self.CAMON50_VARIANTS.get(variant, self.CAMON50_VARIANTS["cn5c"])
+        if output_path is None:
+            base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            output_path = os.path.join(base, "bin", "scatter",
+                                       f"tecno_camon50_pro_{'5g_cn7c' if variant == 'cn7c' else '4g_cn5c'}_scatter.txt")
+        path = output_path
         try:
             os.makedirs(os.path.dirname(path), exist_ok=True)
         except Exception:
@@ -111,17 +136,16 @@ class ScatterFlasher:
         lines = []
         lines.append("###############################################################################")
         lines.append("##  Android Multi-Tool Pro — MediaTek Scatter File")
-        lines.append("##  Project : Tecno Camon 50 Pro 5G (TECNO-CN7c)")
-        lines.append("##  Platform: MT6878 (Dimensity 7400 Ultimate) | Storage: UFS 3.1")
+        lines.append(f"##  Project : {info['label']}")
+        lines.append(f"##  Platform: {info['platform_desc']} | Storage: {info['storage']}")
         lines.append("##  NOTE: template addresses — replace with firmware-provided scatter to flash.")
-        lines.append("##  NOTE: CN5c (4G) is Helio G200 / MT6789 — use that variant's own firmware scatter.")
         lines.append("###############################################################################")
         lines.append("")
         lines.append("- general: MTK_PLATFORM_CFG")
         lines.append("  info:")
         lines.append("    - config_version: V1.1.2")
-        lines.append("      platform: MT6878")
-        lines.append("      project: tecno_cn7c")
+        lines.append(f"      platform: {info['platform']}")
+        lines.append(f"      project: {info['project']}")
         lines.append("      storage: UFS")
         lines.append("      boot_channel: MSDC_0")
         lines.append("      block_size: 0x200000")
@@ -132,6 +156,8 @@ class ScatterFlasher:
         lines.append("")
 
         for idx, (name, fname, addr, size) in enumerate(self.TECNO_CAMON50_SCATTER_LAYOUT):
+            if fname == "__PRELOADER__":
+                fname = info["preloader"]
             lines.append(f"- partition_index: SYS{idx}")
             lines.append(f"  partition_name: {name}")
             lines.append(f"  file_name: {fname}")
@@ -156,7 +182,7 @@ class ScatterFlasher:
             return False, f"Failed writing scatter file: {e}"
 
     def verify_tecno_camon50_scatter(self) -> Dict[str, any]:
-        """Verify the CN7c scatter file exists and parses cleanly."""
+        """Verify the CN5c scatter file exists and parses cleanly."""
         path = self.default_scatter_output_path()
         result = {
             "path": path,

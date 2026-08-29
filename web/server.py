@@ -44,13 +44,13 @@ transsion_mdm = TranssionMDMEngine(adb)
 device_presets = {
     "tecno": {
         "brand": "Tecno Mobile (Transsion)",
-        "model": "Camon 50 Pro 5G (TECNO-CN5c)",
+        "model": "Camon 50 Pro 4G (TECNO-CN5c)",
         "device": "TECNO-CN5c",
         "android_version": "16 (HiOS 16)",
         "sdk_level": "36",
-        "build_id": "CN5c-H932A-U-GL-260315V120",
+        "build_id": "CN5c-H8924-U-GL-260315V120",
         "security_patch": "2026-04-05",
-        "cpu_abi": "arm64-v8a (MediaTek Dimensity 7400 Ultimate 4nm)",
+        "cpu_abi": "arm64-v8a (MediaTek Helio G200 Ultimate 6nm)",
         "battery_level": "96% (6500 mAh)",
         "root_status": "No (SELinux Enforcing)"
     },

@@ -1,15 +1,15 @@
 ###############################################################################
 ##  Android Multi-Tool Pro — MediaTek Scatter File
-##  Project : Tecno Camon 50 Pro 5G (TECNO-CN7c)
-##  Platform: MT6878 (Dimensity 7400 Ultimate) | Storage: UFS 3.1
+##  Project : Tecno Camon 50 Pro 4G (TECNO-CN5c)
+##  Platform: MT6789 (Helio G200 Ultimate) | Storage: UFS 2.2
 ##  NOTE: template addresses — replace with firmware-provided scatter to flash.
 ###############################################################################
 
 - general: MTK_PLATFORM_CFG
   info:
     - config_version: V1.1.2
-      platform: MT6878
-      project: tecno_cn7c
+      platform: MT6789
+      project: tecno_cn5c
       storage: UFS
       boot_channel: MSDC_0
       block_size: 0x200000
@@ -20,7 +20,7 @@
 
 - partition_index: SYS0
   partition_name: preloader
-  file_name: preloader_tecno_cn7c.bin
+  file_name: preloader_tecno_cn5c.bin
   is_download: true
   type: NORMAL_ROM
   linear_start_addr: 0x0

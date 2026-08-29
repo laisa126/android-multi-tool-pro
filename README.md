@@ -39,8 +39,8 @@
 * **Preloader DAA / SLA Bypass & BROM Memory Format**:
   * Direct memory formatting of `frp` (offset `0x5A00000`) and `userdata` via MediaTek MT6878 Preloader port without cloud dongles.
 * **UFS 3.1 Hardware Partition Map**:
-  * Complete partition table (`preloader_tecno_cn7c.bin`, `init_boot`, `vbmeta`, `super`, `nvram`, `nvdata`).
-  * A ready-to-use MTK-format scatter template for the CN7c ships with the app at `bin/scatter/tecno_camon50_pro_5g_cn7c_scatter.txt` (replace template addresses with your firmware package's official scatter before flashing). The 4G CN5c (Helio G200 / MT6789) needs its own firmware scatter.
+  * Complete partition table (`preloader_tecno_cn5c.bin`, `init_boot`, `vbmeta`, `super`, `nvram`, `nvdata`).
+  * A ready-to-use MTK-format scatter template for the CN5c (4G, Helio G200 / MT6789) ships with the app at `bin/scatter/tecno_camon50_pro_4g_cn5c_scatter.txt`, plus a CN7c (5G, MT6878) template at `bin/scatter/tecno_camon50_pro_5g_cn7c_scatter.txt` (replace template addresses with your firmware package's official scatter before flashing).
 
 ---
 

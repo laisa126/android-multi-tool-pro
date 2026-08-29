@@ -229,8 +229,8 @@ class AndroidMultiToolApp:
         # 1b. Hardware Status Diagnostics Strip
         hw_strip = tk.Frame(self.root, bg=C_BORDER, padx=10, pady=3)
         hw_strip.pack(fill="x", padx=15, pady=(0, 4))
-        tk.Label(hw_strip, text="TARGET: MediaTek MT6878 (Dimensity 7400 Ultimate)", font=("Segoe UI", 8, "bold"), fg=C_WHITE, bg=C_BORDER).pack(side="left")
-        tk.Label(hw_strip, text=" | TECNO-CN5c (Camon 50 Pro 5G) | UFS 3.1 | Android 16 (HiOS 16)", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_BORDER).pack(side="left")
+        tk.Label(hw_strip, text="TARGET: MediaTek MT6789 (Helio G200 Ultimate)", font=("Segoe UI", 8, "bold"), fg=C_WHITE, bg=C_BORDER).pack(side="left")
+        tk.Label(hw_strip, text=" | TECNO-CN5c (Camon 50 Pro 4G) | UFS 2.2 | Android 16 (HiOS 16)", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_BORDER).pack(side="left")
         self.lbl_conn_state = tk.Label(hw_strip, text="● NOT CONNECTED", font=("Segoe UI", 8, "bold"), fg=C_RED, bg=C_BORDER)
         self.lbl_conn_state.pack(side="left", padx=(16, 0))
         tk.Label(hw_strip, text="SECURITY: AVB 2.0 ENFORCING", font=("Segoe UI", 8, "bold"), fg=C_GREEN, bg=C_BORDER).pack(side="right")
@@ -441,8 +441,8 @@ class AndroidMultiToolApp:
         tk.Label(chip_box, text="Target MediaTek Chipset (SoC):", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         self.combo_mtk_soc = ttk.Combobox(chip_box, values=[
-            "MT6878 - Dimensity 7400 Ultimate (Tecno Camon 50 Pro 5G / CN5c)",
-            "MT6789 - Helio G99 / Helio G200 (Tecno Camon 50 / Camon 30)",
+            "MT6789 - Helio G200 Ultimate (Tecno Camon 50 Pro 4G / CN5c)",
+            "MT6878 - Dimensity 7400 Ultimate (Tecno Camon 50 Pro 5G / CN7c)",
             "MT6895 - Dimensity 8200 / 8300 (Camon 30 Pro 5G / Premier)",
             "MT6877 - Dimensity 900 / 1080 / 7050 (Infinix Zero / Note 30)",
             "MT6833 - Dimensity 700 / 6020 (Samsung A14 5G, POCO M3 Pro)",
@@ -468,7 +468,7 @@ class AndroidMultiToolApp:
 
         self.mtk_op_var = tk.StringVar(value="frp")
         ops = [
-            ("Wipe FRP Partition (Offset 0x5A00000 - Camon 50 Pro)", "frp"),
+            ("Wipe FRP Partition (offset from firmware scatter - Camon 50 Pro)", "frp"),
             ("Factory Reset (Userdata Wipe - Clears All Screen Locks)", "userdata"),
             ("Bypass MediaTek DAA / SLA Authentication (SRAM Exploit)", "auth_bypass"),
             ("Backup NVRAM Baseband Calibration (IMEI Protection)", "nvram"),
@@ -522,10 +522,10 @@ class AndroidMultiToolApp:
             "4. AUTOMATIC HANDSHAKE:\n"
             "   - Windows will detect 'MediaTek Preloader USB VCOM' or 'MTK USB Port'.\n"
             "   - AMT Pro sends the sync handshake (0xA0 0x0A 0x50 0x05) within 2.5 seconds, disengages DAA/SLA authorization, and formats the selected partition directly on UFS storage!\n\n"
-            "■ UFS MEMORY OFFSETS (DIMENSITY 7400):\n"
-            "   - frp: 0x5A00000 (1 MB)\n"
-            "   - userdata: 0xD000000 (Encrypted user data)\n"
-            "   - nvram: 0x1800000 (Baseband / IMEI calibrations)"
+            "■ UFS MEMORY OFFSETS (HELIO G200 / MT6789 - from firmware scatter):\n"
+            "   - frp: from CN5c firmware scatter (do not hardcode)\n"
+            "   - userdata: Encrypted user data (wipe clears all screen locks)\n"
+            "   - nvram / nvdata: Baseband / IMEI calibrations (backup first)"
         )
 
         txt_info = tk.Text(guide_card, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 8), wrap="word", relief="flat")

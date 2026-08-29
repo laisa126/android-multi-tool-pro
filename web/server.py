@@ -354,43 +354,55 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({"success": ok, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
 
         elif action == "mtk_brom_format":
-            soc = req.get("soc", "MT6878")
+            soc = req.get("soc", "MT6789")
             part = req.get("partition", "frp")
-            plan = mtk.format_partition_plan(part)
             wf = "FACTORY_RESET_COMPLETE" if part == "userdata" else "FRP_BYPASS_COMPLETE"
+            cmd_map = {
+                "frp": ["e", "frp"],
+                "userdata": ["e", "metadata,userdata,md_udc"],
+                "metadata": ["e", "metadata,md_udc"],
+                "misc": ["e", "misc"],
+            }
+            args = cmd_map.get(part, ["e", part])
             if mock_state["simulated"]:
-                logs = [
-                    f"Connecting to MediaTek BROM / Preloader on Windows 11...",
-                    f"Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]",
-                    f"Hardware Chipset: MediaTek {soc} (Dimensity 7400 Ultimate / Helio G200)",
-                    f"Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...",
-                    f"Authorization BYPASSED! Direct memory channel opened.",
-                    f"Formatting partition '{part}' at offset 0x{plan['address']:X} (Length: 0x{plan['length']:X})...",
-                    f"Writing zero blocks to UFS storage... OKAY [0.15s]",
-                    f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!"
-                ]
                 time.sleep(0.15)
-                self.send_json_response({"success": True, "workflow": wf, "logs": logs})
+                self.send_json_response({
+                    "success": True,
+                    "workflow": wf,
+                    "logs": [
+                        f"[SIMULATED] Real command would be: mtk {' '.join(args)}",
+                        "Simulation Mode: no real device operation was performed."
+                    ]
+                })
+                return
+            if not mtk.mtkclient_available():
+                self.send_json_response({
+                    "success": False,
+                    "workflow": wf,
+                    "logs": [
+                        "mtkclient is NOT installed — no real erase can run.",
+                        "Install it (free):  pip install mtkclient",
+                        "  or: git clone https://github.com/bkerler/mtkclient && pip install -r requirements.txt",
+                        "Camon 50 Pro 4G (MT6789 / Helio G200): mtkclient works out of the box, no auth file needed."
+                    ]
+                })
                 return
             logs = []
-            ports = mtk.detect_ports().get("mtk", [])
-            if not ports:
-                logs.append("No MediaTek BROM/Preloader port found.")
-                logs.append("Power the phone OFF, hold Vol Up + Vol Down, plug USB into a USB 2.0 port.")
-                self.send_json_response({"success": False, "workflow": wf, "logs": logs})
-                return
-            port = ports[0]["port"]
-            logs.append(f"Found MediaTek port: {port} ({ports[0].get('description','')})")
-            probe = mtk.probe_port(port)
-            if probe.get("ok"):
-                logs.append(f"Handshake CONFIRMED on {port} (reply {probe.get('reply','')})")
-                logs.append(f"Target partition '{part}' at offset 0x{plan['address']:X}.")
-                logs.append("NOTE: the direct BROM write channel is not implemented yet — no blocks were written.")
-                logs.append("Use SP Flash Tool / MTK client with the DA bypass for the actual erase.")
-                self.send_json_response({"success": False, "workflow": wf, "logs": logs, "handshake": True})
+            logs.append(f"MediaTek BROM wipe of '{part}' (chip {soc}) via mtkclient...")
+            if soc.startswith("MT6878"):
+                da = req.get("loader", "")
+                if da:
+                    args += ["--loader", da]
+                else:
+                    logs.append("MT6878 (Dimensity 7300/7400) protected units need a signed DA + auth file — free mtkclient may stop at 'Auth file is required'.")
+            logs.append("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.")
+            ok, tail = mtk.run_mtkclient(args, log_cb=lambda line, lvl="info": logs.append(line))
+            if ok:
+                logs.append("Wipe complete — " + tail)
             else:
-                logs.append(f"Handshake failed on {port}: {probe.get('error','no reply')}")
-                self.send_json_response({"success": False, "workflow": wf, "logs": logs})
+                logs.append("Wipe failed — " + tail)
+                logs.append("Check: MTK VCOM driver installed, USB 2.0 port, phone fully OFF, buttons held until handshake.")
+            self.send_json_response({"success": ok, "workflow": wf, "logs": logs})
 
         elif action == "extract_payload":
             time.sleep(0.15)

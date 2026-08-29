@@ -283,20 +283,33 @@ class AndroidMultiToolApp:
                 btn.pack(fill="x", padx=6, pady=1)
                 self._nav_buttons[key] = btn
 
-        # --- Right workspace (tab frames) ---
+        # --- Right workspace: scrollable canvas hosting the tab frames ---
         self.content = tk.Frame(self.content_shell, bg=C_CARD)
         self.content.pack(side="left", fill="both", expand=True)
 
-        self.tab_camon50 = tk.Frame(self.content, bg=C_CARD)
-        self.tab_mtk = tk.Frame(self.content, bg=C_CARD)
-        self.tab_info = tk.Frame(self.content, bg=C_CARD)
-        self.tab_frp = tk.Frame(self.content, bg=C_CARD)
-        self.tab_fastboot = tk.Frame(self.content, bg=C_CARD)
-        self.tab_reboot = tk.Frame(self.content, bg=C_CARD)
-        self.tab_debloat = tk.Frame(self.content, bg=C_CARD)
-        self.tab_testpoints = tk.Frame(self.content, bg=C_CARD)
-        self.tab_connect = tk.Frame(self.content, bg=C_CARD)
-        self.tab_devices = tk.Frame(self.content, bg=C_CARD)
+        self._workspace_canvas = tk.Canvas(self.content, bg=C_CARD, highlightthickness=0, borderwidth=0)
+        self._workspace_vbar = ttk.Scrollbar(self.content, orient="vertical", command=self._workspace_canvas.yview)
+        self._workspace_canvas.configure(yscrollcommand=self._workspace_vbar.set)
+        self._workspace_vbar.pack(side="right", fill="y")
+        self._workspace_canvas.pack(side="left", fill="both", expand=True)
+
+        self._tab_host = tk.Frame(self._workspace_canvas, bg=C_CARD)
+        self._canvas_window = self._workspace_canvas.create_window((0, 0), window=self._tab_host, anchor="nw")
+        self._tab_host.bind("<Configure>", lambda e: self._workspace_canvas.configure(
+            scrollregion=self._workspace_canvas.bbox("all")))
+        self._workspace_canvas.bind("<Configure>", lambda e: self._workspace_canvas.itemconfigure(
+            self._canvas_window, width=e.width))
+
+        self.tab_camon50 = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_mtk = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_info = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_frp = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_fastboot = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_reboot = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_debloat = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_testpoints = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_connect = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_devices = tk.Frame(self._tab_host, bg=C_CARD)
 
         self._tab_frames = {
             "camon50": self.tab_camon50,
@@ -364,6 +377,54 @@ class AndroidMultiToolApp:
         self.txt_console.tag_config("warning", foreground=C_WHITE)
         self.txt_console.tag_config("error", foreground=C_RED)
         self.txt_console.tag_config("muted", foreground=C_TEXT_MUTED)
+
+        # Mouse-wheel scrolling for the workspace canvas (console/treeviews keep native scroll)
+        self._bind_mousewheel()
+
+    def _bind_mousewheel(self):
+        """Bind the mouse wheel so it scrolls the workspace canvas under the pointer."""
+        def _on_wheel(event):
+            w = self.root.winfo_containing(event.x_root, event.y_root)
+            if w is None:
+                return
+            # Walk up: if the pointer is over a natively-scrolling widget (Text,
+            # Treeview, Listbox), let that widget scroll instead of the canvas.
+            cur = w
+            while cur is not None and cur is not self._tab_host:
+                if isinstance(cur, (tk.Text, ttk.Treeview, tk.Listbox)):
+                    return
+                cur = getattr(cur, "master", None)
+            if cur is None:
+                return  # pointer not inside the scrollable workspace
+            delta = getattr(event, "delta", 0)
+            if delta:
+                step = -1 if delta > 0 else 1
+            else:
+                step = -1 if getattr(event, "num", 0) == 4 else 1
+            self._workspace_canvas.yview_scroll(step, "units")
+
+        for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            self.root.bind_all(seq, _on_wheel, add="+")
+
+        # Linux (X11) reports the wheel as Button-4/Button-5 and Tk does NOT
+        # auto-scroll Text/Listbox/Treeview for those events. Add class-level
+        # bindings so every scrollable widget rolls under the wheel on Linux.
+        # (Windows/macOS already use <MouseWheel> natively; these are no-ops.)
+        def _wheel_text(event):
+            event.widget.yview_scroll(-1 if getattr(event, "num", 0) == 4 else 1, "units")
+            return "break"
+
+        def _wheel_listbox(event):
+            event.widget.yview_scroll(-1 if getattr(event, "num", 0) == 4 else 1, "units")
+            return "break"
+
+        def _wheel_tree(event):
+            event.widget.yview_scroll(-1 if getattr(event, "num", 0) == 4 else 1, "units")
+            return "break"
+
+        for cls, fn in (("Text", _wheel_text), ("Listbox", _wheel_listbox), ("Treeview", _wheel_tree)):
+            self.root.bind_class(cls, "<Button-4>", fn, add="+")
+            self.root.bind_class(cls, "<Button-5>", fn, add="+")
 
     def show_tab(self, key: str):
         """Switch the visible workspace pane (UnlockTool-style sidebar nav)."""
@@ -471,7 +532,7 @@ class AndroidMultiToolApp:
 
         b_row1 = tk.Frame(brom_box, bg=C_SUBCARD)
         b_row1.pack(fill="x", pady=3)
-        ttk.Button(b_row1, text="Wipe FRP (MT6878)", style="Danger.TButton", command=lambda: self.mtk_brom_wipe("frp")).pack(side="left", padx=(0, 5))
+        ttk.Button(b_row1, text="Wipe FRP (BROM)", style="Danger.TButton", command=lambda: self.mtk_brom_wipe("frp")).pack(side="left", padx=(0, 5))
         ttk.Button(b_row1, text="Factory Reset (Userdata)", style="Danger.TButton", command=lambda: self.mtk_brom_wipe("userdata")).pack(side="left", padx=3)
 
         # Baseband / NVRAM Backup Box
@@ -1467,33 +1528,35 @@ class AndroidMultiToolApp:
         self._run_threaded(task, "Purge Device Owner XML (Root)")
 
     def mtk_brom_wipe(self, part: str):
-        if not messagebox.askyesno("Confirm Erase", f"Proceed with direct MediaTek BROM / Preloader format of '{part}'?"):
+        if not messagebox.askyesno("Confirm Erase", f"Proceed with a REAL MediaTek BROM wipe of '{part}' via mtkclient?\n\n"
+                                                    "This will erase data on the phone (screen locks / FRP)."):
             return
 
+        cmd_map = {
+            "frp": ["e", "frp"],
+            "userdata": ["e", "metadata,userdata,md_udc"],
+            "metadata": ["e", "metadata,md_udc"],
+            "misc": ["e", "misc"],
+        }
+        args = cmd_map.get(part, ["e", part])
+
         def task():
-            self.log(f"Connecting to MediaTek MT6878 (Dimensity 7400) Preloader port...", "info")
+            self.log(f"MediaTek BROM wipe of '{part}' (Camon 50 Pro 4G · MT6789) via mtkclient...", "info")
             if self.simulated_mode.get():
                 time.sleep(0.8)
-                self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "info")
-                self.log("Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...", "warning")
-                self.log("Authorization BYPASSED! Direct memory channel opened.", "success")
-                self.log(f"Partition '{part}' successfully erased (SIMULATED).", "success")
+                self.log(f"Simulation Mode: no real erase. Real command:  mtk {' '.join(args)}", "warning")
                 return
-
-            port = self._mtk_resolve_port()
-            if not port:
-                self.log("No MediaTek Preloader/BROM port found.", "warning")
-                self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+            if not self.mtk.mtkclient_available():
+                self.log("mtkclient is NOT installed — no real erase can run.", "error")
+                self.log("Install (free):  pip install mtkclient", "warning")
                 return
-            probe = self.mtk.probe_port(port)
-            if not probe.get("ok"):
-                self.log(f"Handshake failed on {port}: {probe.get('error','no reply')}", "error")
-                self.log("Check: phone fully OFF, VCOM driver installed, USB 2.0 port, buttons held until handshake.", "warning")
-                return
-            self.log(f"Handshake CONFIRMED on {port} (reply {probe.get('reply','')})", "success")
-            self.log(
-                f"NOTE: direct BROM write channel for '{part}' is not implemented yet — no blocks were written. "
-                "Use the MTK BROM Flasher tab once the write channel is available.", "warning")
+            self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+            ok, tail = self.mtk.run_mtkclient(args, log_cb=lambda line, lvl="info": self.log(line, lvl))
+            if ok:
+                self.log(f"Wipe complete — {tail}", "success")
+            else:
+                self.log(f"Wipe failed: {tail}", "error")
+                self.log("Check: MTK VCOM driver, USB 2.0 port, phone fully OFF, buttons held until handshake.", "warning")
 
         self._run_threaded(task, f"Preloader BROM Wipe ({part})")
 
@@ -1599,51 +1662,59 @@ class AndroidMultiToolApp:
     def run_selected_mtk_brom(self):
         op = self.mtk_op_var.get()
         soc_full = self.combo_mtk_soc.get()
-        soc = soc_full.split()[0] if soc_full else "MT6878"
+        soc = soc_full.split()[0] if soc_full else "MT6789"
+
+        # Map each BROM action to a real mtkclient command (the proven free path).
+        op_commands = {
+            "frp": ["e", "frp"],
+            "userdata": ["e", "metadata,userdata,md_udc"],
+            "auth_bypass": ["payload"],
+            "nvram": ["r", "nvram", "nvram_backup.bin"],
+            "nvdata": ["r", "nvdata", "nvdata_backup.bin"],
+        }
+        op_desc = {
+            "frp": "wipe FRP (Google account lock)",
+            "userdata": "factory reset + clear all screen locks",
+            "auth_bypass": "run the SLA/DAA bypass payload",
+            "nvram": "backup nvram (IMEI / radio calibration)",
+            "nvdata": "backup nvdata (dynamic calibration)",
+        }
 
         def task():
-            self.log(f"Initializing MediaTek BROM / Preloader Engine for {soc}...", "warning")
-            self.log("Waiting for device handshake... (Hold Vol Up + Vol Down and connect USB)", "info")
+            self.log(f"MediaTek BROM operation: {op_desc.get(op, op)} — chip {soc}", "info")
 
             if self.simulated_mode.get():
-                self.log("Simulation Mode: skipping real serial handshake.", "warning")
-                time.sleep(1)
-                self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "success")
-            else:
-                port = self._mtk_resolve_port()
-                if not port:
-                    self.log("No MediaTek Preloader/BROM port found.", "warning")
-                    self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
-                    return
-                probe = self.mtk.probe_port(port)
-                if probe.get("ok"):
-                    self.log(f"Handshake CONFIRMED on {port} (reply {probe.get('reply','')})", "success")
-                else:
-                    self.log(f"Handshake failed on {port}: {probe.get('error','no reply')}", "error")
-                    self.log("Check: phone fully OFF, VCOM driver installed, USB 2.0 port, buttons held until handshake.", "warning")
-                    return
-
-            self.log(f"Chipset ID: MediaTek {soc} (Dimensity / Helio Architecture)", "info")
-            self.log("Transsion DAA/SLA Security Bypass: Disengaging boot auth in SRAM...", "warning")
-            time.sleep(0.5)
-            self.log("Authorization BYPASSED! Direct memory channel opened.", "success")
-
-            if op == "auth_bypass":
-                self.log("SRAM handshake complete. Device ready for SP Flash Tool or partition writes.", "success")
-            elif op == "frp":
-                plan = self.mtk.format_partition_plan("frp")
-                self.log(f"Formatting partition 'frp' at offset 0x{plan['address']:X} (Length: 0x{plan['length']:X})...", "info")
-                time.sleep(0.6)
-                self.log("Zero blocks written to UFS storage. FRP Partition successfully wiped!", "success")
-            elif op == "userdata":
-                plan = self.mtk.format_partition_plan("userdata")
-                self.log(f"Formatting partition 'userdata' at offset 0x{plan['address']:X}...", "info")
-                time.sleep(1)
-                self.log("Userdata erased. All PIN/Pattern locks and admin apps cleared!", "success")
-            elif op in ["nvram", "nvdata"]:
-                self.log(f"Dumping MTK baseband calibration '{op}' from UFS...", "info")
                 time.sleep(0.8)
-                self.log(f"Modem calibration '{op}' backed up successfully to PC!", "success")
+                self.log("Simulation Mode: no real device operation was performed.", "warning")
+                self.log(f"Real command would be:  mtk {' '.join(op_commands.get(op, ['e','frp']))}", "info")
+                return
+
+            if not self.mtk.mtkclient_available():
+                self.log("mtkclient is NOT installed — the built-in formatter cannot erase partitions on its own.", "error")
+                self.log("It is the free tool that performs the real MediaTek exploit. Install it:", "warning")
+                self.log("    pip install mtkclient", "warning")
+                self.log("  or: git clone https://github.com/bkerler/mtkclient && pip install -r requirements.txt", "warning")
+                self.log("For the Camon 50 Pro 4G (MT6789 / Helio G200) no auth file is needed — mtkclient works out of the box.", "info")
+                return
+
+            args = list(op_commands.get(op, ["e", "frp"]))
+            if soc.startswith("MT6878"):
+                self.log("MT6878 (Dimensity 7300/7400) needs a signed DA + auth file on protected units.", "warning")
+                da = (self.entry_da_path.get() or "").strip()
+                if da:
+                    args += ["--loader", da]
+                else:
+                    self.log("No DA selected — a protected MT6878 will stop at 'Auth file is required'.", "warning")
+
+            self.log("Connecting via mtkclient — power the phone OFF, hold Vol Up + Vol Down, then plug USB.", "warning")
+            ok, tail = self.mtk.run_mtkclient(args, log_cb=lambda line, lvl="info": self.log(line, lvl))
+            if ok:
+                self.log(f"mtkclient finished OK — {tail}", "success")
+                self.log("If the phone was lock-screen protected, it will now boot to setup (data wiped).", "success")
+            else:
+                self.log(f"mtkclient did not complete: {tail}", "error")
+                self.log("Check: MTK VCOM driver installed, USB 2.0 port, phone fully OFF, buttons held until handshake.", "warning")
+                self.log("Some devices need preloader mode instead of BROM: connect WITHOUT holding buttons, or use 'mtk crash'.", "warning")
 
         self._run_threaded(task, f"MTK BROM {soc} ({op})")
 

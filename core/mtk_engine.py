@@ -8,6 +8,8 @@ Includes explicit support for Tecno Camon 50 Pro (Dimensity 7400 Ultimate / Heli
 import os
 import time
 import struct
+import shutil
+import subprocess
 from typing import Tuple, Optional, List, Dict
 
 from .serial_ports import list_serial_ports, classify_port, HAS_PYSERIAL
@@ -300,3 +302,80 @@ class MTKEngine:
                 pass
 
         return {"ok": True, "port": port, "log": log, "bytes": total}
+
+    # ------------------------------------------------------------------
+    # mtkclient delegation — the real, proven MediaTek exploit path.
+    # The hand-rolled BROM code above can handshake and read chip info,
+    # but actual partition erase/unlock needs mtkclient's Kamakiri SLA/DAA
+    # bypass + DA upload. This shells out to it when it is installed.
+    # ------------------------------------------------------------------
+    def mtkclient_path(self) -> Optional[str]:
+        """Locate the mtkclient CLI ('mtk' or 'mtkclient') on PATH."""
+        return shutil.which("mtk") or shutil.which("mtkclient")
+
+    def mtkclient_available(self) -> bool:
+        return self.mtkclient_path() is not None
+
+    def run_mtkclient(self, args, log_cb=None, timeout=900) -> Tuple[bool, str]:
+        """Run a real mtkclient command and stream its output to log_cb(line, level).
+
+        Returns (ok, last_line). mtkclient expects the device in BROM/preloader
+        mode (power off -> hold Vol Up + Vol Down -> plug USB) and performs the
+        actual exploit (SLA/DAA bypass) + DA upload + partition operation.
+        """
+        exe = self.mtkclient_path()
+        if not exe:
+            msg = ("mtkclient is not installed. It is the free tool that performs the real "
+                   "MediaTek exploit. Install it with:  pip install mtkclient   (or clone "
+                   "https://github.com/bkerler/mtkclient and run: pip install -r requirements.txt)")
+            if log_cb:
+                log_cb(msg, "error")
+            return False, msg
+
+        cmd = [exe] + [str(a) for a in args]
+        if log_cb:
+            log_cb("$ " + " ".join(cmd), "info")
+
+        env = dict(os.environ)
+        env["PYTHONUNBUFFERED"] = "1"  # force line-by-line output from mtkclient
+
+        try:
+            proc = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, errors="replace", bufsize=1, env=env,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+        except OSError as e:
+            msg = f"Failed to launch mtkclient: {e}"
+            if log_cb:
+                log_cb(msg, "error")
+            return False, msg
+
+        tail = ""
+        try:
+            for line in proc.stdout:
+                line = line.rstrip("\r\n")
+                if line:
+                    tail = line
+                    if log_cb:
+                        log_cb(line, "info")
+            try:
+                proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                tail = "mtkclient timed out (no device in BROM mode?)."
+                if log_cb:
+                    log_cb(tail, "error")
+                return False, tail
+        except Exception as e:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            tail = f"mtkclient interrupted: {e}"
+            if log_cb:
+                log_cb(tail, "error")
+            return False, tail
+
+        ok = proc.returncode == 0
+        return ok, tail

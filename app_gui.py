@@ -1,7 +1,7 @@
 """
 Android Multi-Tool Pro - Main Desktop GUI Application
 Strict Monochrome High-Contrast Edition (Black & White, <= 10 Colors)
-Engineered for Tecno Camon 50 Pro (Dimensity 7400 Ultimate / MT6878 / HiOS 16) & All Brands
+Engineered for Tecno Camon 50 Pro 4G (Helio G200 Ultimate / MT6789 / HiOS 16) & All Brands
 """
 
 import os
@@ -35,7 +35,7 @@ from core.dependency_installer import (
 )
 
 APP_NAME = "Android Multi-Tool Pro"
-APP_VERSION = "v2.5.0 (Monochrome Tecno Camon 50 Edition)"
+APP_VERSION = "v2.5.0 (Tecno Camon 50 Pro 4G Edition)"
 
 # STRICT 10-COLOR MONOCHROME PALETTE
 # 1. #000000 (Pure Black - Root / Terminal BG)
@@ -59,6 +59,7 @@ C_TEXT_BODY = "#cccccc"
 C_WHITE = "#ffffff"
 C_GREEN = "#22c55e"
 C_RED = "#ef4444"
+C_ACCENT = "#22d3ee"  # UnlockTool-style cyan accent for active nav
 
 
 class AndroidMultiToolApp:
@@ -235,32 +236,80 @@ class AndroidMultiToolApp:
         self.lbl_conn_state.pack(side="left", padx=(16, 0))
         tk.Label(hw_strip, text="SECURITY: AVB 2.0 ENFORCING", font=("Segoe UI", 8, "bold"), fg=C_GREEN, bg=C_BORDER).pack(side="right")
 
-        # 2. Main Tabbed Notebook
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill="both", expand=True, padx=15, pady=5)
+        # 2. Main Content — UnlockTool-style left navigation rail + workspace
+        self.content_shell = tk.Frame(self.root, bg=C_BORDER)
+        self.content_shell.pack(fill="both", expand=True, padx=15, pady=5)
 
-        # Build tabs
-        self.tab_camon50 = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_mtk = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_info = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_frp = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_fastboot = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_reboot = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_debloat = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_testpoints = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_connect = ttk.Frame(self.notebook, style="Card.TFrame")
-        self.tab_devices = ttk.Frame(self.notebook, style="Card.TFrame")
+        # --- Left navigation rail ---
+        self.nav_rail = tk.Frame(self.content_shell, bg=C_BORDER, width=224)
+        self.nav_rail.pack(side="left", fill="y")
+        self.nav_rail.pack_propagate(False)
 
-        self.notebook.add(self.tab_camon50, text=" Tecno Camon 50 (CN5c) ")
-        self.notebook.add(self.tab_connect, text=" 🔌 Connection Guide ")
-        self.notebook.add(self.tab_devices, text=" Supported Devices ")
-        self.notebook.add(self.tab_mtk, text=" ⚡ MTK BROM Flasher ")
-        self.notebook.add(self.tab_frp, text=" FRP & Screen Lock ")
-        self.notebook.add(self.tab_fastboot, text=" Fastboot Flasher ")
-        self.notebook.add(self.tab_info, text=" Diagnostics ")
-        self.notebook.add(self.tab_reboot, text=" Reboot Switcher ")
-        self.notebook.add(self.tab_debloat, text=" Debloat & Apps ")
-        self.notebook.add(self.tab_testpoints, text=" EDL & Test Points ")
+        tk.Label(self.nav_rail, text="ANDROID MULTI-TOOL", font=("Segoe UI", 10, "bold"),
+                 fg=C_WHITE, bg=C_BORDER).pack(anchor="w", padx=16, pady=(16, 2))
+        tk.Label(self.nav_rail, text="PRO · v2.5 — OFFLINE GSM SUITE", font=("Segoe UI", 7),
+                 fg=C_TEXT_MUTED, bg=C_BORDER).pack(anchor="w", padx=16, pady=(0, 12))
+
+        self._nav_buttons = {}
+        nav_sections = [
+            ("SERVICE", [
+                ("camon50",    "  \U0001F4F1  Tecno Camon 50 Suite"),
+                ("mtk",        "  \u26A1  MTK BROM Flasher"),
+                ("fastboot",   "  \U0001F680  Fastboot Flasher"),
+                ("frp",        "  \U0001F513  FRP & Screen Lock"),
+                ("debloat",    "  \U0001F9F9  Debloat & Apps"),
+                ("testpoints", "  \U0001F3AF  EDL & Test Points"),
+            ]),
+            ("DIAGNOSTICS", [
+                ("info",    "  \U0001FA7A  Diagnostics"),
+                ("connect", "  \U0001F50C  Connection Guide"),
+                ("reboot",  "  \U0001F501  Reboot Switcher"),
+            ]),
+            ("REFERENCE", [
+                ("devices", "  \U0001F4CB  Supported Devices"),
+            ]),
+        ]
+        for section, items in nav_sections:
+            tk.Label(self.nav_rail, text=section, font=("Segoe UI", 7, "bold"),
+                     fg=C_TEXT_MUTED, bg=C_BORDER).pack(anchor="w", padx=18, pady=(12, 2))
+            for key, label in items:
+                btn = tk.Button(
+                    self.nav_rail, text=label, font=("Segoe UI", 9, "bold"),
+                    fg=C_TEXT_MUTED, bg=C_BORDER, activebackground=C_SUBCARD,
+                    activeforeground=C_WHITE, relief="flat", bd=0, anchor="w",
+                    padx=12, pady=8, cursor="hand2", highlightthickness=0,
+                    command=lambda k=key: self.show_tab(k),
+                )
+                btn.pack(fill="x", padx=6, pady=1)
+                self._nav_buttons[key] = btn
+
+        # --- Right workspace (tab frames) ---
+        self.content = tk.Frame(self.content_shell, bg=C_CARD)
+        self.content.pack(side="left", fill="both", expand=True)
+
+        self.tab_camon50 = tk.Frame(self.content, bg=C_CARD)
+        self.tab_mtk = tk.Frame(self.content, bg=C_CARD)
+        self.tab_info = tk.Frame(self.content, bg=C_CARD)
+        self.tab_frp = tk.Frame(self.content, bg=C_CARD)
+        self.tab_fastboot = tk.Frame(self.content, bg=C_CARD)
+        self.tab_reboot = tk.Frame(self.content, bg=C_CARD)
+        self.tab_debloat = tk.Frame(self.content, bg=C_CARD)
+        self.tab_testpoints = tk.Frame(self.content, bg=C_CARD)
+        self.tab_connect = tk.Frame(self.content, bg=C_CARD)
+        self.tab_devices = tk.Frame(self.content, bg=C_CARD)
+
+        self._tab_frames = {
+            "camon50": self.tab_camon50,
+            "mtk": self.tab_mtk,
+            "info": self.tab_info,
+            "frp": self.tab_frp,
+            "fastboot": self.tab_fastboot,
+            "reboot": self.tab_reboot,
+            "debloat": self.tab_debloat,
+            "testpoints": self.tab_testpoints,
+            "connect": self.tab_connect,
+            "devices": self.tab_devices,
+        }
 
         self._build_tab_camon50()
         self._build_tab_connect()
@@ -272,6 +321,8 @@ class AndroidMultiToolApp:
         self._build_tab_reboot()
         self._build_tab_debloat()
         self._build_tab_testpoints()
+
+        self.show_tab("camon50")
 
         # 3. Bottom Console Log Area
         console_frame = tk.Frame(self.root, bg=C_CARD, height=180)
@@ -313,6 +364,20 @@ class AndroidMultiToolApp:
         self.txt_console.tag_config("warning", foreground=C_WHITE)
         self.txt_console.tag_config("error", foreground=C_RED)
         self.txt_console.tag_config("muted", foreground=C_TEXT_MUTED)
+
+    def show_tab(self, key: str):
+        """Switch the visible workspace pane (UnlockTool-style sidebar nav)."""
+        for k, frame in self._tab_frames.items():
+            if k == key:
+                frame.pack(fill="both", expand=True)
+            else:
+                frame.pack_forget()
+        for k, btn in self._nav_buttons.items():
+            if k == key:
+                btn.configure(fg=C_ACCENT, bg=C_SUBCARD)
+            else:
+                btn.configure(fg=C_TEXT_MUTED, bg=C_BORDER)
+        self.log(f"Navigation: opened [{key}]", "muted")
 
     # ================= TECNO CAMON 50 PRO TAB =================
 

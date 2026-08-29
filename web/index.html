@@ -19,6 +19,10 @@
       --c8-white: #ffffff;
       --c9-green: #22c55e;
       --c10-red: #ef4444;
+      /* UnlockTool-style accent */
+      --acc: #22d3ee;
+      --acc-soft: rgba(34, 211, 238, 0.10);
+      --acc-line: rgba(34, 211, 238, 0.35);
     }
 
     * {
@@ -174,37 +178,136 @@
     .btn-danger { background: var(--c10-red); color: var(--c8-white); border-color: var(--c10-red); }
     .btn-green { background: var(--c9-green); color: var(--c1-black); border-color: var(--c9-green); }
 
-    /* Navigation Tabs */
-    .tabs-bar {
+    /* App shell — UnlockTool-style sidebar + workspace */
+    .app-shell {
+      flex: 1;
+      min-height: 0;
       display: flex;
-      background: var(--c2-dark);
-      border-bottom: 1px solid var(--c5-border);
-      padding: 0 12px;
-      gap: 2px;
-      overflow-x: auto;
     }
 
-    .tab-btn {
+    .sidebar {
+      width: 238px;
+      flex-shrink: 0;
+      background: var(--c2-dark);
+      border-right: 1px solid var(--c5-border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .sidebar-brand {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--c5-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-brand .mark {
+      width: 32px;
+      height: 32px;
+      background: var(--acc);
+      color: var(--c1-black);
+      font-weight: 900;
+      font-size: 16px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-brand .name {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar-brand .ver {
+      font-size: 10px;
+      color: var(--c6-muted);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
       background: transparent;
       color: var(--c6-muted);
-      padding: 9px 14px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 9px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .nav-item .ico {
+      width: 18px;
+      text-align: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .nav-item:hover {
+      background: var(--c4-hover);
+      color: var(--c8-white);
+    }
+
+    .nav-item.active {
+      background: var(--acc-soft);
+      color: var(--acc);
+      border-color: var(--acc-line);
+    }
+
+    .nav-sep {
+      height: 1px;
+      background: var(--c5-border);
+      margin: 6px 8px;
+    }
+
+    .nav-head {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--c6-muted);
+      padding: 8px 10px 4px;
+      text-transform: uppercase;
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--c5-border);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sidebar-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 11px;
-      font-weight: 700;
-      border: none;
-      border-bottom: 2px solid transparent;
-      border-radius: 0;
-      white-space: nowrap;
+      color: var(--c7-lightgray);
+      padding: 8px 10px;
     }
 
-    .tab-btn:hover {
-      color: var(--c8-white);
-      background: var(--c3-card);
-    }
-
-    .tab-btn.active {
-      color: var(--c8-white);
-      background: var(--c1-black);
-      border-bottom: 2px solid var(--c8-white);
+    @media (max-width: 860px) {
+      .sidebar { width: 58px; }
+      .sidebar .name, .sidebar .ver, .nav-item { font-size: 0; }
+      .nav-item .ico { font-size: 16px; }
+      .sidebar-brand { justify-content: center; padding: 12px 0; }
+      .nav-head, .sidebar-status span { display: none; }
     }
 
     /* Workspace */
@@ -556,7 +659,7 @@
         </svg>
       </div>
       <div class="brand-text">
-        <h1>Android Multi-Tool Pro <span>Monochrome Win11</span></h1>
+        <h1>Android Multi-Tool Pro <span>Web Suite v2.5</span></h1>
         <p>Offline Universal GSM Service Suite | Tecno Camon 50 Pro, Samsung, MTK, Qualcomm</p>
       </div>
     </div>
@@ -564,10 +667,10 @@
     <div class="conn-section">
       <div class="status-pill">
         <div class="status-dot"></div>
-        <span id="connState">Tecno Camon 50 Pro 5G</span>
+        <span id="connState">Tecno Camon 50 Pro 4G</span>
       </div>
       <select id="deviceSelect" onchange="onDeviceChanged()">
-        <option value="tecno">Tecno Camon 50 Pro 5G (Dimensity 7400)</option>
+        <option value="tecno">Tecno Camon 50 Pro 4G (Helio G200)</option>
         <option value="samsung">Samsung Galaxy S22 Ultra (ADB)</option>
         <option value="xiaomi">Xiaomi Redmi Note 11 (Fastboot)</option>
       </select>
@@ -579,9 +682,9 @@
 
   <!-- Hardware Diagnostics & Quick Mode Strip -->
   <div class="hardware-strip">
-    <div class="hw-item"><span class="hw-label">TARGET SOC:</span> <span class="hw-val">MT6878 (Dimensity 7400 Ultimate)</span></div>
+    <div class="hw-item"><span class="hw-label">TARGET SOC:</span> <span class="hw-val">MT6789 (Helio G200 Ultimate)</span></div>
     <div class="hw-item"><span class="hw-label">DEVICE:</span> <span class="hw-val">TECNO-CN5c (Camon 50 Pro 4G)</span></div>
-    <div class="hw-item"><span class="hw-label">STORAGE:</span> <span class="hw-val">UFS 3.1 (FRP: 0x5A00000)</span></div>
+    <div class="hw-item"><span class="hw-label">STORAGE:</span> <span class="hw-val">UFS 2.2 · LPDDR4X</span></div>
     <div class="hw-item"><span class="hw-label">OS:</span> <span class="hw-val">Android 16 (HiOS 16 / API 36)</span></div>
     <div class="hw-item"><span class="hw-label">SECURITY:</span> <span class="hw-val">AVB 2.0 Enforcing</span></div>
     <div class="hw-actions">
@@ -592,25 +695,48 @@
     </div>
   </div>
 
-  <!-- Monochromatic Navigation Tabs -->
-  <div class="tabs-bar">
-    <button class="tab-btn active" onclick="switchTab('tab-camon50', this)">Tecno Camon 50 Suite</button>
-    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚡ MTK BROM Flasher</button>
-    <button class="tab-btn" onclick="switchTab('tab-diagnostics', this)">Diagnostics</button>
-    <button class="tab-btn" onclick="switchTab('tab-frp', this)">FRP & MDM Bypass</button>
-    <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">Fastboot Flasher</button>
-    <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">Process Tutorials</button>
-    <button class="tab-btn" onclick="switchTab('tab-connect', this)">🔌 Connection Guide</button>
-    <button class="tab-btn" onclick="switchTab('tab-win11', this)">Windows 11 Fixer</button>
-    <button class="tab-btn" onclick="switchTab('tab-reboot', this)">Reboot Modes</button>
-    <button class="tab-btn" onclick="switchTab('tab-root', this)">Root & Magisk</button>
-    <button class="tab-btn" onclick="switchTab('tab-efs', this)">EFS & NVRAM</button>
-    <button class="tab-btn" onclick="switchTab('tab-debloat', this)">HiOS Debloat</button>
-    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">Supported Devices</button>
-  </div>
+  <!-- App Shell: UnlockTool-style Sidebar Navigation + Workspace -->
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="mark">A</div>
+        <div>
+          <div class="name">ANDROID MULTI-TOOL</div>
+          <div class="ver">PRO · Web Suite v2.5</div>
+        </div>
+      </div>
 
-  <!-- Workspace -->
-  <div class="main-workspace">
+      <nav class="sidebar-nav">
+        <div class="nav-head">Service</div>
+        <button class="nav-item active" onclick="switchTab('tab-camon50', this)"><span class="ico">📱</span> Tecno Camon 50 Suite</button>
+        <button class="nav-item" onclick="switchTab('tab-mtk', this)"><span class="ico">⚡</span> MTK BROM Flasher</button>
+        <button class="nav-item" onclick="switchTab('tab-fastboot', this)"><span class="ico">🚀</span> Fastboot Flasher</button>
+        <button class="nav-item" onclick="switchTab('tab-frp', this)"><span class="ico">🔓</span> FRP &amp; MDM Bypass</button>
+        <button class="nav-item" onclick="switchTab('tab-root', this)"><span class="ico">🧩</span> Root &amp; Magisk</button>
+        <button class="nav-item" onclick="switchTab('tab-debloat', this)"><span class="ico">🧹</span> HiOS Debloat</button>
+        <button class="nav-item" onclick="switchTab('tab-efs', this)"><span class="ico">📡</span> EFS &amp; NVRAM</button>
+
+        <div class="nav-sep"></div>
+        <div class="nav-head">Diagnostics</div>
+        <button class="nav-item" onclick="switchTab('tab-diagnostics', this)"><span class="ico">🩺</span> Device Info</button>
+        <button class="nav-item" onclick="switchTab('tab-connect', this)"><span class="ico">🔌</span> Connection Guide</button>
+        <button class="nav-item" onclick="switchTab('tab-win11', this)"><span class="ico">🪟</span> Windows 11 Fixer</button>
+        <button class="nav-item" onclick="switchTab('tab-tutorials', this)"><span class="ico">📖</span> Process Tutorials</button>
+
+        <div class="nav-sep"></div>
+        <div class="nav-head">Reference</div>
+        <button class="nav-item" onclick="switchTab('tab-reboot', this)"><span class="ico">🔁</span> Reboot Modes</button>
+        <button class="nav-item" onclick="switchTab('tab-catalog', this)"><span class="ico">📋</span> Supported Devices</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-status"><span class="status-dot" id="sideDot"></span><span id="sideConn">Scan USB to connect…</span></div>
+        <button class="nav-item" onclick="scanDevices()"><span class="ico">🔍</span> Scan USB Device</button>
+        <button class="nav-item" onclick="installTools()"><span class="ico">⬇</span> Install Tools &amp; Drivers</button>
+      </div>
+    </aside>
+
+    <div class="main-workspace">
 
     <!-- Interactive USB Guided Next Step Wizard -->
     <div id="guidedWizardCard" class="card" style="margin-bottom: 14px; border-left: 3px solid var(--c8-white); padding: 12px 16px;">
@@ -1259,6 +1385,7 @@
     </div>
 
   </div>
+  </div>
 
   <!-- Terminal Drawer -->
   <div class="terminal-container">
@@ -1334,7 +1461,7 @@ build.bat</div>
     "brand": "Tecno",
     "series": "Camon Pro Series (Flagship Camera Line)",
     "models": [
-      "Tecno Camon 50 Pro 5G (CN5c) / Camon 50 Pro",
+      "Tecno Camon 50 Pro 4G (CN5c) / Camon 50 Pro 5G (CN7c)",
       "Tecno Camon 50 / Camon 50 Premier",
       "Tecno Camon 30 / 30 Pro 5G / 30 Premier",
       "Tecno Camon 20 / 20 Pro / 20 Premier 5G",
@@ -1908,7 +2035,7 @@ build.bat</div>
 
     function switchTab(tabId, btn) {
       document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
-      document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
       const target = document.getElementById(tabId);
       if (target) {
         target.classList.add("active");
@@ -1917,7 +2044,7 @@ build.bat</div>
       if (btn) {
         btn.classList.add("active");
       } else {
-        document.querySelectorAll(".tab-btn").forEach(b => {
+        document.querySelectorAll(".nav-item").forEach(b => {
           if (b.getAttribute("onclick") && b.getAttribute("onclick").includes(tabId)) {
             b.classList.add("active");
           }
@@ -2176,9 +2303,19 @@ build.bat</div>
         const res = await fetch("/api/status");
         const data = await res.json();
         const pill = document.getElementById("connState");
+        const sideConn = document.getElementById("sideConn");
+        const sideDot = document.getElementById("sideDot");
+        const label = data.simulated ? "SIMULATION MODE" : "LIVE DETECTION READY";
         if (pill) {
-          pill.textContent = data.simulated ? "SIMULATION MODE" : "LIVE DETECTION READY";
+          pill.textContent = label;
           pill.style.color = data.simulated ? "var(--c6-muted)" : "var(--c8-white)";
+        }
+        if (sideConn) {
+          sideConn.textContent = data.simulated ? "Simulation Mode" : "Ready — Scan USB";
+          sideConn.style.color = data.simulated ? "var(--c6-muted)" : "var(--c7-lightgray)";
+        }
+        if (sideDot) {
+          sideDot.style.background = data.simulated ? "var(--c6-muted)" : "var(--c9-green)";
         }
       } catch (e) {}
     }
@@ -2736,7 +2873,7 @@ build.bat</div>
 
     window.addEventListener("DOMContentLoaded", () => {
       logLine("Android Multi-Tool Pro Monochrome Edition initialized.", "log-white");
-      logLine("Device Profile: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
+      logLine("Device Profile: Tecno Camon 50 Pro 4G (Helio G200 / HiOS 16)", "log-green");
       refreshHeaderStatus();
       loadCatalog();
       loadWorkflows();

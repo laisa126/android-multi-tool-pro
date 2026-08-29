@@ -12,14 +12,15 @@ SUPPORTED_DEVICE_CATALOG = [
         "brand": "Tecno",
         "series": "Camon Pro Series (Flagship Camera Line)",
         "models": [
-            "Tecno Camon 50 Pro 5G (CN5c) / Camon 50 Pro",
+            "Tecno Camon 50 Pro 5G (CN7c) — MT6878 Dimensity 7400 Ultimate",
+            "Tecno Camon 50 Pro 4G (CN5c) — MT6789 Helio G200 Ultimate",
             "Tecno Camon 50 / Camon 50 Premier",
             "Tecno Camon 30 / 30 Pro 5G / 30 Premier",
             "Tecno Camon 20 / 20 Pro / 20 Premier 5G",
             "Tecno Camon 19 / 19 Pro / 19 Neo",
             "Tecno Camon 18 / 18 Premier / 18P"
         ],
-        "chipset": "MediaTek Dimensity 7400 Ultimate / Dimensity 8200 / Helio G200 / G99 Ultimate (MT6878/MT6897/MT6789)",
+        "chipset": "MediaTek Dimensity 7400 Ultimate (MT6878) / Dimensity 8300-8200 (MT6897/MT6896) / Helio G200-G99 (MT6789)",
         "supported_ops": [
             "1-Click MTK BROM / Preloader FRP Wipe",
             "Userdata Hard Format (Screen PIN/Pattern Removal)",

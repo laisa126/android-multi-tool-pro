@@ -1,7 +1,7 @@
 # Android Multi-Tool Pro (Standalone Windows EXE & Web Suite)
-### Specialized for Tecno Camon 50 Pro (`TECNO-CN5c`), Samsung, Xiaomi & Multi-Brand Servicing
+### Specialized for Tecno Camon 50 Pro (`TECNO-CN7c` 5G / `TECNO-CN5c` 4G), Samsung, Xiaomi & Multi-Brand Servicing
 
-**Android Multi-Tool Pro (AMT Pro)** is a professional-grade, offline-capable hardware and firmware utility engineered for mobile technicians, GSM repair labs, and power users. Designed with a strict 10-color monochrome high-contrast interface, it features full offline servicing for the **Tecno Camon 50 Pro 5G (`TECNO-CN5c`)** powered by the **MediaTek Dimensity 7400 Ultimate (MT6878)** on **HiOS 16 / Android 16**.
+**Android Multi-Tool Pro (AMT Pro)** is a professional-grade, offline-capable hardware and firmware utility engineered for mobile technicians, GSM repair labs, and power users. Designed with a strict 10-color monochrome high-contrast interface, it features full offline servicing for the **Tecno Camon 50 Pro 5G (`TECNO-CN7c`)** powered by the **MediaTek Dimensity 7400 Ultimate (MT6878)** on **HiOS 16 / Android 16** (the 4G `TECNO-CN5c` variant uses the Helio G200 / MT6789).
 
 ---
 
@@ -25,7 +25,7 @@
 
 ---
 
-## 📱 Tecno Camon 50 Pro 5G (`TECNO-CN5c`) Features
+## 📱 Tecno Camon 50 Pro 5G (`TECNO-CN7c`) Features
 
 * **Admin App Security Plugin Remover**:
   * Strips `SYSTEM_ALERT_WINDOW`, `RUN_IN_BACKGROUND`, and accessibility hijacking via AppOps to immediately kill persistent lockscreen overlay banners.
@@ -39,8 +39,8 @@
 * **Preloader DAA / SLA Bypass & BROM Memory Format**:
   * Direct memory formatting of `frp` (offset `0x5A00000`) and `userdata` via MediaTek MT6878 Preloader port without cloud dongles.
 * **UFS 3.1 Hardware Partition Map**:
-  * Complete partition table (`preloader_tecno_cn5c.bin`, `init_boot`, `vbmeta`, `super`, `nvram`, `nvdata`).
-  * A ready-to-use MTK-format scatter template for the CN5c ships with the app at `bin/scatter/tecno_camon50_pro_cn5c_scatter.txt` (replace template addresses with your firmware package's official scatter before flashing).
+  * Complete partition table (`preloader_tecno_cn7c.bin`, `init_boot`, `vbmeta`, `super`, `nvram`, `nvdata`).
+  * A ready-to-use MTK-format scatter template for the CN7c ships with the app at `bin/scatter/tecno_camon50_pro_5g_cn7c_scatter.txt` (replace template addresses with your firmware package's official scatter before flashing). The 4G CN5c (Helio G200 / MT6789) needs its own firmware scatter.
 
 ---
 

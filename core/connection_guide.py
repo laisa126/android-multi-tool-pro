@@ -368,6 +368,9 @@ CONNECTION_SCENARIOS: List[Dict] = [
         "use_when": "The Tecno Camon 50 Pro (or any MTK phone) is PIN/pattern/FRP locked and you CANNOT enable USB debugging because the screen is locked.",
         "prerequisites": [
             "Understand: ADB is IMPOSSIBLE on a locked phone — USB debugging can only be turned on from inside Android. Use the hardware BROM channel instead.",
+            "IDENTIFY THE VARIANT first: Camon 50 Pro 5G = CN7c = MT6878 (Dimensity 7400 Ultimate); Camon 50 Pro 4G = CN5c = MT6789 (Helio G200). Check the box label or the build string (CN5c-16.x vs CN7c-16.x).",
+            "CN7c (MT6878) is protected by SBC/SLA/DAA: the BROM will refuse the DA without an auth file. Free mtkclient support is still WIP (no bundled DA). Use the official Transsion SWD tool + factory firmware, or a paid box (UnlockTool >= 2026.02.20.0 / CM2MT2 / TFT) with server-side auth.",
+            "CN5c (MT6789) is the mature SoC: free mtkclient works (e.g. 'mtk e metadata,userdata,md_udc' / 'mtk da seccfg unlock').",
             "MediaTek Preloader USB VCOM driver installed (VID 0E8D) — Connection Guide -> Install Tools & Drivers.",
         ],
         "steps": [
@@ -375,6 +378,7 @@ CONNECTION_SCENARIOS: List[Dict] = [
             "Hold Volume Up + Volume Down TOGETHER.",
             "While holding, plug the USB cable into a USB 2.0 (black) port on the PC.",
             "In the tool: open the ⚡ MTK BROM tab -> click 'Detect BROM Port & Handshake'.",
+            "For CN7c/MT6878: load a DA via 'Download Agent (DA) upload' (bin/da/MT6878_NOTHING.bin) — note an auth file is still required on protected units.",
             "When the handshake confirms, run 'Wipe FRP' or 'Factory Reset (Userdata)' from the BROM tab — this clears the lock without any USB debugging.",
         ],
         "verify": "A COM/tty port with VID 0E8D appears and the handshake returns 0x5F 0xF5 0xAF 0xFA.",
@@ -382,6 +386,8 @@ CONNECTION_SCENARIOS: List[Dict] = [
             {"symptom": "No MTK port appears", "cause": "Missing VCOM driver / charge-only cable / wrong button combo", "fix": "Install the MTK VCOM driver, use a data cable, and hold the buttons before plugging in."},
             {"symptom": "Port appears for 2s then vanishes", "cause": "Watchdog reset (normal)", "fix": "Keep holding the button combo until the tool reports the handshake."},
             {"symptom": "ADB 'not found'", "cause": "Locked phone has no USB debugging", "fix": "That's expected — use BROM, not ADB."},
+            {"symptom": "Auth file is required (STATUS_SEC_AUTH_FILE_NEEDED)", "cause": "CN7c/MT6878 has SBC/SLA/DAA on; DA rejected without auth_sv5.auth", "fix": "Use the official Transsion SWD tool + factory-signed firmware (auth file inside), or a paid box with server auth. Free public auth for MT6878 does not exist yet."},
+            {"symptom": "No valid da loader found (MT6878)", "cause": "mtkclient ships no MT6878 DA", "fix": "Supply one with --loader (bin/da/MT6878_NOTHING.bin or MTK_AllInOne_DA_mt6878.bin from firmware)."},
         ],
     },
     {

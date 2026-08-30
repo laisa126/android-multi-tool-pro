@@ -108,6 +108,10 @@ class AndroidMultiToolApp:
         self.is_busy = False
         # display-label -> {"kind": "adb"|"fastboot", "serial": ...} for the combobox
         self.device_entries: dict = {}
+        # Auto-connect monitor state (watches for a device being plugged in)
+        self._auto_connect_active = False
+        self._auto_connect_stop = threading.Event()
+        self._auto_connect_stop.set()  # idle by default
 
         # Apply strictly monochrome styling
         self._setup_theme()
@@ -216,6 +220,9 @@ class AndroidMultiToolApp:
 
         btn_scan = ttk.Button(dev_box, text="Scan Devices", style="Action.TButton", command=self.scan_devices)
         btn_scan.pack(side="left", padx=4)
+
+        self.btn_auto_connect = ttk.Button(dev_box, text="Auto-Connect", style="Action.TButton", command=self.auto_connect)
+        self.btn_auto_connect.pack(side="left", padx=4)
 
         btn_kill = ttk.Button(dev_box, text="Kill / Restart ADB", style="Secondary.TButton", command=self.restart_adb)
         btn_kill.pack(side="left", padx=4)
@@ -1240,6 +1247,163 @@ class AndroidMultiToolApp:
 
         self._run_threaded(task, "USB Device Bus Scan")
 
+    # ================= AUTO-CONNECT (PLUG-IN WATCHER + HANDSHAKE) =================
+
+    def auto_connect(self):
+        """Toggle the plug-in watcher: keeps scanning until a device appears,
+        then handshakes it (ADB / fastboot / MTK BROM / EDL) and logs every step.
+        """
+        if self._auto_connect_active:
+            self.log("AUTO-CONNECT: stop requested — finishing the current scan...", "info")
+            self._auto_connect_stop.set()
+            return
+        self._auto_connect_active = True
+        self._auto_connect_stop = threading.Event()
+
+        def _btn_on():
+            self.btn_auto_connect.configure(text="Auto-Connect: ON (stop)")
+            self.set_busy(True, "AUTO-CONNECT: WAITING FOR DEVICE")
+        self.root.after(0, _btn_on)
+
+        threading.Thread(target=self._auto_connect_watch, daemon=True).start()
+
+    def _finish_auto_connect(self, success: bool):
+        self._auto_connect_active = False
+
+        def _btn_off():
+            self.btn_auto_connect.configure(text="Auto-Connect")
+            self.set_busy(False)
+        self.root.after(0, _btn_off)
+        if success:
+            self.log("AUTO-CONNECT: device connected and ready.", "success")
+        else:
+            self.log("AUTO-CONNECT: monitoring stopped.", "muted")
+
+    def _auto_connect_watch(self):
+        """Background loop: watch the USB bus, handshake whatever shows up, log it."""
+        self.log("AUTO-CONNECT: monitoring started — plug in the device now.", "info")
+        self.log("  • ADB:        unlock screen + enable USB debugging, then plug in.", "muted")
+        self.log("  • FASTBOOT:   Volume Down + power to bootloader, then plug in.", "muted")
+        self.log("  • MTK BROM:   power OFF, hold Vol Up + Vol Down, plug USB (no USB debugging needed).", "muted")
+        self._set_conn_state("● LISTENING FOR DEVICE", C_WHITE)
+
+        waited = 0
+        while not self._auto_connect_stop.is_set():
+            if self.simulated_mode.get():
+                # Simulated plug-in: fabricate a BROM handshake clearly labelled as simulation.
+                waited += 1
+                if waited == 2:
+                    self.log("SIMULATION: MediaTek BROM port COM5 appeared (simulated).", "warning")
+                    self.log("SIMULATION: Handshake confirmed [0x5F 0xF5 0xAF 0xFA] (simulated).", "warning")
+                    self._set_conn_state("● SIMULATION CONNECTED", C_WHITE)
+                    self._finish_auto_connect(True)
+                    return
+                time.sleep(1.0)
+                continue
+
+            try:
+                res = run_full_detection(self.adb, self.fastboot, self.mtk)
+            except Exception as e:
+                self.log(f"AUTO-CONNECT: detection error: {e}", "error")
+                time.sleep(1.0)
+                continue
+
+            adb_devs = res.get("adb") or []
+            fb_devs = res.get("fastboot") or []
+            mtk_ports = res.get("mtk_ports") or []
+            edl_ports = res.get("edl_ports") or []
+
+            # ---- 1. ADB device plugged ----
+            if adb_devs:
+                d = adb_devs[0]
+                serial = d.get("serial", "?")
+                self.log(f"DEVICE PLUGGED (ADB): {serial} [{d.get('state','?')}]", "success")
+                self.adb.set_active_device(serial)
+                self._set_conn_state("● CONNECTED (ADB)", C_GREEN)
+                try:
+                    info = self.adb.get_device_info()
+                    for k in ("brand", "model", "device", "build_id", "android_version", "security_patch", "battery_level", "root_status"):
+                        val = (info or {}).get(k)
+                        if val and val not in ("Unknown", "N/A", ""):
+                            self.log(f"  {k}: {val}", "info")
+                except Exception:
+                    pass
+                self._finish_auto_connect(True)
+                return
+
+            # ---- 2. Fastboot device plugged ----
+            if fb_devs:
+                d = fb_devs[0]
+                self.log(f"DEVICE PLUGGED (FASTBOOT): {d.get('serial','?')} [{d.get('mode','fastboot')}]", "success")
+                self.fastboot.set_active_device(d.get("serial"))
+                self._set_conn_state("● CONNECTED (FASTBOOT)", C_GREEN)
+                self._finish_auto_connect(True)
+                return
+
+            # ---- 3. MediaTek BROM / Preloader port ----
+            if mtk_ports:
+                p = mtk_ports[0]
+                port = p.get("port")
+                self.log(f"DEVICE PLUGGED: MediaTek BROM/Preloader on {port} ({p.get('description') or p.get('hwid','')})", "success")
+                self.log(f"Handshaking BootROM on {port}...", "info")
+                probe = self.mtk.probe_port(port)
+                if probe.get("ok"):
+                    self.log(f"HANDSHAKE CONFIRMED on {port} (reply 0x{probe.get('reply','')})", "success")
+                    self._set_conn_state("● BROM HANDSHAKE OK", C_GREEN)
+                    # read real chip identity
+                    hw = self.mtk.read_hw_code(port)
+                    sw = self.mtk.read_hw_sw_ver(port)
+                    cfg = self.mtk.read_target_config(port)
+                    if hw.get("ok") and hw.get("value") is not None:
+                        self.log(f"HW Code: 0x{hw['value']:X} ({hw.get('reply','')})", "info")
+                    else:
+                        self.log(f"HW Code read failed: {hw.get('error','no reply')}", "warning")
+                    if sw.get("ok") and sw.get("value") is not None:
+                        self.log(f"HW SW Version: 0x{sw['value']:X} ({sw.get('reply','')})", "info")
+                    else:
+                        self.log(f"HW SW read failed: {sw.get('error','no reply')}", "warning")
+                    if cfg.get("ok") and cfg.get("value") is not None:
+                        self.log(f"Target Config: 0x{cfg['value']:X} | storage={cfg.get('storage','?')} | SLA={cfg.get('sla')} | DAA={cfg.get('daa')}", "info")
+                    else:
+                        self.log(f"Target Config: {cfg.get('error','no reply')}", "warning")
+
+                    def _fill_port():
+                        vals = [f"{port} (MediaTek BROM — auto-detected)"]
+                        for p2 in mtk_ports:
+                            vals.append(f"{p2['port']} ({p2.get('description') or 'MediaTek Preloader'})")
+                        self.combo_mtk_port["values"] = vals
+                        self.combo_mtk_port.current(0)
+                    self.root.after(0, _fill_port)
+
+                    self.log("Device CONNECTED and handshaked. Run a BROM operation (FRP wipe / Factory Reset) next.", "success")
+                else:
+                    self.log(f"HANDSHAKE FAILED on {port}: {probe.get('error','no reply')}", "error")
+                    self.log("  → Power phone fully OFF, hold Vol Up + Vol Down, then plug into a USB 2.0 port.", "warning")
+                    self.log("  → If the port shows as unknown, install the MediaTek VCOM (BROM) driver.", "warning")
+                    self._set_conn_state("● BROM PORT (retrying handshake)", C_WHITE)
+                    time.sleep(1.5)
+                    continue
+                self._finish_auto_connect(True)
+                return
+
+            # ---- 4. Qualcomm EDL port ----
+            if edl_ports:
+                p = edl_ports[0]
+                self.log(f"DEVICE PLUGGED (EDL 9008): {p.get('port')} ({p.get('description') or p.get('hwid','')})", "success")
+                self._set_conn_state("● EDL 9008 PORT", C_WHITE)
+                self._finish_auto_connect(True)
+                return
+
+            # ---- 5. Nothing yet: keep waiting ----
+            waited += 1
+            if waited == 1:
+                self.log("Waiting for device... plug it in now (original cable, USB 2.0 port).", "info")
+            elif waited % 5 == 0:
+                self.log(f"Still waiting ({waited} checks) — for BROM: power OFF + Vol Up/Down; for ADB: USB debugging ON.", "muted")
+            time.sleep(1.2)
+
+        self._finish_auto_connect(False)
+
     def _set_conn_state(self, text: str, color: str):
         def _do():
             try:
@@ -1300,6 +1464,8 @@ class AndroidMultiToolApp:
 
         btn_troubleshoot = ttk.Button(left_card, text="🔍 Troubleshoot My Connection Now", style="Action.TButton", command=self.troubleshoot_connection)
         btn_troubleshoot.pack(fill="x", pady=(8, 0))
+        btn_auto = ttk.Button(left_card, text="⚡ Auto-Connect (watch for plug-in + handshake)", style="Action.TButton", command=self.auto_connect)
+        btn_auto.pack(fill="x", pady=(4, 0))
         btn_scan = ttk.Button(left_card, text="Scan Devices", style="Secondary.TButton", command=self.scan_devices)
         btn_scan.pack(fill="x", pady=(4, 0))
         btn_install = ttk.Button(left_card, text="⬇ Install Tools & Drivers", style="Secondary.TButton", command=self.install_tools_and_drivers)
@@ -1617,12 +1783,12 @@ class AndroidMultiToolApp:
             hw = self.mtk.read_hw_code(port)
             sw = self.mtk.read_hw_sw_ver(port)
             cfg = self.mtk.read_target_config(port)
-            self.log(f"HW Code: {hw.get('reply','-')}" + (f" (0x{hw['value']:X})" if hw.get("ok") else f" — {hw.get('error','')}"), "success" if hw.get("ok") else "warning")
-            self.log(f"HW SW Version: {sw.get('reply','-')}" + (f" (0x{sw['value']:X})" if sw.get("ok") else f" — {sw.get('error','')}"), "success" if sw.get("ok") else "warning")
-            if cfg.get("ok"):
+            self.log(f"HW Code: {hw.get('reply','-')}" + (f" (0x{hw['value']:X})" if hw.get("ok") and hw.get("value") is not None else f" — {hw.get('error','no reply')}"), "success" if hw.get("ok") else "warning")
+            self.log(f"HW SW Version: {sw.get('reply','-')}" + (f" (0x{sw['value']:X})" if sw.get("ok") and sw.get("value") is not None else f" — {sw.get('error','no reply')}"), "success" if sw.get("ok") else "warning")
+            if cfg.get("ok") and cfg.get("value") is not None:
                 self.log(f"Target Config: 0x{cfg['value']:X} | Storage: {cfg.get('storage','?')} | SLA: {cfg.get('sla')} | DAA: {cfg.get('daa')}", "info")
             else:
-                self.log(f"Target Config read failed: {cfg.get('error','')}", "warning")
+                self.log(f"Target Config read failed: {cfg.get('error','no reply')}", "warning")
 
         self._run_threaded(task, "Read BROM Chip Info")
 

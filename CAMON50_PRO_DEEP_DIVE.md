@@ -172,7 +172,7 @@ Verification: both begin with the ASCII header `MTK_DOWNLOAD_AGENT` and contain 
 
 1. **Identify the variant** (CN5c vs CN7c) from the box / about screen / build string.
 2. **Drivers first:** MediaTek USB VCOM + Preloader VCOM (Windows: disable driver-signature enforcement if needed; Linux: udev rules; use a USB 2.0 port).
-3. **Connect in BROM/preloader:** power off → hold Vol Up+Vol Down → plug USB → confirm `MediaTek USB Port` / `MediaTek PreLoader USB VCOM` in Device Manager.
+3. **Connect in BROM/preloader:** power off → start the tool → plug USB with **NO buttons** (Preloader mode) → the tool crashes the preloader into BROM automatically. ⚠ Holding Vol Up+Vol Down boots **Recovery**, not BROM → confirm `MediaTek USB Port` / `MediaTek PreLoader USB VCOM` in Device Manager.
 4. **Choose the tool by variant:**
    - **CN5c (4G, MT6789):** free path — `mtkclient` (`mtk e metadata,userdata,md_udc` for FRP/locks; `mtk da seccfg unlock` after OEM toggle) **or** Transsion SWD + factory firmware.
    - **CN7c (5G, MT6878):** official Transsion SWD + factory-signed firmware (DA+auth inside) **or** a paid box with server auth (UnlockTool ≥ 2026.02.20.0, CM2MT2, TFT). Free mtkclient is WIP and will stop at `Auth file is required` on a protected unit — the DA files in `bin/da/` help only if the unit is unprotected or you obtain `auth_sv5.auth`.

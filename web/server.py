@@ -261,7 +261,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             ports = mtk.detect_ports().get("mtk", [])
             logs = []
             if not ports:
-                logs.append("No MediaTek BROM/Preloader port found. Power off, hold Vol Up + Vol Down, plug USB.")
+                logs.append("No MediaTek BROM/Preloader port found. Power OFF, plug USB with NO buttons (Preloader). Don't hold Vol Up + Vol Down - that boots Recovery.")
                 self.send_json_response({"success": False, "logs": logs})
                 return
             port = ports[0]["port"]
@@ -395,7 +395,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     args += ["--loader", da]
                 else:
                     logs.append("MT6878 (Dimensity 7300/7400) protected units need a signed DA + auth file — free mtkclient may stop at 'Auth file is required'.")
-            logs.append("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.")
+            logs.append("Power the phone OFF, then plug USB into a USB 2.0 port with NO buttons (Preloader -> auto-crash to BROM). Don't hold Vol Up + Vol Down - that boots Recovery.")
             ok, tail = mtk.run_mtkclient(args, log_cb=lambda line, lvl="info": logs.append(line))
             if ok:
                 logs.append("Wipe complete — " + tail)

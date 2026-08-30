@@ -590,7 +590,7 @@ class AndroidMultiToolApp:
         port_row = tk.Frame(chip_box, bg=C_SUBCARD)
         port_row.pack(fill="x", pady=3)
         tk.Label(port_row, text="BROM / Preloader Port:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left", padx=(0, 5))
-        self.combo_mtk_port = ttk.Combobox(port_row, values=["Auto-Detect (Hold Vol Up + Down)", "COM3 (MediaTek Preloader)", "COM5 (MTK USB Port)"], width=28)
+        self.combo_mtk_port = ttk.Combobox(port_row, values=["Auto-Detect (Preloader -> BROM crash)", "COM3 (MediaTek Preloader)", "COM5 (MTK USB Port)"], width=28)
         self.combo_mtk_port.current(0)
         self.combo_mtk_port.pack(side="left", fill="x", expand=True)
 
@@ -1163,7 +1163,7 @@ class AndroidMultiToolApp:
                     self.combo_devices.current(0)
 
                 # Populate the MTK tab port selector with real ports
-                port_vals = ["Auto-Detect (Hold Vol Up + Down)"]
+                port_vals = ["Auto-Detect (Preloader -> BROM crash)"]
                 for p in mtk_ports:
                     port_vals.append(f"{p['port']} ({p.get('description') or 'MediaTek Preloader'})")
                 for p in edl_ports:
@@ -1284,7 +1284,7 @@ class AndroidMultiToolApp:
         self.log("AUTO-CONNECT: monitoring started — plug in the device now.", "info")
         self.log("  • ADB:        unlock screen + enable USB debugging, then plug in.", "muted")
         self.log("  • FASTBOOT:   Volume Down + power to bootloader, then plug in.", "muted")
-        self.log("  • MTK BROM:   power OFF, hold Vol Up + Vol Down, plug USB (no USB debugging needed).", "muted")
+        self.log("  • MTK BROM:   power OFF, plug USB with NO buttons (Preloader) - the tool crashes it into BROM. Don't hold Vol Up+Down: that's Recovery.", "muted")
         self._set_conn_state("● LISTENING FOR DEVICE", C_WHITE)
 
         waited = 0
@@ -1378,7 +1378,7 @@ class AndroidMultiToolApp:
                     self.log("Device CONNECTED and handshaked. Run a BROM operation (FRP wipe / Factory Reset) next.", "success")
                 else:
                     self.log(f"HANDSHAKE FAILED on {port}: {probe.get('error','no reply')}", "error")
-                    self.log("  → Power phone fully OFF, hold Vol Up + Vol Down, then plug into a USB 2.0 port.", "warning")
+                    self.log("  → Power the phone fully OFF, then plug into a USB 2.0 port with NO buttons (Preloader mode). Don't hold Vol Up + Vol Down - that boots Recovery.", "warning")
                     self.log("  → If the port shows as unknown, install the MediaTek VCOM (BROM) driver.", "warning")
                     self._set_conn_state("● BROM PORT (retrying handshake)", C_WHITE)
                     time.sleep(1.5)
@@ -1399,7 +1399,7 @@ class AndroidMultiToolApp:
             if waited == 1:
                 self.log("Waiting for device... plug it in now (original cable, USB 2.0 port).", "info")
             elif waited % 5 == 0:
-                self.log(f"Still waiting ({waited} checks) — for BROM: power OFF + Vol Up/Down; for ADB: USB debugging ON.", "muted")
+                self.log(f"Still waiting ({waited} checks) — for BROM: power OFF and plug USB with NO buttons; for ADB: USB debugging ON.", "muted")
             time.sleep(1.2)
 
         self._finish_auto_connect(False)
@@ -1716,13 +1716,13 @@ class AndroidMultiToolApp:
                 self.log("mtkclient is NOT installed — no real erase can run.", "error")
                 self.log("Install (free):  pip install mtkclient", "warning")
                 return
-            self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+            self.log("Power the phone OFF, then plug USB into a USB 2.0 port with NO buttons (Preloader) - do NOT hold Vol Up + Vol Down (that boots Recovery).", "warning")
             ok, tail = self.mtk.run_mtkclient(args, log_cb=lambda line, lvl="info": self.log(line, lvl))
             if ok:
                 self.log(f"Wipe complete — {tail}", "success")
             else:
                 self.log(f"Wipe failed: {tail}", "error")
-                self.log("Check: MTK VCOM driver, USB 2.0 port, phone fully OFF, buttons held until handshake.", "warning")
+                self.log("Check: MTK VCOM driver installed, USB 2.0 port, phone fully OFF, and plug with NO buttons (Preloader -> auto-crash to BROM).", "warning")
 
         self._run_threaded(task, f"Preloader BROM Wipe ({part})")
 
@@ -1755,7 +1755,7 @@ class AndroidMultiToolApp:
             detected = self.mtk.detect_ports().get("mtk", [])
             if not detected:
                 self.log("No MediaTek BROM/Preloader port found.", "warning")
-                self.log("Power the phone OFF, hold Vol Up + Vol Down, then plug USB into a USB 2.0 port.", "warning")
+                self.log("Power the phone OFF, then plug USB with NO buttons (Preloader mode). Don't hold Vol Up + Vol Down - that boots Recovery.", "warning")
                 self.log("If still nothing, install the MTK VCOM driver: Connection Guide -> Install Tools & Drivers.", "warning")
                 return
             p = detected[0]
@@ -1778,7 +1778,7 @@ class AndroidMultiToolApp:
                 return
             port = self._mtk_resolve_port()
             if not port:
-                self.log("No MediaTek BROM/Preloader port found. Power off, hold Vol Up + Vol Down, plug USB.", "warning")
+                self.log("No MediaTek BROM/Preloader port found. Power OFF, plug USB with NO buttons (Preloader). Don't hold Vol Up + Vol Down - that boots Recovery.", "warning")
                 return
             hw = self.mtk.read_hw_code(port)
             sw = self.mtk.read_hw_sw_ver(port)
@@ -1872,7 +1872,7 @@ class AndroidMultiToolApp:
                 else:
                     self.log("No DA selected — a protected MT6878 will stop at 'Auth file is required'.", "warning")
 
-            self.log("Connecting via mtkclient — power the phone OFF, hold Vol Up + Vol Down, then plug USB.", "warning")
+            self.log("Connecting via mtkclient — power the phone OFF, then plug USB with NO buttons (Preloader; mtkclient crashes it into BROM). Don't hold Vol Up + Vol Down - that boots Recovery.", "warning")
             ok, tail = self.mtk.run_mtkclient(args, log_cb=lambda line, lvl="info": self.log(line, lvl))
             if ok:
                 self.log(f"mtkclient finished OK — {tail}", "success")

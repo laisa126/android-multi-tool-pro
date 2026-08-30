@@ -838,7 +838,7 @@
           <div class="action-card" style="border: 1px solid var(--c8-white); background: var(--c3-card); margin-bottom: 12px;">
             <div class="action-info">
               <h4 style="color: var(--c8-white); font-size: 12px;">⚡ MediaTek BROM / Preloader Mode (For Locked Phone)</h4>
-              <p>Phone locked or screen frozen? Power OFF phone -> Hold Vol Up + Vol Down -> Connect USB. No ADB needed!</p>
+              <p>Phone locked or screen frozen? Power OFF phone -> start the tool -> plug USB with NO buttons (Preloader). No ADB needed! (Don't hold Vol Up+Down — that boots Recovery.)</p>
             </div>
             <button class="btn-white" onclick="switchTab('tab-mtk')">Open MTK BROM</button>
           </div>
@@ -847,7 +847,7 @@
             <div class="action-card">
               <div class="action-info">
                 <h4>1-Click Preloader FRP & Screen Lock Wipe</h4>
-                <p>Hold Vol Up+Down, plug USB. Bypasses DAA and formats frp/userdata.</p>
+                <p>Power OFF, plug USB with no buttons (Preloader). Bypasses DAA and formats frp/userdata.</p>
               </div>
               <button class="btn-danger" onclick="runMtkBrom()">Wipe FRP</button>
             </div>
@@ -1762,7 +1762,7 @@ build.bat</div>
       "Device connects for 2 seconds and disconnects (MTK Preloader)"
     ],
     "cause": "1. Phone is Locked: If screen is locked by PIN or Admin Plugin, Android cuts off USB data lines (Charge only).\n2. HiOS Default USB Mode: Transsion HiOS defaults to 'Charge only', powering off the ADB interface.\n3. Missing Transsion VID (0x2E04): Windows lacks the Transsion Holdings WinUSB driver mapping.\n4. Missing adb_usb.ini entry: ADB server does not probe Transsion VID 0x2E04 by default.\n5. AMD Ryzen / USB 3.0 Handshake Drop: Dimensity 7400 SoCs drop packets on blue USB 3.1/3.2 ports.",
-    "win11_fix": "IF PHONE IS LOCKED (CANNOT ENABLE ADB):\n- Do not use ADB. Use MediaTek BROM mode instead!\n- Power off CN5c completely (hold Power + Vol Down 10s if screen is frozen).\n- Hold Volume Up + Volume Down together and connect USB cable.\n- Tool will detect MediaTek Preloader COM Port and format userdata/frp directly.\n\nIF PHONE CAN BE UNLOCKED (ADB MODE):\n- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)'.\n- Go to Settings -> Developer options -> tap 'Revoke USB debugging authorizations' -> toggle 'USB Debugging' OFF and ON.\n\nON PC (TRANSSION DRIVER FIX):\n- Run install_drivers.bat as Administrator (auto-adds 0x2e04 and restarts ADB).\n- In Device Manager -> check 'TECNO-CN5c' -> update driver to 'Android Composite ADB Interface'."
+    "win11_fix": "IF PHONE IS LOCKED (CANNOT ENABLE ADB):\n- Do not use ADB. Use MediaTek BROM mode instead!\n- Power off CN5c completely (hold Power + Vol Down 10s if screen is frozen).\n- Start the tool FIRST, then plug USB with NO buttons (Preloader mode) - it crashes the preloader into BROM. Do NOT hold Vol Up + Vol Down: that boots RECOVERY, not BROM.\n- Tool will detect MediaTek Preloader COM Port and format userdata/frp directly.\n\nIF PHONE CAN BE UNLOCKED (ADB MODE):\n- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)'.\n- Go to Settings -> Developer options -> tap 'Revoke USB debugging authorizations' -> toggle 'USB Debugging' OFF and ON.\n\nON PC (TRANSSION DRIVER FIX):\n- Run install_drivers.bat as Administrator (auto-adds 0x2e04 and restarts ADB).\n- In Device Manager -> check 'TECNO-CN5c' -> update driver to 'Android Composite ADB Interface'."
   },
   "FASTBOOT_AMD_USB3_BUG": {
     "title": "Fastboot Freeze / Command Hangs on Windows 11 (AMD Ryzen / USB 3.0)",
@@ -1797,7 +1797,7 @@ build.bat</div>
       "COM port vanishes"
     ],
     "cause": "Missing LibUSB-Win32 filter driver or Watchdog Timer reset triggered.",
-    "win11_fix": "1. Open Device Manager on Windows 11.\n2. Hold Vol Up + Vol Down and connect USB.\n3. As soon as 'MediaTek USB Port' appears under Ports (COM & LPT), ensure driver says 'MediaTek Inc.'.\n4. Use a high-quality USB-C data cable (not a charge-only cable)."
+    "win11_fix": "1. Open Device Manager on Windows 11.\n2. Power the phone OFF, start the tool, then plug USB with NO buttons (Preloader).\n3. As soon as 'MediaTek USB Port' appears under Ports (COM & LPT), ensure driver says 'MediaTek Inc.'.\n4. Use a high-quality USB-C data cable (not a charge-only cable)."
   }
 };
     let cachedWorkflows = {

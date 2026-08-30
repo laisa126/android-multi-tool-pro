@@ -53,7 +53,8 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "IF PHONE IS LOCKED (CANNOT ENABLE ADB):\n"
             "- Do not use ADB. Use MediaTek BROM mode instead!\n"
             "- Power off CN5c completely (hold Power + Vol Down 10s if screen is frozen).\n"
-            "- Hold Volume Up + Volume Down together and connect USB cable.\n"
+            "- Start the tool FIRST, then plug USB with NO buttons (Preloader mode) - the tool crashes it into BROM.\n"
+            "- Do NOT hold Vol Up + Vol Down: that boots RECOVERY, not BROM.\n"
             "- Tool will detect MediaTek Preloader COM Port and format userdata/frp directly.\n\n"
             "IF PHONE CAN BE UNLOCKED (ADB MODE):\n"
             "- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)'.\n"
@@ -103,7 +104,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
         "cause": "Missing LibUSB-Win32 filter driver or Watchdog Timer reset triggered.",
         "win11_fix": (
             "1. Open Device Manager on Windows 11.\n"
-            "2. Hold Vol Up + Vol Down and connect USB.\n"
+            "2. Power the phone OFF, start the tool, then plug USB with NO buttons (Preloader).\n"
             "3. As soon as 'MediaTek USB Port' appears under Ports (COM & LPT), ensure driver says 'MediaTek Inc.'.\n"
             "4. Use a high-quality USB-C data cable (not a charge-only cable)."
         )

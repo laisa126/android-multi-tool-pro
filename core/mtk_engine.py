@@ -320,7 +320,9 @@ class MTKEngine:
         """Run a real mtkclient command and stream its output to log_cb(line, level).
 
         Returns (ok, last_line). mtkclient expects the device in BROM/preloader
-        mode (power off -> hold Vol Up + Vol Down -> plug USB) and performs the
+        mode: power off, then plug USB with NO buttons (preloader mode) and it
+        crashes the preloader into BROM automatically - do NOT hold Vol Up +
+        Vol Down, which boots Recovery on many Tecno phones. It performs the
         actual exploit (SLA/DAA bypass) + DA upload + partition operation.
         """
         exe = self.mtkclient_path()

@@ -31,7 +31,8 @@ from core.detection import run_full_detection, selectable_devices
 from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
 from core.serial_ports import build_custom_adb_inf
 from core.dependency_installer import (
-    ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance
+    ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance,
+    install_mtkclient
 )
 from core import driver_installer
 from core.mtk_workflows import MTKWorkflows, scan_imei, COMMON_PARTITIONS, IMEI_SOURCE_PARTS
@@ -1141,6 +1142,13 @@ class AndroidMultiToolApp:
         def task():
             self.log("Installing required tools & drivers...", "info")
             ensure_runtime_dependencies(self.bin_dir, lambda msg: self.log(msg, "info"))
+
+            # mtkclient is the one dependency every real MTK operation needs.
+            ok_mtk, msg_mtk = install_mtkclient(lambda msg: self.log(msg, "info"))
+            self.log(msg_mtk, "success" if ok_mtk else "warning")
+            if not ok_mtk:
+                self.log("Manual fallback:  pip install mtkclient   (or clone github.com/bkerler/mtkclient)", "warning")
+
             if platform.system() == "Windows":
                 self.log("Launching the automatic MediaTek VCOM + ADB driver installer (accept the UAC prompt)...", "info")
                 log_path = driver_installer.default_log_path()

@@ -49,7 +49,10 @@ from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
 from core.detection import run_full_detection, selectable_devices
 from core.connection_guide import CONNECTION_SCENARIOS, ADB_STATE_GUIDANCE
-from core.dependency_installer import ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance
+from core.dependency_installer import (
+    ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance,
+    install_mtkclient
+)
 
 adb = ADBEngine()
 fastboot = FastbootEngine()
@@ -252,6 +255,8 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             server_log("install_tools: ensuring runtime dependencies")
             report = ensure_runtime_dependencies(os.path.join(parent_dir, "bin"))
             logs = [f"[{'OK' if ok else 'WARN'}] {msg}" for ok, msg in report]
+            ok_mtk, msg_mtk = install_mtkclient(lambda m: logs.append(m))
+            logs.append(("[OK] " if ok_mtk else "[WARN] ") + msg_mtk)
             if platform.system() == "Windows":
                 try:
                     from core import driver_installer

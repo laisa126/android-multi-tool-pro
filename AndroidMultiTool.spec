@@ -21,6 +21,8 @@ if os.path.isdir('bin/drivers'):
     added_files.append(('bin/drivers', 'bin/drivers'))
 if os.path.isdir('bin/scatter'):
     added_files.append(('bin/scatter', 'bin/scatter'))
+if os.path.isdir('bin/da'):
+    added_files.append(('bin/da', 'bin/da'))
 
 a = Analysis(
     ['app_gui.py'],

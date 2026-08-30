@@ -118,7 +118,7 @@ ISSUE_FIXES: Dict[str, Dict] = {
         "cause": "The phone is physically connected (USB hardware bus) but ADB cannot enumerate it — almost always a driver, USB mode, or lock-screen issue.",
         "fix": [
             "On phone: unlock the screen and set USB mode to 'File Transfer (MTP)'.",
-            "Windows: install the driver (install_drivers.bat) — check Device Manager for a yellow '!' device.",
+            "Windows: click 'Install Tools & Drivers' in the app (auto-installs the VCOM/ADB driver) — check Device Manager for a yellow '!' device.",
             "Enable USB Debugging, then 'Revoke USB debugging authorizations'.",
             "If the phone is locked: use MTK BROM (power OFF -> plug USB with NO buttons; do NOT hold Vol Up+Down, that boots Recovery) or EDL.",
         ],
@@ -169,7 +169,7 @@ ISSUE_FIXES: Dict[str, Dict] = {
             "On the phone: unlock the screen, pull down the USB notification, and switch to 'File Transfer (MTP)'.",
             "Enable Developer Options -> USB Debugging, then tap 'Always allow from this computer' when the prompt appears.",
             "Device Manager: find the Tecno/Android device -> Update driver -> Browse my computer -> Let me pick from a list -> Android Device -> 'Android Composite ADB Interface'.",
-            "If it shows a yellow '!': run install_drivers.bat AS ADMIN; on Windows 11 also turn OFF Memory Integrity (Core Isolation) and reboot with driver signature enforcement disabled.",
+            "If it shows a yellow '!': click 'Install Tools & Drivers' in the app (auto-installs VCOM/ADB); if Windows 11 blocks the unsigned INF, use 'Force-Install VCOM (Test Mode)' and reboot.",
             "Then click 'Kill / Restart ADB' in the tool and scan again.",
         ],
     },
@@ -359,7 +359,7 @@ CONNECTION_SCENARIOS: List[Dict] = [
         "failures": [
             {"symptom": "Vol Up + Vol Down boots into RECOVERY, not BROM", "cause": "That key combo is Recovery on this phone", "fix": "Power OFF and plug USB with NO buttons (Preloader) - the tool crashes it into BROM automatically."},
             {"symptom": "Port appears for 2s then vanishes", "cause": "Watchdog reset (normal)", "fix": "Start the tool first, then plug in; keep the phone off until the tool is waiting."},
-            {"symptom": "No port at all", "cause": "Missing VCOM driver / charge-only cable", "fix": "Install driver (install_drivers.bat); use a data cable."},
+            {"symptom": "No port at all", "cause": "Missing VCOM driver / charge-only cable", "fix": "Click 'Install Tools & Drivers' in the app to auto-install the VCOM driver; use a data cable."},
         ],
     },
     {

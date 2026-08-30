@@ -229,13 +229,36 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             server_log("install_tools: ensuring runtime dependencies")
             report = ensure_runtime_dependencies(os.path.join(parent_dir, "bin"))
             logs = [f"[{'OK' if ok else 'WARN'}] {msg}" for ok, msg in report]
-            driver_launched = False
             if platform.system() == "Windows":
-                driver_launched, driver_msg = run_windows_driver_installer(parent_dir)
-                logs.append(driver_msg)
+                try:
+                    from core import driver_installer
+                    log_path = driver_installer.default_log_path()
+                    launched, msg = driver_installer.start_driver_install(log_path)
+                    logs.append(msg)
+                    if launched:
+                        # give the elevated process a few seconds to write progress
+                        deadline = time.time() + 15
+                        while time.time() < deadline:
+                            try:
+                                with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                                    tail = f.read().splitlines()
+                            except FileNotFoundError:
+                                tail = []
+                            if any(driver_installer.SENTINEL in ln for ln in tail):
+                                break
+                            time.sleep(1)
+                        try:
+                            with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                                for ln in f.read().splitlines():
+                                    if ln.strip():
+                                        logs.append(ln)
+                        except FileNotFoundError:
+                            pass
+                except Exception as e:
+                    logs.append(f"Driver installer error: {e}")
             else:
                 logs.append(driver_install_guidance())
-            self.send_json_response({"success": True, "logs": logs, "driver_launched": driver_launched})
+            self.send_json_response({"success": True, "logs": logs})
 
         elif action == "sideload":
             ota = req.get("filename", "")

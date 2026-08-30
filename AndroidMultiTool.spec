@@ -52,6 +52,7 @@ a = Analysis(
         'core.serial_ports',
         'core.detection',
         'core.connection_guide',
+        'core.driver_installer',
         'serial',
         'serial.tools.list_ports'
     ],

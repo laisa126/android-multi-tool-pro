@@ -33,6 +33,7 @@ from core.serial_ports import build_custom_adb_inf
 from core.dependency_installer import (
     ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance
 )
+from core import driver_installer
 
 APP_NAME = "Android Multi-Tool Pro"
 APP_VERSION = "v2.5.0 (Tecno Camon 50 Pro 4G Edition)"
@@ -1118,13 +1119,71 @@ class AndroidMultiToolApp:
             self.log("Installing required tools & drivers...", "info")
             ensure_runtime_dependencies(self.bin_dir, lambda msg: self.log(msg, "info"))
             if platform.system() == "Windows":
-                ok, msg = run_windows_driver_installer(self.base_dir)
-                self.log(msg, "success" if ok else "warning")
+                self.log("Launching the automatic MediaTek VCOM + ADB driver installer (accept the UAC prompt)...", "info")
+                log_path = driver_installer.default_log_path()
+                ok, msg = driver_installer.start_driver_install(log_path)
+                self.log(msg, "info" if ok else "warning")
+                if ok:
+                    self._stream_driver_log(log_path)
+                else:
+                    self.log("You can still install manually: run install_drivers.bat as Administrator.", "warning")
             else:
                 self.log(driver_install_guidance(), "info")
-            self.log("Dependency install pass finished. Re-scan devices when done.", "success")
 
         self._run_threaded(task, "Install Tools & Drivers")
+
+    def force_install_test_mode(self):
+        """Enable Windows Test Mode (testsigning) so the unsigned VCOM INF can install."""
+        if platform.system() != "Windows":
+            self.log("Test Mode is a Windows-only option.", "warning")
+            return
+        if not messagebox.askyesno(
+            "Enable Test Mode (advanced)",
+            "This runs 'bcdedit /set testsigning on' and REQUIRES A REBOOT.\n\n"
+            "It shows a 'Test Mode' watermark on the desktop until you revert\n"
+            "(bcdedit /set testsigning off).\n\n"
+            "Use it only if the normal driver install was blocked by Windows\n"
+            "driver signature enforcement.\n\nContinue?"
+        ):
+            return
+
+        def task():
+            self.log("Enabling Windows Test Mode so the unsigned VCOM driver can install...", "warning")
+            log_path = driver_installer.default_log_path()
+            ok, msg = driver_installer.start_driver_install(log_path, testsigning=True)
+            self.log(msg, "info" if ok else "warning")
+            if ok:
+                self._stream_driver_log(log_path)
+
+        self._run_threaded(task, "Enable Test Mode + Install Drivers")
+
+    def _stream_driver_log(self, log_path: str, timeout: int = 240):
+        """Tail the elevated installer's log file and mirror it into the console."""
+        pos = 0
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                    f.seek(pos)
+                    chunk = f.read()
+                    pos = f.tell()
+            except FileNotFoundError:
+                chunk = ""
+            except Exception:
+                chunk = ""
+            for line in chunk.splitlines():
+                if not line.strip():
+                    continue
+                if driver_installer.SENTINEL in line:
+                    result = line.split(driver_installer.SENTINEL, 1)[1].strip()
+                    lvl = "success" if result in ("OK", "OK_WARN") else "error"
+                    self.log(f">> DRIVER INSTALL RESULT: {result}", lvl)
+                    if result == "OK_WARN":
+                        self.log("Some components installed — check the messages above for what still needs attention.", "warning")
+                    return
+                self.log(line, "info")
+            time.sleep(0.6)
+        self.log("Driver installer timed out waiting for the elevated process (was the UAC prompt left open?).", "warning")
 
     def scan_devices(self):
         def task():
@@ -1470,6 +1529,8 @@ class AndroidMultiToolApp:
         btn_scan.pack(fill="x", pady=(4, 0))
         btn_install = ttk.Button(left_card, text="⬇ Install Tools & Drivers", style="Secondary.TButton", command=self.install_tools_and_drivers)
         btn_install.pack(fill="x", pady=(4, 0))
+        btn_testsign = ttk.Button(left_card, text="⚙ Force-Install VCOM (Test Mode)", style="Secondary.TButton", command=self.force_install_test_mode)
+        btn_testsign.pack(fill="x", pady=(4, 0))
 
         # Right column: scenario detail
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
@@ -2293,6 +2354,10 @@ class AndroidMultiToolApp:
 
 
 def main():
+    # If the UAC relaunch passed the driver-install flag, run the elevated
+    # installer and exit BEFORE building any UI.
+    if driver_installer.handle_elevated_invocation(sys.argv):
+        return
     root = tk.Tk()
     app = AndroidMultiToolApp(root)
     root.mainloop()

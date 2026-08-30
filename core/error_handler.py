@@ -31,7 +31,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "2. Look for 'Android' or 'Unknown Device' with a yellow warning triangle.\n"
             "3. Right-click -> Update driver -> 'Browse my computer for drivers' -> 'Let me pick from a list of available drivers'.\n"
             "4. Select 'Android Device' -> choose 'Android Composite ADB Interface'.\n"
-            "5. If Windows 11 blocks it: Run 'install_drivers.bat' as Administrator to register official Google signed drivers."
+            "5. If Windows 11 blocks it: use the app's 'Install Tools & Drivers' (auto-installs the drivers) or 'Force-Install VCOM (Test Mode)'."
         )
     },
     "TECNO_TRANSSION_NOT_DETECTED": {
@@ -60,7 +60,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)'.\n"
             "- Go to Settings -> Developer options -> tap 'Revoke USB debugging authorizations' -> toggle 'USB Debugging' OFF and ON.\n\n"
             "ON PC (TRANSSION DRIVER FIX):\n"
-            "- Run install_drivers.bat as Administrator (auto-adds 0x2e04 and restarts ADB).\n"
+            "- Click 'Install Tools & Drivers' in the app (auto-adds 0x2e04, installs VCOM/ADB drivers, restarts ADB).\n"
             "- In Device Manager -> check 'TECNO-CN5c' -> update driver to 'Android Composite ADB Interface'."
         )
     },
@@ -83,7 +83,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "1. Click Start -> Search 'Core Isolation'.\n"
             "2. Temporarily toggle 'Memory Integrity' to OFF.\n"
             "3. Restart Windows 11.\n"
-            "4. Run 'install_drivers.bat' as Administrator.\n"
+            "4. Click 'Install Tools & Drivers' in the app (auto-installs VCOM/ADB).\n"
             "5. After servicing is complete, you can toggle Memory Integrity back ON."
         )
     },

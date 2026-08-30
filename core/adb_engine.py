@@ -33,7 +33,7 @@ class ADBEngine:
 
         NOTE: adb_usb.ini is only consulted by adb on Linux / macOS.
         On Windows, ADB uses WinUSB drivers and ignores this file entirely —
-        the Windows fix is the bundled driver INF (install_drivers.bat).
+        the Windows fix is the in-app 'Install Tools & Drivers' auto-installer (stages the bundled driver INF).
         """
         if platform.system() == "Windows":
             return

@@ -63,9 +63,9 @@ def ensure_runtime_dependencies(base_dir: str, callback: Optional[Callable[[str]
 def driver_install_guidance() -> str:
     if platform.system() == "Windows":
         return (
-            "Windows driver install: run install_drivers.bat AS ADMIN. If the Tecno/MTK "
-            "driver is still rejected, temporarily disable Memory Integrity (Core Isolation) "
-            "and reboot with driver signature enforcement off, then re-run it."
+            "Windows driver install: use the in-app 'Install Tools & Drivers' button — it auto-installs the "
+            "MediaTek VCOM + ADB drivers (pnputil, UAC). If Windows still blocks the unsigned "
+            "VCOM INF, use 'Force-Install VCOM (Test Mode)' (needs a reboot) or Device Manager."
         )
     if platform.system() == "Linux":
         return (
@@ -76,18 +76,17 @@ def driver_install_guidance() -> str:
 
 
 def run_windows_driver_installer(base_dir: str) -> Tuple[bool, str]:
-    """Launch install_drivers.bat elevated on Windows (UAC prompt)."""
+    """Self-install the MediaTek VCOM + Android ADB drivers (Python-native, UAC).
+
+    Delegates to core.driver_installer, which stages bin/drivers/*.inf via
+    pnputil, binds any connected MTK/Tecno device, registers ADB vendor IDs and
+    restarts the daemon — relaunching itself elevated if needed.
+    """
     if platform.system() != "Windows":
         return False, "Driver installer only runs on Windows."
-    bat = os.path.join(base_dir, "install_drivers.bat")
-    if not os.path.isfile(bat):
-        return False, f"Driver installer not found: {bat}"
     try:
-        subprocess.Popen(
-            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-             f"Start-Process -FilePath '{bat}' -Verb RunAs"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        return True, "Driver installer launched — accept the UAC prompt to continue."
+        from . import driver_installer
     except Exception as e:
-        return False, f"Could not launch driver installer: {e}"
+        return False, f"Could not load driver installer: {e}"
+    log_path = driver_installer.default_log_path()
+    return driver_installer.start_driver_install(log_path)

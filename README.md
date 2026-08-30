@@ -97,6 +97,11 @@ The interface is styled exclusively using **exactly 10 colors**:
 11. **EFS & NVRAM**: Modem calibration backup and restore (`nvram.img`, `nvdata.img`).
 12. **Fastboot Flasher**: Bootloader unlock/lock, partition flashing, cache and userdata format.
 13. **HiOS Debloat**: 1-click bloatware cleaners and APK package manager.
+14. **MTK Deep Service (NEW)**: three dedicated tabs powered by the real mtkclient CLI —
+    * **Backup & Restore**: partition backup (`mtk r`), full ROM readback (`mtk rl`), single-partition flash (`mtk w`), full-firmware flash (`mtk wl`), plus a **Full Guided Workflow** (readback → IMEI scan → seccfg unlock).
+    * **Bootloader Unlock**: `mtk da seccfg unlock`/`lock`, quick FRP wipe & factory reset, `mtk reset` reboot.
+    * **IMEI & NVRAM**: dump `nvram/nvdata/nvcfg/proinfo` and Luhn-validate 15-digit IMEI candidates; NVRAM backup/restore (read-only IMEI — no writing).
+    * A shared **firmware-context** panel auto-locates `DA_BR.bin` / `auth_sv5.auth` / `preloader*.bin` / scatter inside an extracted stock ROM. Same workflows are exposed via the web API.
 
 ---
 

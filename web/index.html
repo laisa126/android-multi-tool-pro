@@ -1046,9 +1046,39 @@
           <div class="card-title">Camon 50 Pro Connection Procedure</div>
           <div style="font-size:11px; line-height:1.5; color:var(--c7-lightgray);">
             <p>1. Power off Tecno Camon 50 Pro completely.</p>
-            <p style="margin-top:4px;">2. Press and hold <strong>Volume Up + Volume Down</strong> simultaneously.</p>
-            <p style="margin-top:4px;">3. Plug in the Type-C USB cable to your PC.</p>
-            <p style="margin-top:4px;">4. Tool catches the Preloader VCOM port, bypasses DAA authorization, and formats the block.</p>
+            <p style="margin-top:4px;">2. Start the operation in the tool FIRST, then plug in the Type-C cable with <strong>NO buttons</strong> (Preloader mode).</p>
+            <p style="margin-top:4px;">3. The tool crashes the preloader into BROM automatically.</p>
+            <p style="margin-top:4px;">4. ⚠ Don't hold Vol Up + Vol Down — that boots <strong>Recovery</strong>, not BROM.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:14px;">
+        <div class="card">
+          <div class="card-title">🔓 MTK Deep Service — Bootloader &amp; Backup</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">DA loader / auth (optional for MT6789; required for MT6878):</label>
+              <input id="mtkLoader" type="text" placeholder="DA_BR.bin path (optional)" style="width:100%; margin-bottom:4px;">
+              <input id="mtkAuth" type="text" placeholder="auth_sv5.auth path (optional)" style="width:100%; margin-bottom:4px;">
+              <input id="mtkPreloader" type="text" placeholder="preloader.bin path (optional)" style="width:100%;">
+            </div>
+            <button class="btn-white" onclick="mtkDeep('unlock')">🔓 Unlock bootloader (seccfg unlock)</button>
+            <button class="btn-dark" onclick="mtkDeep('lock')">🔒 Re-lock bootloader (seccfg lock)</button>
+            <button class="btn-dark" onclick="mtkDeep('reboot')">🔁 Reboot device (mtk reset)</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📟 Backup &amp; IMEI</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Partitions (comma separated):</label>
+              <input id="mtkBackupParts" type="text" value="boot,recovery,nvram,nvdata,nvcfg,proinfo,frp,seccfg" style="width:100%;">
+            </div>
+            <button class="btn-white" onclick="mtkDeep('backup')">💾 Backup partitions</button>
+            <button class="btn-dark" onclick="mtkDeep('readall')">💾 Full ROM readback</button>
+            <button class="btn-dark" onclick="mtkDeep('imei')">📟 Dump NVRAM + scan IMEI</button>
           </div>
         </div>
       </div>
@@ -2467,6 +2497,36 @@ build.bat</div>
         if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("MTK BROM exploit failed: " + err, "log-red");
+      }
+    }
+
+    async function mtkDeep(action) {
+      const loader = document.getElementById("mtkLoader").value.trim();
+      const auth = document.getElementById("mtkAuth").value.trim();
+      const preloader = document.getElementById("mtkPreloader").value.trim();
+      const body = { loader, auth, preloader };
+      if (action === "backup") {
+        body.parts = document.getElementById("mtkBackupParts").value;
+        body.out_dir = prompt("Backup output folder (absolute path):", "C:\\AMT\\backup");
+      } else if (action === "readall" || action === "imei") {
+        body.out_dir = prompt("Output folder (absolute path):", "C:\\AMT\\" + action);
+      }
+      if (body.out_dir === null || body.out_dir === "") { return; }
+      const endpoint = {
+        unlock: "mtk_unlock", lock: "mtk_lock", reboot: "mtk_reboot",
+        backup: "mtk_backup", readall: "mtk_read_all", imei: "mtk_imei_dump"
+      }[action];
+      logLine(`Starting MTK deep-service: ${action}...`, "log-white");
+      try {
+        const res = await fetch("/api/" + endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        data.logs.forEach(l => logLine(l, data.success ? "log-green" : "log-red"));
+      } catch (err) {
+        logLine("MTK deep-service failed: " + err, "log-red");
       }
     }
 

@@ -34,6 +34,7 @@ from core.dependency_installer import (
     ensure_runtime_dependencies, run_windows_driver_installer, driver_install_guidance
 )
 from core import driver_installer
+from core.mtk_workflows import MTKWorkflows, scan_imei, COMMON_PARTITIONS, IMEI_SOURCE_PARTS
 
 APP_NAME = "Android Multi-Tool Pro"
 APP_VERSION = "v2.5.0 (Tecno Camon 50 Pro 4G Edition)"
@@ -77,6 +78,14 @@ class AndroidMultiToolApp:
         self.fastboot = FastbootEngine()
         self.frp = FRPEngine(self.adb, self.fastboot)
         self.mtk = MTKEngine()
+        self.wf = MTKWorkflows(self.mtk)
+        # Shared MTK deep-service context (DA loader / auth / preloader / firmware folder)
+        self.mtk_ctx = {
+            "folder": tk.StringVar(value=""),
+            "loader": tk.StringVar(value=""),
+            "auth": tk.StringVar(value=""),
+            "preloader": tk.StringVar(value=""),
+        }
         self.samsung_modem = SamsungModemEngine()
         self.root_engine = RootEngine(self.adb, self.fastboot)
         self.efs = EFSEngine(self.adb, self.fastboot)
@@ -268,6 +277,11 @@ class AndroidMultiToolApp:
                 ("debloat",    "  \U0001F9F9  Debloat & Apps"),
                 ("testpoints", "  \U0001F3AF  EDL & Test Points"),
             ]),
+            ("MTK DEEP SERVICE", [
+                ("backup", "  \U0001F4BE  Backup & Restore"),
+                ("unlock", "  \U0001F513  Bootloader Unlock"),
+                ("imei",   "  \U0001F4DF  IMEI & NVRAM"),
+            ]),
             ("DIAGNOSTICS", [
                 ("info",    "  \U0001FA7A  Diagnostics"),
                 ("connect", "  \U0001F50C  Connection Guide"),
@@ -318,6 +332,9 @@ class AndroidMultiToolApp:
         self.tab_testpoints = tk.Frame(self._tab_host, bg=C_CARD)
         self.tab_connect = tk.Frame(self._tab_host, bg=C_CARD)
         self.tab_devices = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_backup = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_unlock = tk.Frame(self._tab_host, bg=C_CARD)
+        self.tab_imei = tk.Frame(self._tab_host, bg=C_CARD)
 
         self._tab_frames = {
             "camon50": self.tab_camon50,
@@ -330,12 +347,18 @@ class AndroidMultiToolApp:
             "testpoints": self.tab_testpoints,
             "connect": self.tab_connect,
             "devices": self.tab_devices,
+            "backup": self.tab_backup,
+            "unlock": self.tab_unlock,
+            "imei": self.tab_imei,
         }
 
         self._build_tab_camon50()
         self._build_tab_connect()
         self._build_tab_devices()
         self._build_tab_mtk()
+        self._build_tab_backup()
+        self._build_tab_unlock()
+        self._build_tab_imei()
         self._build_tab_info()
         self._build_tab_frp()
         self._build_tab_fastboot()
@@ -1487,6 +1510,463 @@ class AndroidMultiToolApp:
             self.fastboot.set_active_device(serial)
             self.adb.set_active_device(None)
             self.log(f"Active FASTBOOT device set to {serial}", "success")
+
+    # ================= MTK DEEP SERVICE (Backup / Unlock / IMEI) =================
+
+    def _build_mtk_ctx_card(self, parent):
+        """Shared 'firmware context' card: DA loader / auth / preloader + auto-locate."""
+        card = tk.Frame(parent, bg=C_SUBCARD, padx=10, pady=8)
+        card.pack(fill="x", pady=4)
+        tk.Label(card, text="MTK FIRMWARE CONTEXT — DA / AUTH / PRELOADER", font=("Segoe UI", 9, "bold"),
+                 fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(card,
+                 text="Optional on MT6789 (Camon 50 Pro 4G — free path). Required on protected MT6878 units. "
+                      "Shared across all deep-service tabs.",
+                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=620).pack(anchor="w", pady=(0, 4))
+
+        frow = tk.Frame(card, bg=C_SUBCARD); frow.pack(fill="x", pady=2)
+        tk.Label(frow, text="Firmware folder:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        tk.Entry(frow, textvariable=self.mtk_ctx["folder"], bg=C_BLACK, fg=C_WHITE,
+                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+        ttk.Button(frow, text="Browse…", style="Secondary.TButton", command=self._browse_mtk_folder).pack(side="left", padx=2)
+        ttk.Button(frow, text="Auto-locate DA/Auth", style="Action.TButton", command=self._auto_locate_files).pack(side="left", padx=2)
+
+        for key, label in (("loader", "DA loader (.bin)"), ("auth", "Auth file (.auth)"), ("preloader", "Preloader (.bin)")):
+            row = tk.Frame(card, bg=C_SUBCARD); row.pack(fill="x", pady=2)
+            tk.Label(row, text=label + ":", font=("Segoe UI", 8), fg=C_TEXT_MUTED,
+                     bg=C_SUBCARD, width=18, anchor="w").pack(side="left")
+            tk.Entry(row, textvariable=self.mtk_ctx[key], bg=C_BLACK, fg=C_WHITE,
+                     insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+            ttk.Button(row, text="…", width=3, style="Secondary.TButton",
+                       command=lambda k=key: self._browse_mtk_file(k)).pack(side="left")
+        return card
+
+    def _mtk_ctx_args(self):
+        return {k: (v.get().strip() or None) for k, v in self.mtk_ctx.items() if k in ("loader", "auth", "preloader")}
+
+    def _browse_mtk_folder(self):
+        d = filedialog.askdirectory(title="Select firmware / DA folder (extracted stock ROM)")
+        if d:
+            self.mtk_ctx["folder"].set(d)
+            self._auto_locate_files(d)
+
+    def _browse_mtk_file(self, key):
+        f = filedialog.askopenfilename(title="Select file", filetypes=[("All files", "*.*")])
+        if f:
+            self.mtk_ctx[key].set(f)
+            self.log(f"{key} set: {os.path.basename(f)}", "info")
+
+    def _auto_locate_files(self, folder=None):
+        folder = folder or self.mtk_ctx["folder"].get().strip()
+        if not folder:
+            self.log("Select a firmware folder first (extracted stock ROM).", "warning")
+            return
+        self.log(f"Scanning {folder} for DA / auth / preloader / scatter...", "info")
+        found = self.wf.locate_firmware_files(folder)
+        hit = False
+        for k, label in (("loader", "DA loader"), ("auth", "auth file"), ("preloader", "preloader")):
+            if found.get(k):
+                self.mtk_ctx[k].set(found[k])
+                self.log(f"  {label}: {os.path.basename(found[k])}", "success")
+                hit = True
+        if found.get("scatter"):
+            self.log(f"  scatter: {os.path.basename(found['scatter'])}", "success")
+            hit = True
+        if not hit:
+            self.log("No DA/auth/preloader/scatter found in that folder.", "warning")
+            self.log("For CN5c (MT6789) you can still proceed without them (free mtkclient path).", "info")
+
+    # ---- Backup & Restore tab ----
+    def _build_tab_backup(self):
+        f = self.tab_backup
+        f.columnconfigure(0, weight=1); f.columnconfigure(1, weight=1)
+        f.rowconfigure(0, weight=1)
+
+        left = tk.Frame(f, bg=C_CARD, padx=12, pady=10); left.grid(row=0, column=0, sticky="nsew", padx=6, pady=6)
+        right = tk.Frame(f, bg=C_CARD, padx=12, pady=10); right.grid(row=0, column=1, sticky="nsew", padx=6, pady=6)
+
+        self._build_mtk_ctx_card(left)
+
+        # Partition backup
+        pc = tk.Frame(left, bg=C_SUBCARD, padx=10, pady=8); pc.pack(fill="both", expand=True, pady=4)
+        tk.Label(pc, text="PARTITION BACKUP (mtk r)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(pc, text="Ctrl/Shift-click to select several partitions.", font=("Segoe UI", 8),
+                 fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w")
+        self.backup_parts_list = tk.Listbox(pc, bg=C_BLACK, fg=C_TEXT_BODY, selectbackground=C_GRAY_MID,
+                                            selectforeground=C_WHITE, relief="flat", font=("Consolas", 8),
+                                            selectmode="multiple", exportselection=False)
+        self.backup_parts_list.pack(fill="both", expand=True, pady=4)
+        for p in COMMON_PARTITIONS:
+            self.backup_parts_list.insert(tk.END, p)
+        ttk.Button(pc, text="Backup selected partitions", style="Action.TButton",
+                   command=self.backup_selected_partitions).pack(fill="x", pady=(4, 0))
+
+        # Guided workflow
+        gw = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); gw.pack(fill="x", pady=4)
+        tk.Label(gw, text="🛡 FULL GUIDED WORKFLOW", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(gw, text="1) Full ROM readback → 2) dump + scan IMEI → 3) seccfg unlock. One click, everything logged.",
+                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=430).pack(anchor="w", pady=(0, 4))
+        ttk.Button(gw, text="Run Full Guided Workflow", style="Action.TButton",
+                   command=self.guided_full_workflow).pack(fill="x")
+
+        # Full readback
+        rb = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); rb.pack(fill="x", pady=4)
+        tk.Label(rb, text="FULL ROM READBACK (mtk rl)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(rb, text="Dumps every partition + scatter to a folder. 15–60+ min on UFS — do not disconnect.",
+                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=430).pack(anchor="w", pady=(0, 4))
+        ttk.Button(rb, text="Full readback to folder…", style="Secondary.TButton",
+                   command=self.full_readback).pack(fill="x")
+
+        # Restore / flash
+        rf = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); rf.pack(fill="x", pady=4)
+        tk.Label(rf, text="RESTORE / FLASH", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+
+        r1 = tk.Frame(rf, bg=C_SUBCARD); r1.pack(fill="x", pady=2)
+        tk.Label(r1, text="Partition:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        self.flash_part_var = tk.StringVar(value="boot")
+        tk.Entry(r1, textvariable=self.flash_part_var, width=14, bg=C_BLACK, fg=C_WHITE,
+                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", padx=4)
+        self.flash_image_var = tk.StringVar(value="")
+        tk.Entry(r1, textvariable=self.flash_image_var, bg=C_BLACK, fg=C_WHITE,
+                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+        ttk.Button(r1, text="…", width=3, style="Secondary.TButton",
+                   command=lambda: self.flash_image_var.set(
+                       filedialog.askopenfilename(title="Select partition image", filetypes=[("Image", "*.img *.bin"), ("All", "*.*")]) or "")).pack(side="left")
+        ttk.Button(rf, text="Flash single partition (mtk w)", style="Action.TButton",
+                   command=self.flash_partition_image).pack(fill="x", pady=(2, 4))
+
+        self.flash_folder_var = tk.StringVar(value="")
+        r2 = tk.Frame(rf, bg=C_SUBCARD); r2.pack(fill="x", pady=2)
+        tk.Label(r2, text="Firmware folder:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        tk.Entry(r2, textvariable=self.flash_folder_var, bg=C_BLACK, fg=C_WHITE,
+                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+        ttk.Button(r2, text="…", width=3, style="Secondary.TButton",
+                   command=lambda: self.flash_folder_var.set(filedialog.askdirectory(title="Select extracted firmware folder") or "")).pack(side="left")
+        ttk.Button(rf, text="Flash full firmware folder (mtk wl)", style="Action.TButton",
+                   command=self.flash_firmware_folder).pack(fill="x", pady=(2, 0))
+
+    def backup_selected_partitions(self):
+        sel = [self.backup_parts_list.get(i) for i in self.backup_parts_list.curselection()]
+        if not sel:
+            self.log("Select at least one partition to back up.", "warning")
+            return
+        out_dir = filedialog.askdirectory(title="Select backup output folder")
+        if not out_dir:
+            return
+
+        def task():
+            self.log(f"Backing up partitions: {', '.join(sel)} (mtk r)…", "info")
+            self.log("Connect the phone in BROM/preloader mode (power OFF → plug USB, no buttons).", "warning")
+            ok, tail = self.wf.backup_partitions(sel, out_dir, self._mtk_ctx_args(),
+                                                 log_cb=lambda l, lvl="info": self.log(l, lvl))
+            if ok:
+                self.log(f"Backup complete → {out_dir} ({tail})", "success")
+            else:
+                self.log(f"Backup failed: {tail}", "error")
+
+        self._run_threaded(task, f"Backup {len(sel)} partition(s)")
+
+    def full_readback(self):
+        out_dir = filedialog.askdirectory(title="Select folder for full ROM readback")
+        if not out_dir:
+            return
+
+        def task():
+            self.log("Full ROM readback (mtk rl) — every partition + scatter. This can take 15–60+ min.", "warning")
+            self.log("Connect the phone in BROM/preloader mode and DO NOT disconnect.", "warning")
+            ok, tail = self.wf.read_all(out_dir, self._mtk_ctx_args(),
+                                        log_cb=lambda l, lvl="info": self.log(l, lvl), timeout=5400)
+            if ok:
+                self.log(f"Full readback complete → {out_dir}", "success")
+            else:
+                self.log(f"Readback failed: {tail}", "error")
+
+        self._run_threaded(task, "Full ROM readback")
+
+    def flash_partition_image(self):
+        part = self.flash_part_var.get().strip()
+        img = self.flash_image_var.get().strip()
+        if not part or not img:
+            self.log("Enter a partition name and select an image file.", "warning")
+            return
+        if not messagebox.askyesno("Confirm Flash", f"Flash '{part}' with:\n{img}\n\nThis overwrites the partition. Proceed?"):
+            return
+
+        def task():
+            self.log(f"Flashing {part} ← {os.path.basename(img)} (mtk w)…", "warning")
+            ok, tail = self.wf.write_partition(part, img, self._mtk_ctx_args(),
+                                               log_cb=lambda l, lvl="info": self.log(l, lvl))
+            self.log(f"Flash {'OK — ' if ok else 'failed — '}{tail}", "success" if ok else "error")
+
+        self._run_threaded(task, f"Flash {part}")
+
+    def flash_firmware_folder(self):
+        folder = self.flash_folder_var.get().strip()
+        if not folder:
+            self.log("Select an extracted firmware folder (must contain the scatter).", "warning")
+            return
+        if not messagebox.askyesno("Confirm Flash", f"Flash the FULL firmware in:\n{folder}\n\nThis rewrites the phone's partitions. Proceed?"):
+            return
+
+        def task():
+            self.log(f"Flashing full firmware folder (mtk wl): {folder}", "warning")
+            ok, tail = self.wf.write_all(folder, self._mtk_ctx_args(),
+                                         log_cb=lambda l, lvl="info": self.log(l, lvl), timeout=5400)
+            self.log(f"Firmware flash {'OK — ' if ok else 'failed — '}{tail}", "success" if ok else "error")
+
+        self._run_threaded(task, "Flash full firmware")
+
+    def guided_full_workflow(self):
+        backup_dir = filedialog.askdirectory(title="Folder for the full ROM backup (step 1)")
+        if not backup_dir:
+            return
+        if not messagebox.askyesno(
+            "Full Guided Workflow",
+            f"This will:\n\n"
+            f"1) Back up the ENTIRE ROM to:\n   {backup_dir}\n\n"
+            f"2) Dump nvram/nvdata/nvcfg/proinfo and scan for IMEI\n\n"
+            f"3) Run 'seccfg unlock' (bootloader unlock) — on some devices\n"
+            f"   this factory-resets the phone\n\n"
+            f"Keep the phone connected the whole time.\n\nProceed?"
+        ):
+            return
+
+        def task():
+            ctx = self._mtk_ctx_args()
+            self.log("═══ FULL GUIDED WORKFLOW START ═══", "info")
+            self.log("Connect the phone in BROM/preloader mode (power OFF → plug USB, no buttons).", "warning")
+
+            self.log("[1/3] Full ROM readback (mtk rl)…", "info")
+            ok, tail = self.wf.read_all(backup_dir, ctx, log_cb=lambda l, lvl="info": self.log(l, lvl), timeout=5400)
+            if not ok:
+                self.log(f"[1/3] Backup FAILED — aborting workflow. {tail}", "error")
+                return
+            self.log("[1/3] Backup OK.", "success")
+
+            self.log("[2/3] Dumping IMEI source partitions (nvram, nvdata, nvcfg, proinfo)…", "info")
+            imei_dir = os.path.join(backup_dir, "imei_sources")
+            ok2, tail2 = self.wf.dump_imei_sources(imei_dir, ctx,
+                                                   log_cb=lambda l, lvl="info": self.log(l, lvl), timeout=1800)
+            if ok2:
+                imeis = scan_imei(imei_dir)
+                if imeis:
+                    self.log(f"[2/3] IMEI candidates (Luhn-valid): {', '.join(imeis)}", "success")
+                else:
+                    self.log("[2/3] No plaintext Luhn-valid IMEI found — the device likely stores it hashed (needs the device key).", "warning")
+            else:
+                self.log(f"[2/3] IMEI dump failed (continuing): {tail2}", "warning")
+
+            self.log("[3/3] Bootloader unlock (seccfg unlock)…", "info")
+            ok3, tail3 = self.wf.unlock_bootloader(ctx, log_cb=lambda l, lvl="info": self.log(l, lvl))
+            self.log(f"[3/3] Bootloader unlock {'OK — ' if ok3 else 'FAILED — '}{tail3}", "success" if ok3 else "error")
+
+            self.log("═══ FULL GUIDED WORKFLOW DONE ═══", "success" if (ok and ok3) else "warning")
+
+        self._run_threaded(task, "Full Guided Workflow")
+
+    # ---- Bootloader Unlock tab ----
+    def _build_tab_unlock(self):
+        f = self.tab_unlock
+        f.columnconfigure(0, weight=1); f.columnconfigure(1, weight=1)
+        f.rowconfigure(0, weight=1)
+
+        left = tk.Frame(f, bg=C_CARD, padx=12, pady=10); left.grid(row=0, column=0, sticky="nsew", padx=6, pady=6)
+        right = tk.Frame(f, bg=C_CARD, padx=12, pady=10); right.grid(row=0, column=1, sticky="nsew", padx=6, pady=6)
+
+        self._build_mtk_ctx_card(left)
+
+        info = tk.Text(left, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 8), wrap="word",
+                       relief="flat", padx=8, pady=6, height=10)
+        info.pack(fill="both", expand=True, pady=4)
+        info.insert("1.0",
+            "BOOTLOADER UNLOCK — what's real:\n\n"
+            "• CN5c / MT6789 (Camon 50 Pro 4G): 'mtk da seccfg unlock' works\n"
+            "  free via mtkclient — no auth file needed.\n\n"
+            "• CN7c / MT6878 (5G): protected by SLA/DAA. Needs a signed DA +\n"
+            "  auth_sv5.auth from its stock ROM; may still refuse without a\n"
+            "  server-side auth (paid box territory).\n\n"
+            "• seccfg unlock sets the unlock flag. Some Tecno builds factory-\n"
+            "  reset when the flag changes — back up first.\n\n"
+            "• For official unlock you additionally need a Tecno account ≥ 2\n"
+            "  weeks old + 'fastboot flashing unlock' from Fastboot.\n\n"
+            "Note: modifying IMEI is illegal in many countries. This tool only\n"
+            "unlocks the bootloader and backs up / restores NVRAM — it does\n"
+            "NOT write IMEI.")
+        info.configure(state="disabled")
+
+        acts = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); acts.pack(fill="x", pady=4)
+        tk.Label(acts, text="SECCFG OPERATIONS", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        ttk.Button(acts, text="🔓 Unlock bootloader (seccfg unlock)", style="Action.TButton",
+                   command=self.mtk_seccfg_unlock).pack(fill="x", pady=2)
+        ttk.Button(acts, text="🔒 Re-lock bootloader (seccfg lock)", style="Secondary.TButton",
+                   command=self.mtk_seccfg_lock).pack(fill="x", pady=2)
+
+        wipes = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); wipes.pack(fill="x", pady=4)
+        tk.Label(wipes, text="QUICK WIPES", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        ttk.Button(wipes, text="Wipe FRP (mtk e frp)", style="Danger.TButton",
+                   command=lambda: self.mtk_quick_erase(["frp"])).pack(fill="x", pady=2)
+        ttk.Button(wipes, text="Factory reset (mtk e metadata,userdata,md_udc)", style="Danger.TButton",
+                   command=lambda: self.mtk_quick_erase(["metadata", "userdata", "md_udc"])).pack(fill="x", pady=2)
+
+        misc = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); misc.pack(fill="x", pady=4)
+        tk.Label(misc, text="DEVICE", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        ttk.Button(misc, text="Reboot device out of BROM (mtk reset)", style="Secondary.TButton",
+                   command=self.mtk_reboot_device).pack(fill="x", pady=2)
+
+    def mtk_seccfg_unlock(self):
+        if not messagebox.askyesno("Unlock Bootloader",
+                                   "Run 'mtk da seccfg unlock'?\n\nThis may factory-reset the phone. "
+                                   "Make sure you have a backup first."):
+            return
+
+        def task():
+            self.log("Bootloader unlock (mtk da seccfg unlock)…", "info")
+            self.log("Connect the phone in BROM/preloader mode (power OFF → plug USB, no buttons).", "warning")
+            ok, tail = self.wf.unlock_bootloader(self._mtk_ctx_args(),
+                                                 log_cb=lambda l, lvl="info": self.log(l, lvl))
+            self.log(f"Bootloader unlock {'OK — ' if ok else 'FAILED — '}{tail}", "success" if ok else "error")
+
+        self._run_threaded(task, "Bootloader unlock")
+
+    def mtk_seccfg_lock(self):
+        if not messagebox.askyesno("Re-lock Bootloader", "Run 'mtk da seccfg lock'?"):
+            return
+
+        def task():
+            self.log("Bootloader re-lock (mtk da seccfg lock)…", "info")
+            ok, tail = self.wf.lock_bootloader(self._mtk_ctx_args(),
+                                               log_cb=lambda l, lvl="info": self.log(l, lvl))
+            self.log(f"Bootloader re-lock {'OK — ' if ok else 'FAILED — '}{tail}", "success" if ok else "error")
+
+        self._run_threaded(task, "Bootloader re-lock")
+
+    def mtk_quick_erase(self, parts):
+        if not messagebox.askyesno("Confirm Erase", f"Erase: {', '.join(parts)}?\n\nThis destroys data on the phone."):
+            return
+
+        def task():
+            self.log(f"Erasing {', '.join(parts)} (mtk e)…", "warning")
+            ok, tail = self.wf.erase_partitions(parts, self._mtk_ctx_args(),
+                                                log_cb=lambda l, lvl="info": self.log(l, lvl))
+            self.log(f"Erase {'OK — ' if ok else 'FAILED — '}{tail}", "success" if ok else "error")
+
+        self._run_threaded(task, f"Erase {', '.join(parts)}")
+
+    def mtk_reboot_device(self):
+        def task():
+            self.log("Rebooting device out of BROM (mtk reset)…", "info")
+            ok, tail = self.wf.reboot(self._mtk_ctx_args(),
+                                      log_cb=lambda l, lvl="info": self.log(l, lvl))
+            self.log(f"Reboot {'OK — ' if ok else 'FAILED — '}{tail}", "success" if ok else "error")
+
+        self._run_threaded(task, "Reboot device")
+
+    # ---- IMEI & NVRAM tab ----
+    def _build_tab_imei(self):
+        f = self.tab_imei
+        f.columnconfigure(0, weight=1); f.columnconfigure(1, weight=1)
+        f.rowconfigure(0, weight=1)
+
+        left = tk.Frame(f, bg=C_CARD, padx=12, pady=10); left.grid(row=0, column=0, sticky="nsew", padx=6, pady=6)
+        right = tk.Frame(f, bg=C_CARD, padx=12, pady=10); right.grid(row=0, column=1, sticky="nsew", padx=6, pady=6)
+
+        self._build_mtk_ctx_card(left)
+
+        dump = tk.Frame(left, bg=C_SUBCARD, padx=10, pady=8); dump.pack(fill="x", pady=4)
+        tk.Label(dump, text="NVRAM BACKUP & IMEI SCAN", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(dump, text="Dumps nvram / nvdata / nvcfg / proinfo (where IMEI + radio\ncalibration live) and scans them for 15-digit Luhn-valid IMEI.",
+                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left").pack(anchor="w", pady=(0, 4))
+        ttk.Button(dump, text="Dump IMEI sources + scan", style="Action.TButton",
+                   command=self.dump_and_scan_imei).pack(fill="x", pady=2)
+        ttk.Button(dump, text="Scan an existing folder for IMEI…", style="Secondary.TButton",
+                   command=self.scan_imei_folder).pack(fill="x", pady=2)
+
+        rest = tk.Frame(left, bg=C_SUBCARD, padx=10, pady=8); rest.pack(fill="x", pady=4)
+        tk.Label(rest, text="RESTORE CALIBRATION (mtk w)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        r1 = tk.Frame(rest, bg=C_SUBCARD); r1.pack(fill="x", pady=2)
+        tk.Label(r1, text="Partition:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        self.nv_part_var = tk.StringVar(value="nvram")
+        tk.Entry(r1, textvariable=self.nv_part_var, width=12, bg=C_BLACK, fg=C_WHITE,
+                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", padx=4)
+        self.nv_img_var = tk.StringVar(value="")
+        tk.Entry(r1, textvariable=self.nv_img_var, bg=C_BLACK, fg=C_WHITE,
+                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+        ttk.Button(r1, text="…", width=3, style="Secondary.TButton",
+                   command=lambda: self.nv_img_var.set(
+                       filedialog.askopenfilename(title="Select NVRAM image", filetypes=[("Image", "*.img *.bin"), ("All", "*.*")]) or "")).pack(side="left")
+        ttk.Button(rest, text="Restore partition", style="Action.TButton",
+                   command=self.restore_nv_partition).pack(fill="x", pady=(2, 0))
+
+        tk.Label(right, text="IMEI / NVRAM RESULTS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        self.txt_imei_results = tk.Text(right, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Consolas", 9), wrap="word",
+                                        relief="flat", padx=8, pady=6)
+        self.txt_imei_results.pack(fill="both", expand=True)
+        self.txt_imei_results.insert("1.0", "Results will appear here.\n\n"
+                                             "Backing up / restoring your own NVRAM is legitimate.\n"
+                                             "Changing IMEI is illegal in most countries — this tool\n"
+                                             "does not write IMEI.")
+
+    def _imei_result(self, text, level="info"):
+        self.log(text, level)
+        self.root.after(0, lambda: self.txt_imei_results.insert(tk.END, "\n" + text))
+        self.root.after(0, lambda: self.txt_imei_results.see(tk.END))
+
+    def dump_and_scan_imei(self):
+        out_dir = filedialog.askdirectory(title="Select folder for NVRAM dump")
+        if not out_dir:
+            return
+
+        def task():
+            self._imei_result(f"[$] Dumping {', '.join(IMEI_SOURCE_PARTS)} to {out_dir}…")
+            ok, tail = self.wf.dump_imei_sources(out_dir, self._mtk_ctx_args(),
+                                                 log_cb=lambda l, lvl="info": self.log(l, lvl))
+            if not ok:
+                self._imei_result(f"[X] Dump failed: {tail}", "error")
+                return
+            self._imei_result("[✓] Dump complete — scanning for IMEI…", "success")
+            imeis = scan_imei(out_dir)
+            if imeis:
+                for im in imeis:
+                    self._imei_result(f"    IMEI (Luhn-valid): {im}", "success")
+            else:
+                self._imei_result("[!] No plaintext 15-digit Luhn-valid IMEI found. The device likely stores IMEI MD5-hashed (needs the per-device key) — dump kept for reference.", "warning")
+
+        self._run_threaded(task, "Dump NVRAM + scan IMEI")
+
+    def scan_imei_folder(self):
+        folder = filedialog.askdirectory(title="Select folder to scan for IMEI")
+        if not folder:
+            return
+
+        def task():
+            self._imei_result(f"[$] Scanning {folder} for IMEI…")
+            imeis = scan_imei(folder)
+            if imeis:
+                for im in imeis:
+                    self._imei_result(f"    IMEI (Luhn-valid): {im}", "success")
+            else:
+                self._imei_result("[!] No plaintext Luhn-valid IMEI found in that folder.", "warning")
+
+        self._run_threaded(task, "Scan folder for IMEI")
+
+    def restore_nv_partition(self):
+        part = self.nv_part_var.get().strip()
+        img = self.nv_img_var.get().strip()
+        if not part or not img:
+            self.log("Enter a partition name and select an image to restore.", "warning")
+            return
+        if not messagebox.askyesno("Confirm Restore", f"Restore '{part}' from:\n{img}\n\nProceed?"):
+            return
+
+        def task():
+            self.log(f"Restoring {part} ← {os.path.basename(img)} (mtk w)…", "warning")
+            ok, tail = self.wf.write_partition(part, img, self._mtk_ctx_args(),
+                                               log_cb=lambda l, lvl="info": self.log(l, lvl))
+            self._imei_result(f"[{'✓' if ok else 'X'}] Restore {'OK — ' if ok else 'FAILED — '}{tail}", "success" if ok else "error")
+
+        self._run_threaded(task, f"Restore {part}")
+
+    # ================= CONNECTION GUIDE TAB =================
 
     # ================= CONNECTION GUIDE TAB =================
 

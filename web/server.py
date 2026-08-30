@@ -5,7 +5,7 @@ import time
 import threading
 import platform
 import urllib.parse
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, SimpleHTTPRequestHandler
 
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parent_dir)
@@ -14,6 +14,28 @@ from core.adb_engine import ADBEngine
 from core.fastboot_engine import FastbootEngine
 from core.frp_engine import FRPEngine
 from core.mtk_engine import MTKEngine
+from core.mtk_workflows import MTKWorkflows, scan_imei
+
+
+class _MTKLogSink:
+    """Collects mtkclient output lines up to a cap. Callable as a log_cb."""
+
+    def __init__(self, limit: int = 800):
+        self.logs: list = []
+        self.limit = limit
+
+    def __call__(self, line: str, level: str = "info") -> None:
+        self.append(line)
+
+    def append(self, line: str) -> None:
+        if len(self.logs) >= self.limit:
+            if self.logs[-1] != "… (output truncated)":
+                self.logs.append("… (output truncated)")
+            return
+        self.logs.append(line)
+
+    def get(self) -> list:
+        return self.logs
 from core.qualcomm_engine import QualcommEDLEngine
 from core.samsung_modem import SamsungModemEngine
 from core.root_engine import RootEngine
@@ -33,6 +55,7 @@ adb = ADBEngine()
 fastboot = FastbootEngine()
 frp = FRPEngine(adb, fastboot)
 mtk = MTKEngine()
+mtk_wf = MTKWorkflows(mtk)
 qualcomm = QualcommEDLEngine()
 samsung_modem = SamsungModemEngine()
 root_engine = RootEngine(adb, fastboot)
@@ -427,6 +450,97 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 logs.append("Check: MTK VCOM driver installed, USB 2.0 port, phone fully OFF, buttons held until handshake.")
             self.send_json_response({"success": ok, "workflow": wf, "logs": logs})
 
+        elif action == "mtk_locate":
+            folder = req.get("folder", "")
+            found = mtk_wf.locate_firmware_files(folder)
+            self.send_json_response({
+                "success": True,
+                "found": {k: (os.path.basename(v) if v else None) for k, v in found.items()},
+                "paths": found,
+            })
+
+        elif action == "mtk_backup":
+            parts = [p.strip() for p in req.get("parts", "").split(",") if p.strip()]
+            out_dir = req.get("out_dir", "")
+            if not parts or not out_dir:
+                self.send_json_response({"success": False, "logs": ["Missing 'parts' or 'out_dir'."]})
+                return
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.backup_partitions(parts, out_dir, ctx, log_cb=logs)
+            logs.append("Backup complete — " + tail if ok else "Backup failed — " + tail)
+            self.send_json_response({"success": ok, "logs": logs.get()})
+
+        elif action == "mtk_read_all":
+            out_dir = req.get("out_dir", "")
+            if not out_dir:
+                self.send_json_response({"success": False, "logs": ["Missing 'out_dir'."]})
+                return
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.read_all(out_dir, ctx, log_cb=logs)
+            logs.append("Readback complete — " + tail if ok else "Readback failed — " + tail)
+            self.send_json_response({"success": ok, "logs": logs.get()})
+
+        elif action == "mtk_write_part":
+            part, image = req.get("part", ""), req.get("image", "")
+            if not part or not image:
+                self.send_json_response({"success": False, "logs": ["Missing 'part' or 'image'."]})
+                return
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.write_partition(part, image, ctx, log_cb=logs)
+            logs.append("Flash complete — " + tail if ok else "Flash failed — " + tail)
+            self.send_json_response({"success": ok, "logs": logs.get()})
+
+        elif action == "mtk_write_all":
+            folder = req.get("folder", "")
+            if not folder:
+                self.send_json_response({"success": False, "logs": ["Missing 'folder'."]})
+                return
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.write_all(folder, ctx, log_cb=logs)
+            logs.append("Firmware flash complete — " + tail if ok else "Firmware flash failed — " + tail)
+            self.send_json_response({"success": ok, "logs": logs.get()})
+
+        elif action == "mtk_unlock":
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.unlock_bootloader(ctx, log_cb=logs)
+            logs.append("Bootloader unlock OK — " + tail if ok else "Bootloader unlock FAILED — " + tail)
+            self.send_json_response({"success": ok, "logs": logs.get()})
+
+        elif action == "mtk_lock":
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.lock_bootloader(ctx, log_cb=logs)
+            logs.append("Bootloader re-lock OK — " + tail if ok else "Bootloader re-lock FAILED — " + tail)
+            self.send_json_response({"success": ok, "logs": logs.get()})
+
+        elif action == "mtk_imei_dump":
+            out_dir = req.get("out_dir", "")
+            if not out_dir:
+                self.send_json_response({"success": False, "logs": ["Missing 'out_dir'."]})
+                return
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.dump_imei_sources(out_dir, ctx, log_cb=logs)
+            imeis = scan_imei(out_dir) if ok else []
+            logs.append("Dump complete — " + tail if ok else "Dump failed — " + tail)
+            if ok and imeis:
+                logs.append("IMEI (Luhn-valid): " + ", ".join(imeis))
+            elif ok:
+                logs.append("No plaintext Luhn-valid IMEI found (device may store it hashed).")
+            self.send_json_response({"success": ok, "logs": logs.get(), "imeis": imeis})
+
+        elif action == "mtk_reboot":
+            ctx = self._mtk_ctx_from_req(req)
+            logs = self._mtk_log_sink()
+            ok, tail = mtk_wf.reboot(ctx, log_cb=logs)
+            logs.append("Reboot OK — " + tail if ok else "Reboot FAILED — " + tail)
+            self.send_json_response({"success": ok, "logs": logs.get()})
+
         elif action == "extract_payload":
             time.sleep(0.15)
             self.send_json_response({
@@ -678,10 +792,24 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             return False
         return True
 
+    @staticmethod
+    def _mtk_ctx_from_req(req: dict) -> dict:
+        """Build an mtkclient context dict from request keys (loader/auth/preloader)."""
+        return {
+            "loader": (req.get("loader") or "").strip() or None,
+            "auth": (req.get("auth") or "").strip() or None,
+            "preloader": (req.get("preloader") or "").strip() or None,
+        }
+
+    @staticmethod
+    def _mtk_log_sink(limit: int = 800):
+        """Return a log sink that is both a log_cb and a capped line collector."""
+        return _MTKLogSink(limit)
+
 def run():
     port = 3000
     server_address = ('0.0.0.0', port)
-    httpd = HTTPServer(server_address, AMTRequestHandler)
+    httpd = ThreadingHTTPServer(server_address, AMTRequestHandler)
     print(f"Android Multi-Tool Pro Web UI Server listening on 0.0.0.0:{port}")
     httpd.serve_forever()
 

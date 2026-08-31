@@ -64,6 +64,17 @@ C_GREEN = "#22c55e"
 C_RED = "#ef4444"
 C_ACCENT = "#22d3ee"  # UnlockTool-style cyan accent for active nav
 
+# Expanded accent palette — one colour identity per service section, all tuned
+# for readability on the dark base. Keeps the app modern instead of monochrome.
+C_CYAN = "#22d3ee"
+C_BLUE = "#38bdf8"
+C_GREEN_ACC = "#4ade80"
+C_AMBER = "#fbbf24"
+C_VIOLET = "#a78bfa"
+C_ROSE = "#fb7185"
+C_TEAL = "#2dd4bf"
+C_ORANGE = "#fb923c"
+
 # ---------------------------------------------------------------------------
 # Typography — one source of truth for fonts so every panel looks consistent.
 # Segoe UI (Windows native) with a clean monospace (Consolas) for logs/tech.
@@ -82,6 +93,86 @@ F_TINY_BOLD = (_FONT_UI, 8, "bold")
 F_MONO = (_FONT_MONO, 9)
 F_MONO_SMALL = (_FONT_MONO, 8)
 F_MONO_BOLD = (_FONT_MONO, 9, "bold")
+
+# Console keeps at most this many lines on screen; older lines are trimmed so
+# the Text widget stays fast during long sessions / heavy engine output.
+CONSOLE_MAX_LINES = 2000
+
+
+# ---------------------------------------------------------------------------
+# Rounded-corner drawing. Tk has no native border-radius, so cards, pills and
+# nav buttons are painted as smoothed polygons on a Canvas for "smooth edges".
+# ---------------------------------------------------------------------------
+def _round_rect(canvas, x1, y1, x2, y2, r=8, **kw):
+    """Draw a rounded rectangle as a smooth polygon. Extra kwargs go to the item."""
+    if r <= 0 or (x2 - x1) < 2 * r or (y2 - y1) < 2 * r:
+        r = min(max((x2 - x1), (y2 - y1)) // 2, 2)
+    pts = [
+        x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r, x2, y2 - r, x2, y2,
+        x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r, x1, y1 + r, x1, y1,
+    ]
+    return canvas.create_polygon(pts, smooth=True, **kw)
+
+
+class _NavButton:
+    """Rounded pill button for the left navigation rail.
+
+    Painted on a Canvas so each item gets smooth, modern edges plus a coloured
+    accent state. Wraps a plain Label so emoji/text render exactly as before.
+    """
+
+    def __init__(self, master, label, accent, on_click, height=30):
+        self.accent = accent
+        self.on_click = on_click
+        self.height = height
+        self.hover = False
+        self.active = False
+        self.canvas = tk.Canvas(master, height=height, bg=C_BORDER,
+                                highlightthickness=0, bd=0)
+        self.canvas.pack(fill="x", padx=6, pady=1)
+        self.inner = tk.Frame(self.canvas, bg=C_BORDER)
+        self.win = self.canvas.create_window(1, 1, window=self.inner, anchor="nw")
+        self.lbl = tk.Label(self.inner, text=label, font=F_SMALL_BOLD,
+                            bg=C_BORDER, fg=C_TEXT_MUTED, anchor="w",
+                            padx=12, cursor="hand2")
+        self.lbl.pack(fill="both", expand=True)
+        self.canvas.bind("<Configure>", lambda e: self.redraw())
+        for w in (self.canvas, self.inner, self.lbl):
+            w.bind("<Enter>", lambda e: self._hover(True))
+            w.bind("<Leave>", lambda e: self._hover(False))
+            w.bind("<Button-1>", lambda e: self.on_click())
+        self.canvas.configure(cursor="hand2")
+        self.redraw()
+
+    def _hover(self, on):
+        if self.hover != on:
+            self.hover = on
+            self.redraw()
+
+    def set_active(self, on):
+        if self.active != on:
+            self.active = on
+            self.redraw()
+
+    def redraw(self):
+        w = max(self.canvas.winfo_width(), 4)
+        h = self.height
+        self.canvas.delete("pill")
+        if self.active:
+            fill, fg, notch = C_SUBCARD, self.accent, self.accent
+        elif self.hover:
+            fill, fg, notch = C_SUBCARD, C_WHITE, self.accent
+        else:
+            fill, fg, notch = C_BORDER, C_TEXT_MUTED, C_BORDER
+        _round_rect(self.canvas, 1, 1, w - 2, h - 2, r=(h - 2) // 2,
+                    fill=fill, outline="", tags="pill")
+        self.canvas.create_rectangle(1, 7, 4, max(h - 8, 8), fill=notch,
+                                     outline="", tags="pill")
+        self.canvas.tag_lower("pill")
+        self.canvas.itemconfigure(self.win, width=max(w - 2, 1),
+                                  height=max(h - 2, 1))
+        self.inner.configure(bg=fill)
+        self.lbl.configure(bg=fill, fg=fg)
 
 
 class AndroidMultiToolApp:
@@ -136,6 +227,13 @@ class AndroidMultiToolApp:
         self.simulated_mode = tk.BooleanVar(value=False)
         self.selected_device = tk.StringVar(value="None")
         self.is_busy = False
+        # Separate operation lock: blocks double-clicks from piling up threads
+        # (the #1 source of UI lag) without interfering with auto-connect.
+        self._op_active = False
+        # Coalesced console logging: lines are buffered and flushed on a timer
+        # so bursts of engine output redraw once instead of once per line.
+        self._log_pending = []
+        self._log_timer = None
         # display-label -> {"kind": "adb"|"fastboot", "serial": ...} for the combobox
         self.device_entries: dict = {}
         # Auto-connect monitor state (watches for a device being plugged in)
@@ -175,10 +273,10 @@ class AndroidMultiToolApp:
             foreground=[("selected", C_BLACK), ("active", C_WHITE)]
         )
 
-        # Action Buttons (Black & White High Contrast)
+        # Primary Action Buttons (Cyan accent — the main colour identity)
         self.style.configure(
             "Action.TButton",
-            background=C_WHITE,
+            background=C_ACCENT,
             foreground=C_BLACK,
             font=F_BODY_BOLD,
             borderwidth=0,
@@ -186,7 +284,7 @@ class AndroidMultiToolApp:
             relief="flat",
         )
         self.style.map("Action.TButton",
-                       background=[("active", C_TEXT_BODY), ("pressed", C_TEXT_BODY), ("disabled", C_BORDER)],
+                       background=[("active", "#67e8f9"), ("pressed", "#67e8f9"), ("disabled", C_BORDER)],
                        foreground=[("disabled", C_TEXT_MUTED)])
 
         # Danger Buttons (Red Accent)
@@ -290,7 +388,7 @@ class AndroidMultiToolApp:
         # 1b. Hardware Status Diagnostics Strip
         hw_strip = tk.Frame(self.root, bg=C_BORDER, padx=10, pady=3)
         hw_strip.pack(fill="x", padx=15, pady=(0, 4))
-        tk.Label(hw_strip, text="TARGET: MediaTek MT6789 (Helio G200 Ultimate)", font=F_TINY_BOLD, fg=C_WHITE, bg=C_BORDER).pack(side="left")
+        tk.Label(hw_strip, text="TARGET: MediaTek MT6789 (Helio G200 Ultimate)", font=F_TINY_BOLD, fg=C_AMBER, bg=C_BORDER).pack(side="left")
         tk.Label(hw_strip, text=" | TECNO-CN5c (Camon 50 Pro 4G) | UFS 2.2 | Android 16 (HiOS 16)", font=F_TINY, fg=C_TEXT_MUTED, bg=C_BORDER).pack(side="left")
         self.lbl_conn_state = tk.Label(hw_strip, text="● NOT CONNECTED", font=F_TINY_BOLD, fg=C_RED, bg=C_BORDER)
         self.lbl_conn_state.pack(side="left", padx=(16, 0))
@@ -327,7 +425,7 @@ class AndroidMultiToolApp:
 
         self._nav_buttons = {}
         nav_sections = [
-            ("SERVICE", [
+            ("SERVICE", C_CYAN, [
                 ("camon50",    "  \U0001F4F1  Tecno Camon 50 Suite"),
                 ("mtk",        "  \u26A1  MTK BROM Flasher"),
                 ("fastboot",   "  \U0001F680  Fastboot Flasher"),
@@ -335,32 +433,28 @@ class AndroidMultiToolApp:
                 ("debloat",    "  \U0001F9F9  Debloat & Apps"),
                 ("testpoints", "  \U0001F3AF  EDL & Test Points"),
             ]),
-            ("MTK DEEP SERVICE", [
+            ("MTK DEEP SERVICE", C_VIOLET, [
                 ("backup", "  \U0001F4BE  Backup & Restore"),
                 ("unlock", "  \U0001F513  Bootloader Unlock"),
                 ("imei",   "  \U0001F4DF  IMEI & NVRAM"),
             ]),
-            ("DIAGNOSTICS", [
+            ("DIAGNOSTICS", C_GREEN_ACC, [
                 ("info",    "  \U0001FA7A  Diagnostics"),
                 ("connect", "  \U0001F50C  Connection Guide"),
                 ("reboot",  "  \U0001F501  Reboot Switcher"),
             ]),
-            ("REFERENCE", [
+            ("REFERENCE", C_AMBER, [
                 ("devices", "  \U0001F4CB  Supported Devices"),
             ]),
         ]
-        for section, items in nav_sections:
+        for section, accent, items in nav_sections:
             tk.Label(self._nav_inner, text=section, font=F_TINY_BOLD,
-                     fg=C_TEXT_MUTED, bg=C_BORDER).pack(anchor="w", padx=18, pady=(12, 2))
+                     fg=accent, bg=C_BORDER).pack(anchor="w", padx=18, pady=(12, 2))
             for key, label in items:
-                btn = tk.Button(
-                    self._nav_inner, text=label, font=F_SMALL_BOLD,
-                    fg=C_TEXT_MUTED, bg=C_BORDER, activebackground=C_SUBCARD,
-                    activeforeground=C_WHITE, relief="flat", bd=0, anchor="w",
-                    padx=14, pady=7, cursor="hand2", highlightthickness=0,
-                    command=lambda k=key: self.show_tab(k),
+                btn = _NavButton(
+                    self._nav_inner, label, accent,
+                    on_click=lambda k=key: self.show_tab(k),
                 )
-                btn.pack(fill="x", padx=6, pady=1)
                 self._nav_buttons[key] = btn
         tk.Frame(self._nav_inner, bg=C_GRAY_MID, height=1).pack(fill="x", padx=12, pady=(8, 0))
 
@@ -466,8 +560,9 @@ class AndroidMultiToolApp:
         # Tags for monochrome console
         self.txt_console.tag_config("info", foreground=C_TEXT_BODY)
         self.txt_console.tag_config("success", foreground=C_GREEN)
-        self.txt_console.tag_config("warning", foreground=C_WHITE)
+        self.txt_console.tag_config("warning", foreground=C_AMBER)
         self.txt_console.tag_config("error", foreground=C_RED)
+        self.txt_console.tag_config("action", foreground=C_CYAN)
         self.txt_console.tag_config("muted", foreground=C_TEXT_MUTED)
 
         # Mouse-wheel scrolling for the workspace canvas (console/treeviews keep native scroll)
@@ -519,10 +614,7 @@ class AndroidMultiToolApp:
             else:
                 frame.pack_forget()
         for k, btn in self._nav_buttons.items():
-            if k == key:
-                btn.configure(fg=C_ACCENT, bg=C_SUBCARD)
-            else:
-                btn.configure(fg=C_TEXT_MUTED, bg=C_BORDER)
+            btn.set_active(k == key)
         self.log(f"Navigation: opened [{key}]", "muted")
 
     # ================= TECNO CAMON 50 PRO TAB =================
@@ -1102,7 +1194,12 @@ class AndroidMultiToolApp:
     # ================= LOGGING & CONSOLE =================
 
     def log(self, text: str, level: str = "info"):
-        """Log a line to BOTH the on-screen console and the session log file."""
+        """Log a line to BOTH the on-screen console and the session log file.
+
+        Console writes are coalesced: lines are buffered and flushed on a short
+        timer so a burst of engine output triggers one redraw instead of one per
+        line (this is what used to make the UI feel laggy during long ops).
+        """
         timestamp = time.strftime("[%H:%M:%S] ")
         # 1. Persist to file (synchronous, thread-safe)
         try:
@@ -1113,16 +1210,32 @@ class AndroidMultiToolApp:
                     self._log_file.flush()
         except Exception:
             pass
-        # 2. Update console (thread-safe via main loop)
-        def _append():
-            try:
-                self.txt_console.insert(tk.END, timestamp, "muted")
-                self.txt_console.insert(tk.END, text + "\n", level)
-                self.txt_console.see(tk.END)
-                self.txt_console.update_idletasks()
-            except Exception:
-                pass
-        self.root.after(0, _append)
+        # 2. Buffer for the console (thread-safe via the main loop)
+        self._log_pending.append((timestamp, text, level))
+        if self._log_timer is None:
+            self._log_timer = self.root.after(30, self._flush_log)
+
+    def _flush_log(self):
+        """Apply buffered log lines to the console in a single redraw pass."""
+        self._log_timer = None
+        if not self._log_pending:
+            return
+        pending, self._log_pending = self._log_pending, []
+        try:
+            c = self.txt_console
+            near_bottom = c.yview()[1] >= 0.98
+            # Keep the console bounded so a long session never slows the Text
+            # widget down to a crawl.
+            line_count = int(c.index("end-1c").split(".")[0])
+            if line_count > CONSOLE_MAX_LINES:
+                c.delete("1.0", f"{line_count - CONSOLE_MAX_LINES}.0")
+            for ts, text, level in pending:
+                c.insert(tk.END, ts, "muted")
+                c.insert(tk.END, text + "\n", level)
+            if near_bottom:
+                c.see(tk.END)
+        except Exception:
+            pass
 
     def _engine_log(self, line: str, level: str = "info"):
         """Callback used by ADB/Fastboot engines to echo real command output."""
@@ -1187,8 +1300,14 @@ class AndroidMultiToolApp:
     # ================= ASYNC RUNNER WRAPPER =================
 
     def _run_threaded(self, target, action_name="Operation", *args):
+        # One heavy operation at a time: double-clicks must never pile up
+        # threads and freeze the UI. Skip with a clear message instead.
+        if self._op_active:
+            self.log(f"[BUSY] '{action_name}' skipped — another operation is still running.", "warning")
+            return
+        self._op_active = True
         # Instant feedback on click: Never leave user wondering if click worked!
-        self.log(f">> [ACTION] Initiated: {action_name}...", "info")
+        self.log(f">> [ACTION] Initiated: {action_name}...", "action")
         def wrapper():
             self.set_busy(True, f"ACTIVE: {action_name}")
             try:
@@ -1196,6 +1315,7 @@ class AndroidMultiToolApp:
             except Exception as e:
                 self.log(f"[ERROR] {action_name} error: {e}", "error")
             finally:
+                self._op_active = False
                 self.set_busy(False)
                 self.log(f">> [DONE] {action_name} finished.", "muted")
 

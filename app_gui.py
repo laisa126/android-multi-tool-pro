@@ -64,6 +64,25 @@ C_GREEN = "#22c55e"
 C_RED = "#ef4444"
 C_ACCENT = "#22d3ee"  # UnlockTool-style cyan accent for active nav
 
+# ---------------------------------------------------------------------------
+# Typography — one source of truth for fonts so every panel looks consistent.
+# Segoe UI (Windows native) with a clean monospace (Consolas) for logs/tech.
+# ---------------------------------------------------------------------------
+_FONT_UI = "Segoe UI"
+_FONT_MONO = "Consolas"
+F_HERO = (_FONT_UI, 14, "bold")
+F_HEADER = (_FONT_UI, 13, "bold")
+F_TITLE = (_FONT_UI, 11, "bold")
+F_BODY = (_FONT_UI, 10)
+F_BODY_BOLD = (_FONT_UI, 10, "bold")
+F_SMALL = (_FONT_UI, 9)
+F_SMALL_BOLD = (_FONT_UI, 9, "bold")
+F_TINY = (_FONT_UI, 8)
+F_TINY_BOLD = (_FONT_UI, 8, "bold")
+F_MONO = (_FONT_MONO, 9)
+F_MONO_SMALL = (_FONT_MONO, 8)
+F_MONO_BOLD = (_FONT_MONO, 9, "bold")
+
 
 class AndroidMultiToolApp:
     def __init__(self, root):
@@ -142,14 +161,14 @@ class AndroidMultiToolApp:
         self.style.configure("SubCard.TFrame", background=C_SUBCARD, relief="flat")
 
         # Label styles
-        self.style.configure("TLabel", background=C_CARD, foreground=C_TEXT_BODY, font=("Segoe UI", 9))
-        self.style.configure("Header.TLabel", background=C_BLACK, foreground=C_WHITE, font=("Segoe UI", 12, "bold"))
-        self.style.configure("SubHeader.TLabel", background=C_BLACK, foreground=C_TEXT_MUTED, font=("Segoe UI", 8))
-        self.style.configure("Status.TLabel", background=C_CARD, foreground=C_GREEN, font=("Segoe UI", 9, "bold"))
+        self.style.configure("TLabel", background=C_CARD, foreground=C_TEXT_BODY, font=F_BODY)
+        self.style.configure("Header.TLabel", background=C_BLACK, foreground=C_WHITE, font=F_HEADER)
+        self.style.configure("SubHeader.TLabel", background=C_BLACK, foreground=C_TEXT_MUTED, font=F_SMALL)
+        self.style.configure("Status.TLabel", background=C_CARD, foreground=C_GREEN, font=F_BODY_BOLD)
 
         # Notebook / Tabs
         self.style.configure("TNotebook", background=C_BLACK, borderwidth=0)
-        self.style.configure("TNotebook.Tab", background=C_BORDER, foreground=C_TEXT_MUTED, padding=[12, 7], font=("Segoe UI", 9, "bold"))
+        self.style.configure("TNotebook.Tab", background=C_BORDER, foreground=C_TEXT_MUTED, padding=[12, 7], font=F_BODY_BOLD)
         self.style.map(
             "TNotebook.Tab",
             background=[("selected", C_WHITE), ("active", C_GRAY_MID)],
@@ -161,51 +180,74 @@ class AndroidMultiToolApp:
             "Action.TButton",
             background=C_WHITE,
             foreground=C_BLACK,
-            font=("Segoe UI", 9, "bold"),
+            font=F_BODY_BOLD,
             borderwidth=0,
-            padding=[10, 6]
+            padding=[12, 6],
+            relief="flat",
         )
-        self.style.map("Action.TButton", background=[("active", C_TEXT_BODY), ("disabled", C_BORDER)])
+        self.style.map("Action.TButton",
+                       background=[("active", C_TEXT_BODY), ("pressed", C_TEXT_BODY), ("disabled", C_BORDER)],
+                       foreground=[("disabled", C_TEXT_MUTED)])
 
         # Danger Buttons (Red Accent)
         self.style.configure(
             "Danger.TButton",
             background=C_RED,
             foreground=C_WHITE,
-            font=("Segoe UI", 9, "bold"),
+            font=F_BODY_BOLD,
             borderwidth=0,
-            padding=[10, 6]
+            padding=[12, 6],
+            relief="flat",
         )
-        self.style.map("Danger.TButton", background=[("active", C_BORDER)])
+        self.style.map("Danger.TButton", background=[("active", "#c9372c"), ("pressed", "#c9372c")])
 
         # Success Buttons (Green Accent)
         self.style.configure(
             "Success.TButton",
             background=C_GREEN,
             foreground=C_BLACK,
-            font=("Segoe UI", 9, "bold"),
+            font=F_BODY_BOLD,
             borderwidth=0,
-            padding=[10, 6]
+            padding=[12, 6],
+            relief="flat",
         )
-        self.style.map("Success.TButton", background=[("active", C_TEXT_BODY)])
+        self.style.map("Success.TButton", background=[("active", "#1da750")])
 
         # Secondary Buttons (Monochrome Gray)
         self.style.configure(
             "Secondary.TButton",
             background=C_GRAY_MID,
             foreground=C_WHITE,
-            font=("Segoe UI", 9),
+            font=F_SMALL,
             borderwidth=0,
-            padding=[8, 5]
+            padding=[9, 5],
+            relief="flat",
         )
-        self.style.map("Secondary.TButton", background=[("active", C_BORDER)])
+        self.style.map("Secondary.TButton",
+                       background=[("active", C_BORDER), ("disabled", C_BORDER)],
+                       foreground=[("disabled", C_TEXT_MUTED)])
 
         # Inputs
-        self.style.configure("TCombobox", fieldbackground=C_SUBCARD, background=C_BORDER, foreground=C_WHITE)
-        self.style.configure("TEntry", fieldbackground=C_SUBCARD, foreground=C_WHITE)
-        self.style.configure("Treeview", background=C_SUBCARD, foreground=C_TEXT_BODY, fieldbackground=C_SUBCARD, font=("Segoe UI", 8))
-        self.style.configure("Treeview.Heading", background=C_BORDER, foreground=C_WHITE, font=("Segoe UI", 9, "bold"))
+        self.style.configure("TCombobox",
+                             fieldbackground=C_SUBCARD, background=C_BORDER,
+                             foreground=C_WHITE, arrowcolor=C_TEXT_BODY,
+                             font=F_SMALL, padding=3, relief="flat")
+        self.style.map("TCombobox", fieldbackground=[("readonly", C_SUBCARD)],
+                       foreground=[("readonly", C_WHITE)],
+                       selectbackground=[("readonly", C_SUBCARD)],
+                       selectforeground=[("readonly", C_WHITE)])
+        self.style.configure("TEntry", fieldbackground=C_SUBCARD, foreground=C_WHITE,
+                             font=F_SMALL, padding=3, relief="flat")
+        self.style.configure("Treeview", background=C_SUBCARD, foreground=C_TEXT_BODY,
+                             fieldbackground=C_SUBCARD, font=F_SMALL, rowheight=24)
+        self.style.configure("Treeview.Heading", background=C_BORDER, foreground=C_WHITE,
+                             font=F_SMALL_BOLD, padding=[6, 4])
         self.style.map("Treeview", background=[("selected", C_GRAY_MID)], foreground=[("selected", C_WHITE)])
+
+        # Scrollbars — slim, quiet, always visible so content is clearly scrollable
+        self.style.configure("Vertical.TScrollbar", background=C_BORDER, troughcolor=C_CARD,
+                             bordercolor=C_CARD, arrowcolor=C_TEXT_MUTED, relief="flat")
+        self.style.map("Vertical.TScrollbar", background=[("active", C_GRAY_MID)])
 
     def _build_ui(self):
         # 1. Top Navigation & Connection Bar
@@ -217,14 +259,14 @@ class AndroidMultiToolApp:
         brand_box.pack(side="left")
         lbl_title = tk.Label(brand_box, text="AMT PRO // TECNO & UNIVERSAL SUITE", font=("Segoe UI", 12, "bold"), fg=C_WHITE, bg=C_BLACK)
         lbl_title.pack(anchor="w")
-        lbl_sub = tk.Label(brand_box, text="MediaTek Dimensity 7400 / Transsion HiOS / Universal Android Servicing", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_BLACK)
+        lbl_sub = tk.Label(brand_box, text="MediaTek Dimensity 7400 / Transsion HiOS / Universal Android Servicing", font=F_TINY, fg=C_TEXT_MUTED, bg=C_BLACK)
         lbl_sub.pack(anchor="w")
 
         # Device Selector & Scan
         dev_box = tk.Frame(top_bar, bg=C_BLACK)
         dev_box.pack(side="right")
 
-        tk.Label(dev_box, text="Port / Device:", font=("Segoe UI", 9, "bold"), fg=C_TEXT_BODY, bg=C_BLACK).pack(side="left", padx=5)
+        tk.Label(dev_box, text="Port / Device:", font=F_SMALL_BOLD, fg=C_TEXT_BODY, bg=C_BLACK).pack(side="left", padx=5)
         self.combo_devices = ttk.Combobox(dev_box, textvariable=self.selected_device, width=28, state="readonly")
         self.combo_devices.pack(side="left", padx=5)
         self.combo_devices.bind("<<ComboboxSelected>>", self._on_device_selected)
@@ -241,32 +283,47 @@ class AndroidMultiToolApp:
         chk_sim = tk.Checkbutton(
             dev_box, text="Simulate (Camon 50)", variable=self.simulated_mode,
             bg=C_BLACK, fg=C_WHITE, selectcolor=C_SUBCARD, activebackground=C_BLACK,
-            activeforeground=C_WHITE, font=("Segoe UI", 8)
+            activeforeground=C_WHITE, font=F_TINY
         )
         chk_sim.pack(side="left", padx=6)
 
         # 1b. Hardware Status Diagnostics Strip
         hw_strip = tk.Frame(self.root, bg=C_BORDER, padx=10, pady=3)
         hw_strip.pack(fill="x", padx=15, pady=(0, 4))
-        tk.Label(hw_strip, text="TARGET: MediaTek MT6789 (Helio G200 Ultimate)", font=("Segoe UI", 8, "bold"), fg=C_WHITE, bg=C_BORDER).pack(side="left")
-        tk.Label(hw_strip, text=" | TECNO-CN5c (Camon 50 Pro 4G) | UFS 2.2 | Android 16 (HiOS 16)", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_BORDER).pack(side="left")
-        self.lbl_conn_state = tk.Label(hw_strip, text="● NOT CONNECTED", font=("Segoe UI", 8, "bold"), fg=C_RED, bg=C_BORDER)
+        tk.Label(hw_strip, text="TARGET: MediaTek MT6789 (Helio G200 Ultimate)", font=F_TINY_BOLD, fg=C_WHITE, bg=C_BORDER).pack(side="left")
+        tk.Label(hw_strip, text=" | TECNO-CN5c (Camon 50 Pro 4G) | UFS 2.2 | Android 16 (HiOS 16)", font=F_TINY, fg=C_TEXT_MUTED, bg=C_BORDER).pack(side="left")
+        self.lbl_conn_state = tk.Label(hw_strip, text="● NOT CONNECTED", font=F_TINY_BOLD, fg=C_RED, bg=C_BORDER)
         self.lbl_conn_state.pack(side="left", padx=(16, 0))
-        tk.Label(hw_strip, text="SECURITY: AVB 2.0 ENFORCING", font=("Segoe UI", 8, "bold"), fg=C_GREEN, bg=C_BORDER).pack(side="right")
+        tk.Label(hw_strip, text="SECURITY: AVB 2.0 ENFORCING", font=F_TINY_BOLD, fg=C_GREEN, bg=C_BORDER).pack(side="right")
 
         # 2. Main Content — UnlockTool-style left navigation rail + workspace
         self.content_shell = tk.Frame(self.root, bg=C_BORDER)
         self.content_shell.pack(fill="both", expand=True, padx=15, pady=5)
 
-        # --- Left navigation rail ---
-        self.nav_rail = tk.Frame(self.content_shell, bg=C_BORDER, width=224)
+        # --- Left navigation rail (scrollable so nothing is ever clipped) ---
+        self.nav_rail = tk.Frame(self.content_shell, bg=C_BORDER, width=228)
         self.nav_rail.pack(side="left", fill="y")
         self.nav_rail.pack_propagate(False)
 
-        tk.Label(self.nav_rail, text="ANDROID MULTI-TOOL", font=("Segoe UI", 10, "bold"),
+        self._nav_canvas = tk.Canvas(self.nav_rail, bg=C_BORDER, highlightthickness=0, borderwidth=0)
+        self._nav_vbar = ttk.Scrollbar(self.nav_rail, orient="vertical", command=self._nav_canvas.yview,
+                                       style="Vertical.TScrollbar")
+        self._nav_canvas.configure(yscrollcommand=self._nav_vbar.set)
+        self._nav_vbar.pack(side="right", fill="y")
+        self._nav_canvas.pack(side="left", fill="both", expand=True)
+
+        self._nav_inner = tk.Frame(self._nav_canvas, bg=C_BORDER)
+        self._nav_window = self._nav_canvas.create_window((0, 0), window=self._nav_inner, anchor="nw")
+        self._nav_inner.bind("<Configure>", lambda e: self._nav_canvas.configure(
+            scrollregion=self._nav_canvas.bbox("all")))
+        self._nav_canvas.bind("<Configure>", lambda e: self._nav_canvas.itemconfigure(
+            self._nav_window, width=e.width))
+
+        tk.Label(self._nav_inner, text="ANDROID MULTI-TOOL", font=F_TITLE,
                  fg=C_WHITE, bg=C_BORDER).pack(anchor="w", padx=16, pady=(16, 2))
-        tk.Label(self.nav_rail, text="PRO · v2.5 — OFFLINE GSM SUITE", font=("Segoe UI", 7),
-                 fg=C_TEXT_MUTED, bg=C_BORDER).pack(anchor="w", padx=16, pady=(0, 12))
+        tk.Label(self._nav_inner, text="PRO · v2.5 — OFFLINE GSM SUITE", font=F_TINY,
+                 fg=C_TEXT_MUTED, bg=C_BORDER).pack(anchor="w", padx=16, pady=(0, 10))
+        tk.Frame(self._nav_inner, bg=C_GRAY_MID, height=1).pack(fill="x", padx=12, pady=(0, 6))
 
         self._nav_buttons = {}
         nav_sections = [
@@ -293,25 +350,27 @@ class AndroidMultiToolApp:
             ]),
         ]
         for section, items in nav_sections:
-            tk.Label(self.nav_rail, text=section, font=("Segoe UI", 7, "bold"),
+            tk.Label(self._nav_inner, text=section, font=F_TINY_BOLD,
                      fg=C_TEXT_MUTED, bg=C_BORDER).pack(anchor="w", padx=18, pady=(12, 2))
             for key, label in items:
                 btn = tk.Button(
-                    self.nav_rail, text=label, font=("Segoe UI", 9, "bold"),
+                    self._nav_inner, text=label, font=F_SMALL_BOLD,
                     fg=C_TEXT_MUTED, bg=C_BORDER, activebackground=C_SUBCARD,
                     activeforeground=C_WHITE, relief="flat", bd=0, anchor="w",
-                    padx=12, pady=8, cursor="hand2", highlightthickness=0,
+                    padx=14, pady=7, cursor="hand2", highlightthickness=0,
                     command=lambda k=key: self.show_tab(k),
                 )
                 btn.pack(fill="x", padx=6, pady=1)
                 self._nav_buttons[key] = btn
+        tk.Frame(self._nav_inner, bg=C_GRAY_MID, height=1).pack(fill="x", padx=12, pady=(8, 0))
 
         # --- Right workspace: scrollable canvas hosting the tab frames ---
         self.content = tk.Frame(self.content_shell, bg=C_CARD)
         self.content.pack(side="left", fill="both", expand=True)
 
         self._workspace_canvas = tk.Canvas(self.content, bg=C_CARD, highlightthickness=0, borderwidth=0)
-        self._workspace_vbar = ttk.Scrollbar(self.content, orient="vertical", command=self._workspace_canvas.yview)
+        self._workspace_vbar = ttk.Scrollbar(self.content, orient="vertical", command=self._workspace_canvas.yview,
+                                             style="Vertical.TScrollbar")
         self._workspace_canvas.configure(yscrollcommand=self._workspace_vbar.set)
         self._workspace_vbar.pack(side="right", fill="y")
         self._workspace_canvas.pack(side="left", fill="both", expand=True)
@@ -395,9 +454,10 @@ class AndroidMultiToolApp:
 
         self.txt_console = tk.Text(
             con_box, bg=C_BLACK, fg=C_TEXT_BODY, insertbackground=C_WHITE,
-            font=("Consolas", 8), wrap="char", height=7, relief="flat", padx=6, pady=4
+            font=F_MONO_SMALL, wrap="char", height=7, relief="flat", padx=6, pady=4
         )
-        con_scroll = ttk.Scrollbar(con_box, orient="vertical", command=self.txt_console.yview)
+        con_scroll = ttk.Scrollbar(con_box, orient="vertical", command=self.txt_console.yview,
+                             style="Vertical.TScrollbar")
         self.txt_console.configure(yscrollcommand=con_scroll.set)
 
         self.txt_console.pack(side="left", fill="both", expand=True)
@@ -414,49 +474,42 @@ class AndroidMultiToolApp:
         self._bind_mousewheel()
 
     def _bind_mousewheel(self):
-        """Bind the mouse wheel so it scrolls the workspace canvas under the pointer."""
+        """Universal mouse-wheel scrolling (no double-scroll, nothing blocked).
+
+        Verified against Tk's own behaviour:
+          * Text / Listbox / Treeview already scroll natively on the wheel
+            (X11: Button-4/5, Windows/macOS: MouseWheel) — leave them alone.
+          * tk.Canvas does NOT scroll natively, so we scroll the nav-rail and
+            workspace canvases ourselves when the pointer is over them.
+        """
+        def _wheel_step(event):
+            delta = getattr(event, "delta", 0)
+            if delta:
+                return -1 if delta > 0 else 1
+            return -1 if getattr(event, "num", 0) == 4 else 1
+
         def _on_wheel(event):
             w = self.root.winfo_containing(event.x_root, event.y_root)
             if w is None:
                 return
-            # Walk up: if the pointer is over a natively-scrolling widget (Text,
-            # Treeview, Listbox), let that widget scroll instead of the canvas.
+            step = _wheel_step(event)
             cur = w
-            while cur is not None and cur is not self._tab_host:
-                if isinstance(cur, (tk.Text, ttk.Treeview, tk.Listbox)):
+            while cur is not None:
+                # Native scrollables handle themselves — do not touch them.
+                if isinstance(cur, (tk.Text, tk.Listbox, ttk.Treeview)):
                     return
+                # The scrollable canvases need explicit wheel support.
+                if cur is self._nav_canvas:
+                    self._nav_canvas.yview_scroll(step, "units")
+                    return "break"
+                if cur is self._workspace_canvas:
+                    self._workspace_canvas.yview_scroll(step, "units")
+                    return "break"
                 cur = getattr(cur, "master", None)
-            if cur is None:
-                return  # pointer not inside the scrollable workspace
-            delta = getattr(event, "delta", 0)
-            if delta:
-                step = -1 if delta > 0 else 1
-            else:
-                step = -1 if getattr(event, "num", 0) == 4 else 1
-            self._workspace_canvas.yview_scroll(step, "units")
+            return None
 
         for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
             self.root.bind_all(seq, _on_wheel, add="+")
-
-        # Linux (X11) reports the wheel as Button-4/Button-5 and Tk does NOT
-        # auto-scroll Text/Listbox/Treeview for those events. Add class-level
-        # bindings so every scrollable widget rolls under the wheel on Linux.
-        # (Windows/macOS already use <MouseWheel> natively; these are no-ops.)
-        def _wheel_text(event):
-            event.widget.yview_scroll(-1 if getattr(event, "num", 0) == 4 else 1, "units")
-            return "break"
-
-        def _wheel_listbox(event):
-            event.widget.yview_scroll(-1 if getattr(event, "num", 0) == 4 else 1, "units")
-            return "break"
-
-        def _wheel_tree(event):
-            event.widget.yview_scroll(-1 if getattr(event, "num", 0) == 4 else 1, "units")
-            return "break"
-
-        for cls, fn in (("Text", _wheel_text), ("Listbox", _wheel_listbox), ("Treeview", _wheel_tree)):
-            self.root.bind_class(cls, "<Button-4>", fn, add="+")
-            self.root.bind_class(cls, "<Button-5>", fn, add="+")
 
     def show_tab(self, key: str):
         """Switch the visible workspace pane (UnlockTool-style sidebar nav)."""
@@ -484,14 +537,14 @@ class AndroidMultiToolApp:
         left_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
         left_card.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(left_card, text="TECNO CAMON 50 PRO (MT6878 / DIMENSITY 7400)", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
-        tk.Label(left_card, text="OTA Payload Unpacker & MediaTek UFS Scatter Engine", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(left_card, text="TECNO CAMON 50 PRO (MT6878 / DIMENSITY 7400)", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(left_card, text="OTA Payload Unpacker & MediaTek UFS Scatter Engine", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         # Payload Extractor Frame
         p_box = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=10)
         p_box.pack(fill="x", pady=6)
-        tk.Label(p_box, text="Stock OTA payload.bin Extractor", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(p_box, text="Extracts init_boot.img (Magisk), boot.img, and vbmeta.img directly from ROM", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+        tk.Label(p_box, text="Stock OTA payload.bin Extractor", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(p_box, text="Extracts init_boot.img (Magisk), boot.img, and vbmeta.img directly from ROM", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
 
         p_row = tk.Frame(p_box, bg=C_SUBCARD)
         p_row.pack(fill="x", pady=4)
@@ -503,34 +556,40 @@ class AndroidMultiToolApp:
         # MediaTek Scatter Map Frame
         s_box = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=10)
         s_box.pack(fill="both", expand=True, pady=6)
-        tk.Label(s_box, text="MediaTek UFS Partition Map (TECNO-CN5c)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(s_box, text="MediaTek UFS Partition Map (TECNO-CN5c)", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         cols = ("Partition", "Target", "File")
-        self.tree_scatter = ttk.Treeview(s_box, columns=cols, show="headings", height=6)
+        tree_wrap = tk.Frame(s_box, bg=C_SUBCARD)
+        tree_wrap.pack(fill="both", expand=True, pady=6)
+        self.tree_scatter = ttk.Treeview(tree_wrap, columns=cols, show="headings", height=6)
         self.tree_scatter.heading("Partition", text="Partition")
         self.tree_scatter.heading("Target", text="Storage Target")
         self.tree_scatter.heading("File", text="Image Name")
         self.tree_scatter.column("Partition", width=90)
         self.tree_scatter.column("Target", width=140)
         self.tree_scatter.column("File", width=140)
+        ts_vsb = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.tree_scatter.yview,
+                               style="Vertical.TScrollbar")
+        self.tree_scatter.configure(yscrollcommand=ts_vsb.set)
+        self.tree_scatter.pack(side="left", fill="both", expand=True)
+        ts_vsb.pack(side="right", fill="y")
 
         partitions = self.scatter_flasher.build_tecno_camon50_partition_map()
         for p in partitions:
             self.tree_scatter.insert("", "end", values=(p["partition"], p["target"], p["file"]))
-        self.tree_scatter.pack(fill="both", expand=True, pady=6)
 
         # Right Column - Transsion MDM Bypass & Preloader DAA Actions
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
         right_card.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(right_card, text="HIOS 16 MDM & PRELOADER DIRECT OPERATIONS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
-        tk.Label(right_card, text="PayJoy / PalmPay / Carlcare Disabler & BROM Direct Memory Wipe", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(right_card, text="HIOS 16 MDM & PRELOADER DIRECT OPERATIONS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(right_card, text="PayJoy / PalmPay / Carlcare Disabler & BROM Direct Memory Wipe", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         # Transsion MDM Bypass Box
         mdm_box = tk.Frame(right_card, bg=C_SUBCARD, padx=10, pady=10)
         mdm_box.pack(fill="x", pady=4)
-        tk.Label(mdm_box, text="Transsion MDM & Financing Lock Remover", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(mdm_box, text="Disables Carlcare MDM, PalmPay Framework, PayJoy and locks setup completion state", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(mdm_box, text="Transsion MDM & Financing Lock Remover", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(mdm_box, text="Disables Carlcare MDM, PalmPay Framework, PayJoy and locks setup completion state", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 4))
 
         m_btns = tk.Frame(mdm_box, bg=C_SUBCARD)
         m_btns.pack(fill="x", pady=2)
@@ -540,12 +599,12 @@ class AndroidMultiToolApp:
         # Admin App Security Plugin Box
         plugin_box = tk.Frame(right_card, bg=C_SUBCARD, padx=10, pady=10)
         plugin_box.pack(fill="x", pady=4)
-        tk.Label(plugin_box, text="Admin App Security Plugin Remover", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(plugin_box, text="Neutralizes SYSTEM_ALERT_WINDOW overlay, unregisters DPM admin & forces disable", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(plugin_box, text="Admin App Security Plugin Remover", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(plugin_box, text="Neutralizes SYSTEM_ALERT_WINDOW overlay, unregisters DPM admin & forces disable", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 4))
 
         p_input_row = tk.Frame(plugin_box, bg=C_SUBCARD)
         p_input_row.pack(fill="x", pady=2)
-        tk.Label(p_input_row, text="Package:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left", padx=(0, 4))
+        tk.Label(p_input_row, text="Package:", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left", padx=(0, 4))
         self.entry_security_plugin = ttk.Entry(p_input_row, width=28)
         self.entry_security_plugin.insert(0, "com.android.security.plugin")
         self.entry_security_plugin.pack(side="left", fill="x", expand=True, padx=(0, 4))
@@ -559,8 +618,8 @@ class AndroidMultiToolApp:
         # MTK Preloader DAA / SLA Direct Format Box
         brom_box = tk.Frame(right_card, bg=C_SUBCARD, padx=10, pady=10)
         brom_box.pack(fill="x", pady=6)
-        tk.Label(brom_box, text="Preloader DAA Bypass & Direct Partition Wipe", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(brom_box, text="Direct memory formatting via MediaTek MT6878 Preloader / BROM port", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+        tk.Label(brom_box, text="Preloader DAA Bypass & Direct Partition Wipe", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(brom_box, text="Direct memory formatting via MediaTek MT6878 Preloader / BROM port", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
 
         b_row1 = tk.Frame(brom_box, bg=C_SUBCARD)
         b_row1.pack(fill="x", pady=3)
@@ -570,8 +629,8 @@ class AndroidMultiToolApp:
         # Baseband / NVRAM Backup Box
         nv_box = tk.Frame(right_card, bg=C_SUBCARD, padx=10, pady=10)
         nv_box.pack(fill="x", pady=6)
-        tk.Label(nv_box, text="Baseband NVRAM / NVDATA Calibration Backup", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(nv_box, text="Backup IMEI / Baseband calibrations before unlocking bootloader or flashing", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+        tk.Label(nv_box, text="Baseband NVRAM / NVDATA Calibration Backup", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(nv_box, text="Backup IMEI / Baseband calibrations before unlocking bootloader or flashing", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
 
         nv_btns = tk.Frame(nv_box, bg=C_SUBCARD)
         nv_btns.pack(fill="x", pady=3)
@@ -590,13 +649,13 @@ class AndroidMultiToolApp:
         left_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
         left_card.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(left_card, text="MEDIATEK BROM & PRELOADER DIRECT SERVICE", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
-        tk.Label(left_card, text="Direct memory flashing & lock removal for locked / bricked devices", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(left_card, text="MEDIATEK BROM & PRELOADER DIRECT SERVICE", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(left_card, text="Direct memory flashing & lock removal for locked / bricked devices", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         # Chipset Selector
         chip_box = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=10)
         chip_box.pack(fill="x", pady=4)
-        tk.Label(chip_box, text="Target MediaTek Chipset (SoC):", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(chip_box, text="Target MediaTek Chipset (SoC):", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         self.combo_mtk_soc = ttk.Combobox(chip_box, values=[
             "MT6789 - Helio G200 Ultimate (Tecno Camon 50 Pro 4G / CN5c)",
@@ -614,7 +673,7 @@ class AndroidMultiToolApp:
         # COM Port Selector
         port_row = tk.Frame(chip_box, bg=C_SUBCARD)
         port_row.pack(fill="x", pady=3)
-        tk.Label(port_row, text="BROM / Preloader Port:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left", padx=(0, 5))
+        tk.Label(port_row, text="BROM / Preloader Port:", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left", padx=(0, 5))
         self.combo_mtk_port = ttk.Combobox(port_row, values=["Auto-Detect (Preloader -> BROM crash)", "COM3 (MediaTek Preloader)", "COM5 (MTK USB Port)"], width=28)
         self.combo_mtk_port.current(0)
         self.combo_mtk_port.pack(side="left", fill="x", expand=True)
@@ -622,7 +681,7 @@ class AndroidMultiToolApp:
         # 1-Click Operations
         op_box = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=10)
         op_box.pack(fill="x", pady=6)
-        tk.Label(op_box, text="Select BROM Operation:", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(op_box, text="Select BROM Operation:", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         self.mtk_op_var = tk.StringVar(value="frp")
         ops = [
@@ -636,7 +695,7 @@ class AndroidMultiToolApp:
             rb = tk.Radiobutton(
                 op_box, text=text, variable=self.mtk_op_var, value=val,
                 bg=C_SUBCARD, fg=C_TEXT_BODY, selectcolor=C_CARD, activebackground=C_SUBCARD,
-                activeforeground=C_WHITE, font=("Segoe UI", 8)
+                activeforeground=C_WHITE, font=F_TINY
             )
             rb.pack(anchor="w", pady=2)
 
@@ -651,7 +710,7 @@ class AndroidMultiToolApp:
         # Download Agent upload (advanced — SLA/DAA gated)
         da_card = tk.Frame(left_card, bg=C_SUBCARD, padx=10, pady=8)
         da_card.pack(fill="x", pady=4)
-        tk.Label(da_card, text="Download Agent (DA) upload:", font=("Segoe UI", 8, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(da_card, text="Download Agent (DA) upload:", font=F_TINY_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         da_row = tk.Frame(da_card, bg=C_SUBCARD)
         da_row.pack(fill="x", pady=4)
         self.entry_da_path = ttk.Entry(da_row, width=20)
@@ -663,8 +722,8 @@ class AndroidMultiToolApp:
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
         right_card.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(right_card, text="HOW TO CONNECT WHEN PHONE IS LOCKED", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
-        tk.Label(right_card, text="Hardware BROM runs before Android OS and bypasses all screen locks", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(right_card, text="HOW TO CONNECT WHEN PHONE IS LOCKED", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(right_card, text="Hardware BROM runs before Android OS and bypasses all screen locks", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         guide_card = tk.Frame(right_card, bg=C_SUBCARD, padx=12, pady=10)
         guide_card.pack(fill="both", expand=True, pady=4)
@@ -686,10 +745,16 @@ class AndroidMultiToolApp:
             "   - nvram / nvdata: Baseband / IMEI calibrations (backup first)"
         )
 
-        txt_info = tk.Text(guide_card, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 8), wrap="word", relief="flat")
+        guide_wrap = tk.Frame(guide_card, bg=C_SUBCARD)
+        guide_wrap.pack(fill="both", expand=True)
+        txt_info = tk.Text(guide_wrap, bg=C_SUBCARD, fg=C_TEXT_BODY, font=F_SMALL, wrap="word", relief="flat")
+        gi_vsb = ttk.Scrollbar(guide_wrap, orient="vertical", command=txt_info.yview,
+                               style="Vertical.TScrollbar")
+        txt_info.configure(yscrollcommand=gi_vsb.set)
         txt_info.insert("1.0", steps_text)
         txt_info.configure(state="disabled")
-        txt_info.pack(fill="both", expand=True)
+        txt_info.pack(side="left", fill="both", expand=True)
+        gi_vsb.pack(side="right", fill="y")
 
     # ================= DEVICE DIAGNOSTICS =================
 
@@ -702,7 +767,7 @@ class AndroidMultiToolApp:
         left_card = tk.Frame(f, bg=C_CARD, padx=15, pady=15)
         left_card.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(left_card, text="HARDWARE & FIRMWARE PARAMETERS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
+        tk.Label(left_card, text="HARDWARE & FIRMWARE PARAMETERS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
 
         self.info_labels = {}
         fields = [
@@ -719,17 +784,17 @@ class AndroidMultiToolApp:
         ]
 
         for idx, (label_text, key) in enumerate(fields):
-            lbl_k = tk.Label(left_card, text=f"{label_text}:", font=("Segoe UI", 9, "bold"), fg=C_TEXT_MUTED, bg=C_CARD)
+            lbl_k = tk.Label(left_card, text=f"{label_text}:", font=F_SMALL_BOLD, fg=C_TEXT_MUTED, bg=C_CARD)
             lbl_k.grid(row=idx + 1, column=0, sticky="w", pady=3)
 
-            lbl_v = tk.Label(left_card, text="--", font=("Segoe UI", 9), fg=C_WHITE, bg=C_CARD)
+            lbl_v = tk.Label(left_card, text="--", font=F_SMALL, fg=C_WHITE, bg=C_CARD)
             lbl_v.grid(row=idx + 1, column=1, sticky="w", padx=10, pady=3)
             self.info_labels[key] = lbl_v
 
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=15)
         right_card.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(right_card, text="DIAGNOSTIC EXECUTIONS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
+        tk.Label(right_card, text="DIAGNOSTIC EXECUTIONS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
 
         ttk.Button(right_card, text="Read ADB Device Info", style="Action.TButton", command=self.read_adb_info).pack(fill="x", pady=4)
         ttk.Button(right_card, text="Read Fastboot Variables (getvar all)", style="Secondary.TButton", command=self.read_fastboot_vars).pack(fill="x", pady=4)
@@ -748,27 +813,33 @@ class AndroidMultiToolApp:
         left = tk.Frame(f, bg=C_CARD, padx=15, pady=15)
         left.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(left, text="FRP & SETUP WIZARD BYPASS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
+        tk.Label(left, text="FRP & SETUP WIZARD BYPASS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
 
         ttk.Button(left, text="Universal Fastboot FRP Reset (Erase Partitions)", style="Danger.TButton", command=self.reset_frp_fastboot).pack(fill="x", pady=5)
-        tk.Label(left, text="* Formats config, frp, and persistent blocks in Fastboot mode", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(left, text="* Formats config, frp, and persistent blocks in Fastboot mode", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         ttk.Button(left, text="Samsung Test Mode (*#0*#) ADB FRP Reset", style="Action.TButton", command=self.frp_samsung_test_mode).pack(fill="x", pady=5)
-        tk.Label(left, text="* Dial *#0*# on emergency call dialer, then click execute", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(left, text="* Dial *#0*# on emergency call dialer, then click execute", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         ttk.Button(left, text="Bypass Android Setup Wizard (ADB)", style="Secondary.TButton", command=self.bypass_setup_wizard).pack(fill="x", pady=5)
-        tk.Label(left, text="* Injects user_setup_complete 1 and device_provisioned 1", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(left, text="* Injects user_setup_complete 1 and device_provisioned 1", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         ttk.Button(left, text="Remove Lockscreen Database (TWRP / Root)", style="Danger.TButton", command=self.remove_screen_lock).pack(fill="x", pady=5)
-        tk.Label(left, text="* Clears gesture.key, password.key, and locksettings.db", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w")
+        tk.Label(left, text="* Clears gesture.key, password.key, and locksettings.db", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w")
 
         right = tk.Frame(f, bg=C_CARD, padx=15, pady=15)
         right.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(right, text="EXPLOIT REFERENCE & PROTOCOLS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(right, text="EXPLOIT REFERENCE & PROTOCOLS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
-        info_box = tk.Text(right, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 8), wrap="word", relief="flat", height=18)
-        info_box.pack(fill="both", expand=True)
+        info_wrap = tk.Frame(right, bg=C_SUBCARD)
+        info_wrap.pack(fill="both", expand=True)
+        info_box = tk.Text(info_wrap, bg=C_SUBCARD, fg=C_TEXT_BODY, font=F_SMALL, wrap="word", relief="flat", height=18)
+        info_vsb = ttk.Scrollbar(info_wrap, orient="vertical", command=info_box.yview,
+                                 style="Vertical.TScrollbar")
+        info_box.configure(yscrollcommand=info_vsb.set)
+        info_box.pack(side="left", fill="both", expand=True)
+        info_vsb.pack(side="right", fill="y")
 
         guide_text = ""
         for name, desc in self.frp.get_frp_methods_info().items():
@@ -783,13 +854,13 @@ class AndroidMultiToolApp:
         p = tk.Frame(f, bg=C_CARD, padx=18, pady=18)
         p.pack(fill="both", expand=True, padx=8, pady=8)
 
-        tk.Label(p, text="FASTBOOT BOOTLOADER & PARTITION FLASHER", font=("Segoe UI", 11, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
+        tk.Label(p, text="FASTBOOT BOOTLOADER & PARTITION FLASHER", font=F_TITLE, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
 
         # Bootloader Controls
         bl_card = tk.Frame(p, bg=C_SUBCARD, padx=12, pady=10)
         bl_card.pack(fill="x", pady=6)
-        tk.Label(bl_card, text="Bootloader Lock / Unlock Control", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(bl_card, text="Standard Fastboot & OEM unlock switches for Tecno, Xiaomi, Motorola, OnePlus", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+        tk.Label(bl_card, text="Bootloader Lock / Unlock Control", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(bl_card, text="Standard Fastboot & OEM unlock switches for Tecno, Xiaomi, Motorola, OnePlus", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
 
         bl_btns = tk.Frame(bl_card, bg=C_SUBCARD)
         bl_btns.pack(fill="x")
@@ -799,17 +870,17 @@ class AndroidMultiToolApp:
         # Partition Flasher
         flash_card = tk.Frame(p, bg=C_SUBCARD, padx=12, pady=12)
         flash_card.pack(fill="x", pady=10)
-        tk.Label(flash_card, text="Flash Partition Image (.img)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+        tk.Label(flash_card, text="Flash Partition Image (.img)", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
 
         fl_row = tk.Frame(flash_card, bg=C_SUBCARD)
         fl_row.pack(fill="x", pady=4)
 
-        tk.Label(fl_row, text="Target:", font=("Segoe UI", 9), fg=C_TEXT_BODY, bg=C_SUBCARD).pack(side="left", padx=(0, 5))
+        tk.Label(fl_row, text="Target:", font=F_SMALL, fg=C_TEXT_BODY, bg=C_SUBCARD).pack(side="left", padx=(0, 5))
         self.combo_partition = ttk.Combobox(fl_row, values=["boot", "init_boot", "recovery", "vbmeta", "super", "system", "vendor", "dtbo", "persist"], width=12)
         self.combo_partition.set("init_boot")
         self.combo_partition.pack(side="left", padx=5)
 
-        tk.Label(fl_row, text="Image File:", font=("Segoe UI", 9), fg=C_TEXT_BODY, bg=C_SUBCARD).pack(side="left", padx=(10, 5))
+        tk.Label(fl_row, text="Image File:", font=F_SMALL, fg=C_TEXT_BODY, bg=C_SUBCARD).pack(side="left", padx=(10, 5))
         self.entry_img_path = ttk.Entry(fl_row, width=32)
         self.entry_img_path.pack(side="left", padx=5, fill="x", expand=True)
 
@@ -819,7 +890,7 @@ class AndroidMultiToolApp:
         # Wipe Partitions
         wipe_card = tk.Frame(p, bg=C_SUBCARD, padx=12, pady=10)
         wipe_card.pack(fill="x", pady=6)
-        tk.Label(wipe_card, text="Fastboot Wipe Operations", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(wipe_card, text="Fastboot Wipe Operations", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         w_btns = tk.Frame(wipe_card, bg=C_SUBCARD)
         w_btns.pack(fill="x", pady=6)
@@ -830,8 +901,8 @@ class AndroidMultiToolApp:
         # Recovery Sideload (works with USB debugging DISABLED)
         sl_card = tk.Frame(p, bg=C_SUBCARD, padx=12, pady=12)
         sl_card.pack(fill="x", pady=6)
-        tk.Label(sl_card, text="Recovery ADB Sideload (no USB debugging needed)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(sl_card, text="Boot to Recovery -> 'Apply update from ADB'. Recovery adbd needs NO USB debugging.", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
+        tk.Label(sl_card, text="Recovery ADB Sideload (no USB debugging needed)", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(sl_card, text="Boot to Recovery -> 'Apply update from ADB'. Recovery adbd needs NO USB debugging.", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w", pady=(0, 6))
 
         sl_row = tk.Frame(sl_card, bg=C_SUBCARD)
         sl_row.pack(fill="x", pady=4)
@@ -847,7 +918,7 @@ class AndroidMultiToolApp:
         p = tk.Frame(f, bg=C_CARD, padx=18, pady=18)
         p.pack(fill="both", expand=True, padx=8, pady=8)
 
-        tk.Label(p, text="HARDWARE POWER & TARGET MODE SWITCHER", font=("Segoe UI", 11, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 15))
+        tk.Label(p, text="HARDWARE POWER & TARGET MODE SWITCHER", font=F_TITLE, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 15))
 
         btn_grid = tk.Frame(p, bg=C_CARD)
         btn_grid.pack(fill="both", expand=True)
@@ -871,10 +942,10 @@ class AndroidMultiToolApp:
             cell = tk.Frame(btn_grid, bg=C_SUBCARD, padx=12, pady=10, relief="flat")
             cell.grid(row=r, column=c, sticky="nsew", padx=6, pady=6)
 
-            lbl = tk.Label(cell, text=title, font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD)
+            lbl = tk.Label(cell, text=title, font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD)
             lbl.pack(anchor="w")
 
-            lbl_d = tk.Label(cell, text=desc, font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD)
+            lbl_d = tk.Label(cell, text=desc, font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD)
             lbl_d.pack(anchor="w", pady=(2, 6))
 
             cmd = (lambda t=target: self.execute_reboot(t))
@@ -891,14 +962,14 @@ class AndroidMultiToolApp:
         left = tk.Frame(f, bg=C_CARD, padx=15, pady=15)
         left.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(left, text="OEM BLOATWARE PROFILES", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
+        tk.Label(left, text="OEM BLOATWARE PROFILES", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
 
         for brand in BLOATWARE_PRESETS.keys():
             row = tk.Frame(left, bg=C_CARD)
             row.pack(fill="x", pady=4)
-            tk.Label(row, text=brand, font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_CARD).pack(side="left")
+            tk.Label(row, text=brand, font=F_SMALL_BOLD, fg=C_WHITE, bg=C_CARD).pack(side="left")
             pkg_count = len(BLOATWARE_PRESETS[brand])
-            tk.Label(row, text=f"({pkg_count} pkgs)", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(side="left", padx=6)
+            tk.Label(row, text=f"({pkg_count} pkgs)", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(side="left", padx=6)
 
             cmd = (lambda b=brand: self.run_debloat(b))
             ttk.Button(row, text="Remove Bloat", style="Secondary.TButton", command=cmd).pack(side="right")
@@ -906,12 +977,12 @@ class AndroidMultiToolApp:
         right = tk.Frame(f, bg=C_CARD, padx=15, pady=15)
         right.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(right, text="MANUAL PACKAGE MANAGEMENT", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
+        tk.Label(right, text="MANUAL PACKAGE MANAGEMENT", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 10))
 
         # APK installer
         apk_box = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=10)
         apk_box.pack(fill="x", pady=6)
-        tk.Label(apk_box, text="Sideload APK Application", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(apk_box, text="Sideload APK Application", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         apk_row = tk.Frame(apk_box, bg=C_SUBCARD)
         apk_row.pack(fill="x", pady=5)
@@ -923,7 +994,7 @@ class AndroidMultiToolApp:
         # Disable single package
         pkg_box = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=10)
         pkg_box.pack(fill="x", pady=8)
-        tk.Label(pkg_box, text="Target Package Name", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(pkg_box, text="Target Package Name", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         self.entry_pkg = ttk.Entry(pkg_box)
         self.entry_pkg.pack(fill="x", pady=5)
@@ -940,10 +1011,12 @@ class AndroidMultiToolApp:
         p = tk.Frame(f, bg=C_CARD, padx=15, pady=15)
         p.pack(fill="both", expand=True, padx=8, pady=8)
 
-        tk.Label(p, text="HARDWARE TEST-POINT PINOUTS & EDL 9008 / BROM SPECIFICATIONS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(p, text="HARDWARE TEST-POINT PINOUTS & EDL 9008 / BROM SPECIFICATIONS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         cols = ("Brand", "Model", "Chipset", "Boot Mode", "Test-Point Instructions")
-        tree = ttk.Treeview(p, columns=cols, show="headings", height=10)
+        tp_wrap = tk.Frame(p, bg=C_CARD)
+        tp_wrap.pack(fill="both", expand=True)
+        tree = ttk.Treeview(tp_wrap, columns=cols, show="headings", height=10)
 
         tree.heading("Brand", text="Brand")
         tree.heading("Model", text="Model")
@@ -956,11 +1029,14 @@ class AndroidMultiToolApp:
         tree.column("Chipset", width=140)
         tree.column("Boot Mode", width=120)
         tree.column("Test-Point Instructions", width=380)
+        tp_vsb = ttk.Scrollbar(tp_wrap, orient="vertical", command=tree.yview,
+                               style="Vertical.TScrollbar")
+        tree.configure(yscrollcommand=tp_vsb.set)
+        tree.pack(side="left", fill="both", expand=True)
+        tp_vsb.pack(side="right", fill="y")
 
         for tp in TEST_POINT_DATABASE:
             tree.insert("", "end", values=(tp["brand"], tp["model"], tp["chipset"], tp["mode"], tp["instructions"]))
-
-        tree.pack(fill="both", expand=True)
 
     # ================= SUPPORTED DEVICES TAB =================
 
@@ -972,13 +1048,13 @@ class AndroidMultiToolApp:
         header = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
         header.grid(row=0, column=0, sticky="ew", padx=8, pady=(8, 0))
 
-        tk.Label(header, text="SUPPORTED DEVICE MATRIX", font=("Segoe UI", 11, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w")
+        tk.Label(header, text="SUPPORTED DEVICE MATRIX", font=F_TITLE, fg=C_WHITE, bg=C_CARD).pack(anchor="w")
         tk.Label(header, text=f"{len(SUPPORTED_DEVICE_CATALOG)} categories | ADB, Fastboot, MTK BROM, EDL & test-point servicing",
-                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(2, 0))
+                 font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(2, 0))
 
         search_row = tk.Frame(header, bg=C_CARD)
         search_row.pack(fill="x", pady=(8, 0))
-        tk.Label(search_row, text="Search:", font=("Segoe UI", 9, "bold"), fg=C_TEXT_BODY, bg=C_CARD).pack(side="left", padx=(0, 6))
+        tk.Label(search_row, text="Search:", font=F_SMALL_BOLD, fg=C_TEXT_BODY, bg=C_CARD).pack(side="left", padx=(0, 6))
         self.entry_device_search = ttk.Entry(search_row)
         self.entry_device_search.pack(side="left", fill="x", expand=True)
         self.entry_device_search.bind("<KeyRelease>", self._on_device_search)
@@ -997,7 +1073,8 @@ class AndroidMultiToolApp:
         self.tree_devices.column("models", width=360)
         self.tree_devices.column("chipset", width=230)
 
-        vsb = ttk.Scrollbar(body, orient="vertical", command=self.tree_devices.yview)
+        vsb = ttk.Scrollbar(body, orient="vertical", command=self.tree_devices.yview,
+                       style="Vertical.TScrollbar")
         self.tree_devices.configure(yscrollcommand=vsb.set)
         self.tree_devices.pack(side="left", fill="both", expand=True)
         vsb.pack(side="right", fill="y")
@@ -1525,26 +1602,26 @@ class AndroidMultiToolApp:
         """Shared 'firmware context' card: DA loader / auth / preloader + auto-locate."""
         card = tk.Frame(parent, bg=C_SUBCARD, padx=10, pady=8)
         card.pack(fill="x", pady=4)
-        tk.Label(card, text="MTK FIRMWARE CONTEXT — DA / AUTH / PRELOADER", font=("Segoe UI", 9, "bold"),
+        tk.Label(card, text="MTK FIRMWARE CONTEXT — DA / AUTH / PRELOADER", font=F_SMALL_BOLD,
                  fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         tk.Label(card,
                  text="Optional on MT6789 (Camon 50 Pro 4G — free path). Required on protected MT6878 units. "
                       "Shared across all deep-service tabs.",
-                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=620).pack(anchor="w", pady=(0, 4))
+                 font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=620).pack(anchor="w", pady=(0, 4))
 
         frow = tk.Frame(card, bg=C_SUBCARD); frow.pack(fill="x", pady=2)
-        tk.Label(frow, text="Firmware folder:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        tk.Label(frow, text="Firmware folder:", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
         tk.Entry(frow, textvariable=self.mtk_ctx["folder"], bg=C_BLACK, fg=C_WHITE,
-                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+                 insertbackground=C_WHITE, relief="flat", font=F_MONO_SMALL).pack(side="left", fill="x", expand=True, padx=4)
         ttk.Button(frow, text="Browse…", style="Secondary.TButton", command=self._browse_mtk_folder).pack(side="left", padx=2)
         ttk.Button(frow, text="Auto-locate DA/Auth", style="Action.TButton", command=self._auto_locate_files).pack(side="left", padx=2)
 
         for key, label in (("loader", "DA loader (.bin)"), ("auth", "Auth file (.auth)"), ("preloader", "Preloader (.bin)")):
             row = tk.Frame(card, bg=C_SUBCARD); row.pack(fill="x", pady=2)
-            tk.Label(row, text=label + ":", font=("Segoe UI", 8), fg=C_TEXT_MUTED,
+            tk.Label(row, text=label + ":", font=F_TINY, fg=C_TEXT_MUTED,
                      bg=C_SUBCARD, width=18, anchor="w").pack(side="left")
             tk.Entry(row, textvariable=self.mtk_ctx[key], bg=C_BLACK, fg=C_WHITE,
-                     insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+                     insertbackground=C_WHITE, relief="flat", font=F_MONO_SMALL).pack(side="left", fill="x", expand=True, padx=4)
             ttk.Button(row, text="…", width=3, style="Secondary.TButton",
                        command=lambda k=key: self._browse_mtk_file(k)).pack(side="left")
         return card
@@ -1597,13 +1674,19 @@ class AndroidMultiToolApp:
 
         # Partition backup
         pc = tk.Frame(left, bg=C_SUBCARD, padx=10, pady=8); pc.pack(fill="both", expand=True, pady=4)
-        tk.Label(pc, text="PARTITION BACKUP (mtk r)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
-        tk.Label(pc, text="Ctrl/Shift-click to select several partitions.", font=("Segoe UI", 8),
+        tk.Label(pc, text="PARTITION BACKUP (mtk r)", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(pc, text="Ctrl/Shift-click to select several partitions.", font=F_TINY,
                  fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(anchor="w")
-        self.backup_parts_list = tk.Listbox(pc, bg=C_BLACK, fg=C_TEXT_BODY, selectbackground=C_GRAY_MID,
-                                            selectforeground=C_WHITE, relief="flat", font=("Consolas", 8),
+        bp_wrap = tk.Frame(pc, bg=C_SUBCARD)
+        bp_wrap.pack(fill="both", expand=True, pady=4)
+        self.backup_parts_list = tk.Listbox(bp_wrap, bg=C_BLACK, fg=C_TEXT_BODY, selectbackground=C_GRAY_MID,
+                                            selectforeground=C_WHITE, relief="flat", font=F_MONO_SMALL,
                                             selectmode="multiple", exportselection=False)
-        self.backup_parts_list.pack(fill="both", expand=True, pady=4)
+        bp_vsb = ttk.Scrollbar(bp_wrap, orient="vertical", command=self.backup_parts_list.yview,
+                               style="Vertical.TScrollbar")
+        self.backup_parts_list.configure(yscrollcommand=bp_vsb.set)
+        self.backup_parts_list.pack(side="left", fill="both", expand=True)
+        bp_vsb.pack(side="right", fill="y")
         for p in COMMON_PARTITIONS:
             self.backup_parts_list.insert(tk.END, p)
         ttk.Button(pc, text="Backup selected partitions", style="Action.TButton",
@@ -1611,32 +1694,32 @@ class AndroidMultiToolApp:
 
         # Guided workflow
         gw = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); gw.pack(fill="x", pady=4)
-        tk.Label(gw, text="🛡 FULL GUIDED WORKFLOW", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(gw, text="🛡 FULL GUIDED WORKFLOW", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         tk.Label(gw, text="1) Full ROM readback → 2) dump + scan IMEI → 3) seccfg unlock. One click, everything logged.",
-                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=430).pack(anchor="w", pady=(0, 4))
+                 font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=430).pack(anchor="w", pady=(0, 4))
         ttk.Button(gw, text="Run Full Guided Workflow", style="Action.TButton",
                    command=self.guided_full_workflow).pack(fill="x")
 
         # Full readback
         rb = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); rb.pack(fill="x", pady=4)
-        tk.Label(rb, text="FULL ROM READBACK (mtk rl)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(rb, text="FULL ROM READBACK (mtk rl)", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         tk.Label(rb, text="Dumps every partition + scatter to a folder. 15–60+ min on UFS — do not disconnect.",
-                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=430).pack(anchor="w", pady=(0, 4))
+                 font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left", wraplength=430).pack(anchor="w", pady=(0, 4))
         ttk.Button(rb, text="Full readback to folder…", style="Secondary.TButton",
                    command=self.full_readback).pack(fill="x")
 
         # Restore / flash
         rf = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); rf.pack(fill="x", pady=4)
-        tk.Label(rf, text="RESTORE / FLASH", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(rf, text="RESTORE / FLASH", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
 
         r1 = tk.Frame(rf, bg=C_SUBCARD); r1.pack(fill="x", pady=2)
-        tk.Label(r1, text="Partition:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        tk.Label(r1, text="Partition:", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
         self.flash_part_var = tk.StringVar(value="boot")
         tk.Entry(r1, textvariable=self.flash_part_var, width=14, bg=C_BLACK, fg=C_WHITE,
-                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", padx=4)
+                 insertbackground=C_WHITE, relief="flat", font=F_MONO_SMALL).pack(side="left", padx=4)
         self.flash_image_var = tk.StringVar(value="")
         tk.Entry(r1, textvariable=self.flash_image_var, bg=C_BLACK, fg=C_WHITE,
-                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+                 insertbackground=C_WHITE, relief="flat", font=F_MONO_SMALL).pack(side="left", fill="x", expand=True, padx=4)
         ttk.Button(r1, text="…", width=3, style="Secondary.TButton",
                    command=lambda: self.flash_image_var.set(
                        filedialog.askopenfilename(title="Select partition image", filetypes=[("Image", "*.img *.bin"), ("All", "*.*")]) or "")).pack(side="left")
@@ -1645,9 +1728,9 @@ class AndroidMultiToolApp:
 
         self.flash_folder_var = tk.StringVar(value="")
         r2 = tk.Frame(rf, bg=C_SUBCARD); r2.pack(fill="x", pady=2)
-        tk.Label(r2, text="Firmware folder:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        tk.Label(r2, text="Firmware folder:", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
         tk.Entry(r2, textvariable=self.flash_folder_var, bg=C_BLACK, fg=C_WHITE,
-                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+                 insertbackground=C_WHITE, relief="flat", font=F_MONO_SMALL).pack(side="left", fill="x", expand=True, padx=4)
         ttk.Button(r2, text="…", width=3, style="Secondary.TButton",
                    command=lambda: self.flash_folder_var.set(filedialog.askdirectory(title="Select extracted firmware folder") or "")).pack(side="left")
         ttk.Button(rf, text="Flash full firmware folder (mtk wl)", style="Action.TButton",
@@ -1783,9 +1866,15 @@ class AndroidMultiToolApp:
 
         self._build_mtk_ctx_card(left)
 
-        info = tk.Text(left, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 8), wrap="word",
+        unlock_wrap = tk.Frame(left, bg=C_SUBCARD)
+        unlock_wrap.pack(fill="both", expand=True, pady=4)
+        info = tk.Text(unlock_wrap, bg=C_SUBCARD, fg=C_TEXT_BODY, font=F_SMALL, wrap="word",
                        relief="flat", padx=8, pady=6, height=10)
-        info.pack(fill="both", expand=True, pady=4)
+        ul_vsb = ttk.Scrollbar(unlock_wrap, orient="vertical", command=info.yview,
+                               style="Vertical.TScrollbar")
+        info.configure(yscrollcommand=ul_vsb.set)
+        info.pack(side="left", fill="both", expand=True)
+        ul_vsb.pack(side="right", fill="y")
         info.insert("1.0",
             "BOOTLOADER UNLOCK — what's real:\n\n"
             "• CN5c / MT6789 (Camon 50 Pro 4G): 'mtk da seccfg unlock' works\n"
@@ -1803,21 +1892,21 @@ class AndroidMultiToolApp:
         info.configure(state="disabled")
 
         acts = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); acts.pack(fill="x", pady=4)
-        tk.Label(acts, text="SECCFG OPERATIONS", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(acts, text="SECCFG OPERATIONS", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         ttk.Button(acts, text="🔓 Unlock bootloader (seccfg unlock)", style="Action.TButton",
                    command=self.mtk_seccfg_unlock).pack(fill="x", pady=2)
         ttk.Button(acts, text="🔒 Re-lock bootloader (seccfg lock)", style="Secondary.TButton",
                    command=self.mtk_seccfg_lock).pack(fill="x", pady=2)
 
         wipes = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); wipes.pack(fill="x", pady=4)
-        tk.Label(wipes, text="QUICK WIPES", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(wipes, text="QUICK WIPES", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         ttk.Button(wipes, text="Wipe FRP (mtk e frp)", style="Danger.TButton",
                    command=lambda: self.mtk_quick_erase(["frp"])).pack(fill="x", pady=2)
         ttk.Button(wipes, text="Factory reset (mtk e metadata,userdata,md_udc)", style="Danger.TButton",
                    command=lambda: self.mtk_quick_erase(["metadata", "userdata", "md_udc"])).pack(fill="x", pady=2)
 
         misc = tk.Frame(right, bg=C_SUBCARD, padx=10, pady=8); misc.pack(fill="x", pady=4)
-        tk.Label(misc, text="DEVICE", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(misc, text="DEVICE", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         ttk.Button(misc, text="Reboot device out of BROM (mtk reset)", style="Secondary.TButton",
                    command=self.mtk_reboot_device).pack(fill="x", pady=2)
 
@@ -1881,34 +1970,40 @@ class AndroidMultiToolApp:
         self._build_mtk_ctx_card(left)
 
         dump = tk.Frame(left, bg=C_SUBCARD, padx=10, pady=8); dump.pack(fill="x", pady=4)
-        tk.Label(dump, text="NVRAM BACKUP & IMEI SCAN", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(dump, text="NVRAM BACKUP & IMEI SCAN", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         tk.Label(dump, text="Dumps nvram / nvdata / nvcfg / proinfo (where IMEI + radio\ncalibration live) and scans them for 15-digit Luhn-valid IMEI.",
-                 font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left").pack(anchor="w", pady=(0, 4))
+                 font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD, justify="left").pack(anchor="w", pady=(0, 4))
         ttk.Button(dump, text="Dump IMEI sources + scan", style="Action.TButton",
                    command=self.dump_and_scan_imei).pack(fill="x", pady=2)
         ttk.Button(dump, text="Scan an existing folder for IMEI…", style="Secondary.TButton",
                    command=self.scan_imei_folder).pack(fill="x", pady=2)
 
         rest = tk.Frame(left, bg=C_SUBCARD, padx=10, pady=8); rest.pack(fill="x", pady=4)
-        tk.Label(rest, text="RESTORE CALIBRATION (mtk w)", font=("Segoe UI", 9, "bold"), fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
+        tk.Label(rest, text="RESTORE CALIBRATION (mtk w)", font=F_SMALL_BOLD, fg=C_WHITE, bg=C_SUBCARD).pack(anchor="w")
         r1 = tk.Frame(rest, bg=C_SUBCARD); r1.pack(fill="x", pady=2)
-        tk.Label(r1, text="Partition:", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
+        tk.Label(r1, text="Partition:", font=F_TINY, fg=C_TEXT_MUTED, bg=C_SUBCARD).pack(side="left")
         self.nv_part_var = tk.StringVar(value="nvram")
         tk.Entry(r1, textvariable=self.nv_part_var, width=12, bg=C_BLACK, fg=C_WHITE,
-                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", padx=4)
+                 insertbackground=C_WHITE, relief="flat", font=F_MONO_SMALL).pack(side="left", padx=4)
         self.nv_img_var = tk.StringVar(value="")
         tk.Entry(r1, textvariable=self.nv_img_var, bg=C_BLACK, fg=C_WHITE,
-                 insertbackground=C_WHITE, relief="flat", font=("Consolas", 8)).pack(side="left", fill="x", expand=True, padx=4)
+                 insertbackground=C_WHITE, relief="flat", font=F_MONO_SMALL).pack(side="left", fill="x", expand=True, padx=4)
         ttk.Button(r1, text="…", width=3, style="Secondary.TButton",
                    command=lambda: self.nv_img_var.set(
                        filedialog.askopenfilename(title="Select NVRAM image", filetypes=[("Image", "*.img *.bin"), ("All", "*.*")]) or "")).pack(side="left")
         ttk.Button(rest, text="Restore partition", style="Action.TButton",
                    command=self.restore_nv_partition).pack(fill="x", pady=(2, 0))
 
-        tk.Label(right, text="IMEI / NVRAM RESULTS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
-        self.txt_imei_results = tk.Text(right, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Consolas", 9), wrap="word",
+        tk.Label(right, text="IMEI / NVRAM RESULTS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        imei_wrap = tk.Frame(right, bg=C_SUBCARD)
+        imei_wrap.pack(fill="both", expand=True)
+        self.txt_imei_results = tk.Text(imei_wrap, bg=C_SUBCARD, fg=C_TEXT_BODY, font=F_MONO, wrap="word",
                                         relief="flat", padx=8, pady=6)
-        self.txt_imei_results.pack(fill="both", expand=True)
+        imei_vsb = ttk.Scrollbar(imei_wrap, orient="vertical", command=self.txt_imei_results.yview,
+                                 style="Vertical.TScrollbar")
+        self.txt_imei_results.configure(yscrollcommand=imei_vsb.set)
+        self.txt_imei_results.pack(side="left", fill="both", expand=True)
+        imei_vsb.pack(side="right", fill="y")
         self.txt_imei_results.insert("1.0", "Results will appear here.\n\n"
                                              "Backing up / restoring your own NVRAM is legitimate.\n"
                                              "Changing IMEI is illegal in most countries — this tool\n"
@@ -1988,8 +2083,8 @@ class AndroidMultiToolApp:
         left_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
         left_card.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
 
-        tk.Label(left_card, text="DEVICE CONNECTION TUTORIALS", font=("Segoe UI", 10, "bold"), fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
-        tk.Label(left_card, text="Step-by-step guides for every way a device can connect", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
+        tk.Label(left_card, text="DEVICE CONNECTION TUTORIALS", font=F_BODY_BOLD, fg=C_WHITE, bg=C_CARD).pack(anchor="w", pady=(0, 4))
+        tk.Label(left_card, text="Step-by-step guides for every way a device can connect", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD).pack(anchor="w", pady=(0, 8))
 
         sc_frame = tk.Frame(left_card, bg=C_SUBCARD, padx=6, pady=6)
         sc_frame.pack(fill="both", expand=True)
@@ -1997,10 +2092,11 @@ class AndroidMultiToolApp:
         self.lbox_scenarios = tk.Listbox(
             sc_frame, bg=C_SUBCARD, fg=C_TEXT_BODY, selectbackground=C_GRAY_MID,
             selectforeground=C_WHITE, highlightthickness=0, relief="flat",
-            font=("Segoe UI", 9), activestyle="none"
+            font=F_SMALL, activestyle="none"
         )
         self.lbox_scenarios.pack(fill="both", expand=True, side="left")
-        sc_scroll = ttk.Scrollbar(sc_frame, orient="vertical", command=self.lbox_scenarios.yview)
+        sc_scroll = ttk.Scrollbar(sc_frame, orient="vertical", command=self.lbox_scenarios.yview,
+                             style="Vertical.TScrollbar")
         self.lbox_scenarios.configure(yscrollcommand=sc_scroll.set)
         sc_scroll.pack(side="right", fill="y")
 
@@ -2024,13 +2120,19 @@ class AndroidMultiToolApp:
         right_card = tk.Frame(f, bg=C_CARD, padx=15, pady=12)
         right_card.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
 
-        self.lbl_scenario_title = tk.Label(right_card, text="", font=("Segoe UI", 11, "bold"), fg=C_WHITE, bg=C_CARD, anchor="w")
+        self.lbl_scenario_title = tk.Label(right_card, text="", font=F_TITLE, fg=C_WHITE, bg=C_CARD, anchor="w")
         self.lbl_scenario_title.pack(fill="x")
-        self.lbl_scenario_when = tk.Label(right_card, text="", font=("Segoe UI", 8), fg=C_TEXT_MUTED, bg=C_CARD, anchor="w", justify="left")
+        self.lbl_scenario_when = tk.Label(right_card, text="", font=F_TINY, fg=C_TEXT_MUTED, bg=C_CARD, anchor="w", justify="left")
         self.lbl_scenario_when.pack(fill="x", pady=(0, 6))
 
-        self.txt_scenario = tk.Text(right_card, bg=C_SUBCARD, fg=C_TEXT_BODY, font=("Segoe UI", 9), wrap="word", relief="flat", padx=8, pady=6)
-        self.txt_scenario.pack(fill="both", expand=True)
+        scenario_wrap = tk.Frame(right_card, bg=C_SUBCARD)
+        scenario_wrap.pack(fill="both", expand=True)
+        self.txt_scenario = tk.Text(scenario_wrap, bg=C_SUBCARD, fg=C_TEXT_BODY, font=F_BODY, wrap="word", relief="flat", padx=8, pady=6)
+        sc_vsb = ttk.Scrollbar(scenario_wrap, orient="vertical", command=self.txt_scenario.yview,
+                               style="Vertical.TScrollbar")
+        self.txt_scenario.configure(yscrollcommand=sc_vsb.set)
+        self.txt_scenario.pack(side="left", fill="both", expand=True)
+        sc_vsb.pack(side="right", fill="y")
 
         self._render_scenario(0)
 

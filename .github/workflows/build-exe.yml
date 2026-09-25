@@ -55,8 +55,8 @@ jobs:
             choco install innosetup --yes --no-progress --force
             if ($LASTEXITCODE -ne 0) { Write-Host "choco exit $LASTEXITCODE but continuing" }
           }
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /?
-          Write-Host "Inno Setup 6 ready"
+          Write-Host "Inno Setup 6 ready at C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+
 
 
       - name: Compile Windows Setup.exe (like Oumse — installs to Program Files)

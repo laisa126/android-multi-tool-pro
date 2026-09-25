@@ -4,9 +4,9 @@ so they are ready for bundling into the Windows .exe.
 """
 
 import os
+import shutil
 import urllib.request
 import zipfile
-import shutil
 
 WIN_TOOLS_URL = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
 

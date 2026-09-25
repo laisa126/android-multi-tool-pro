@@ -5,15 +5,14 @@ Safeguards critical cellular modem calibration partitions to prevent
 """
 
 import os
-import time
-from typing import Tuple, List, Dict
+
 
 class EFSEngine:
     def __init__(self, adb_engine, fastboot_engine):
         self.adb = adb_engine
         self.fastboot = fastboot_engine
 
-    def detect_efs_partitions(self) -> List[str]:
+    def detect_efs_partitions(self) -> list[str]:
         """Detects whether device uses Qualcomm (modemst1/2), MTK (nvram/nvdata), or Samsung (efs)."""
         # Read partition list via ADB
         code, out, _ = self.adb.run_cmd(["shell", "ls", "-l", "/dev/block/by-name/"])
@@ -32,7 +31,7 @@ class EFSEngine:
 
         return detected
 
-    def backup_partition(self, partition: str, destination_folder: str) -> Tuple[bool, str]:
+    def backup_partition(self, partition: str, destination_folder: str) -> tuple[bool, str]:
         """Dumps raw block image of the partition to PC via ADB."""
         os.makedirs(destination_folder, exist_ok=True)
         local_file = os.path.join(destination_folder, f"{partition}_backup.img")
@@ -62,7 +61,7 @@ class EFSEngine:
             return True, f"Backup saved: {local_file}"
         return False, f"Failed transferring {partition}: {p_err}"
 
-    def restore_partition_fastboot(self, partition: str, image_path: str) -> Tuple[bool, str]:
+    def restore_partition_fastboot(self, partition: str, image_path: str) -> tuple[bool, str]:
         """Restores modem partition via Fastboot."""
         if not os.path.isfile(image_path):
             return False, f"File not found: {image_path}"

@@ -7,8 +7,8 @@ This engine   = Read proinfo locally -> patch binary flag at known offset -> wri
 Supports Tecno / Infinix / itel MediaTek (MT6878, MT6789, MT6895 etc.) regional MDM zone lock.
 """
 
-from typing import List, Dict, Tuple
 import os
+
 
 class ProinfoEngine:
     """Offline MTK proinfo.img patcher for regional / carrier lock."""
@@ -21,7 +21,7 @@ class ProinfoEngine:
         {"offset": 0x1000, "length": 64, "original": None, "patched": b"\x00"*64, "desc": "MDM enrollment payload"},
     ]
 
-    def get_supported_socs(self) -> List[Dict[str, str]]:
+    def get_supported_socs(self) -> list[dict[str, str]]:
         return [
             {"soc": "MT6878", "name": "Dimensity 7400 Ultimate (Tecno Camon 50 Pro 5G) - OFFLINE patch"},
             {"soc": "MT6789", "name": "Helio G99 Ultimate (Tecno Camon 50) - OFFLINE patch"},
@@ -30,7 +30,7 @@ class ProinfoEngine:
             {"soc": "MT6833", "name": "Dimensity 700 (Tecno Spark 10 5G) - OFFLINE"},
         ]
 
-    def build_file_patch_plan(self) -> Dict[str, any]:
+    def build_file_patch_plan(self) -> dict[str, any]:
         # Return JSON-safe copy (bytes -> hex string + length)
         safe_patches = []
         for pp in self.PROINFO_PATCHES:
@@ -50,7 +50,7 @@ class ProinfoEngine:
             "mode": "OFFLINE file patch - no META server needed"
         }
 
-    def build_meta_live_plan(self) -> Dict[str, any]:
+    def build_meta_live_plan(self) -> dict[str, any]:
         """Live META mode plan (USB, no file needed) - offline handshake."""
         return {
             "mode": "META mode (live, phone connected)",
@@ -65,7 +65,7 @@ class ProinfoEngine:
             "offline": True
         }
 
-    def patch_proinfo_file_offline(self, input_path: str, output_path: str) -> Tuple[bool, str]:
+    def patch_proinfo_file_offline(self, input_path: str, output_path: str) -> tuple[bool, str]:
         """Patch a dumped proinfo.img file 100% offline."""
         if not os.path.isfile(input_path):
             return False, f"proinfo file not found: {input_path}. Dump it first via: adb pull /dev/block/by-name/proinfo"
@@ -86,7 +86,7 @@ class ProinfoEngine:
         except Exception as e:
             return False, str(e)
 
-    def get_offline_workflow(self) -> List[Dict[str, str]]:
+    def get_offline_workflow(self) -> list[dict[str, str]]:
         return [
             {"step": 1, "title": "Choose mode: FILE (dumped proinfo.img) or META (live phone)"},
             {"step": 2, "title": "FILE mode: adb pull /dev/block/by-name/proinfo (or MTK BROM dump)", "detail": "Offline dump, no server"},
@@ -95,7 +95,7 @@ class ProinfoEngine:
             {"step": 5, "title": "Reboot - regional MDM gone permanently", "detail": "Insert any SIM, 100% offline, no relock"},
         ]
 
-    def verify_patched(self, file_path: str) -> Tuple[bool, str]:
+    def verify_patched(self, file_path: str) -> tuple[bool, str]:
         if not os.path.isfile(file_path):
             return False, "File not found"
         try:

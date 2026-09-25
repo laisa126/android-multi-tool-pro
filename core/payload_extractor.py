@@ -6,7 +6,7 @@ Tecno Camon 50 Pro / Transsion stock firmware packages directly on PC.
 
 import os
 import struct
-from typing import List, Dict, Tuple, Optional
+
 
 class PayloadExtractor:
     """
@@ -14,10 +14,10 @@ class PayloadExtractor:
     """
     MAGIC = b"CrAU"
 
-    def __init__(self, payload_file_path: Optional[str] = None):
+    def __init__(self, payload_file_path: str | None = None):
         self.payload_path = payload_file_path
 
-    def inspect_payload(self, file_path: str) -> Tuple[bool, List[str], str]:
+    def inspect_payload(self, file_path: str) -> tuple[bool, list[str], str]:
         """Validates payload.bin header and lists contained partitions."""
         if not os.path.isfile(file_path):
             return False, [], f"File not found: {file_path}"
@@ -40,7 +40,7 @@ class PayloadExtractor:
         except Exception as e:
             return False, [], f"Error reading payload: {e}"
 
-    def extract_critical_partitions(self, payload_path: str, output_folder: str, partitions: Optional[List[str]] = None) -> List[str]:
+    def extract_critical_partitions(self, payload_path: str, output_folder: str, partitions: list[str] | None = None) -> list[str]:
         """
         Extracts essential rooting and repair partitions:
         init_boot (Android 15/16 root), vbmeta (AVB disable), and boot.

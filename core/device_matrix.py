@@ -4,7 +4,6 @@ Full catalog of supported devices, OEM models, chipsets, and servicing methods.
 Includes dedicated support for Tecno Camon 50 Pro / Camon 50 Pro 5G.
 """
 
-from typing import Dict, List, Optional
 
 SUPPORTED_DEVICE_CATALOG = [
     # --- TRANSSION: TECNO (FLAGSHIP & CAMON SERIES) ---
@@ -141,7 +140,7 @@ SUPPORTED_DEVICE_CATALOG = [
     }
 ]
 
-def find_device_matches(model_str: str) -> List[Dict[str, any]]:
+def find_device_matches(model_str: str) -> list[dict[str, any]]:
     matches = []
     query = model_str.lower()
     for cat in SUPPORTED_DEVICE_CATALOG:

@@ -4,15 +4,14 @@ Provides technical methods for FRP (Factory Reset Protection) removal,
 Setup Wizard bypass, and Screen Lock handling across ADB, Fastboot, and MTP.
 """
 
-from typing import Tuple, List, Dict
-import time
+
 
 class FRPEngine:
     def __init__(self, adb_engine, fastboot_engine):
         self.adb = adb_engine
         self.fastboot = fastboot_engine
 
-    def reset_frp_fastboot(self) -> List[Tuple[str, bool, str]]:
+    def reset_frp_fastboot(self) -> list[tuple[str, bool, str]]:
         """
         Attempts Universal Fastboot FRP partition erases across common vendor partitions:
         config, frp, persistent, devinfo.
@@ -24,7 +23,7 @@ class FRPEngine:
             results.append((part, success, msg))
         return results
 
-    def bypass_frp_adb_setupwizard(self) -> Tuple[bool, List[str]]:
+    def bypass_frp_adb_setupwizard(self) -> tuple[bool, list[str]]:
         """
         Bypasses Setup Wizard via ADB if USB Debugging is active (e.g. after Samsung *#0*# exploit).
         Sets user_setup_complete and device_provisioned flags, then disables Google Setup Wizard.
@@ -49,7 +48,7 @@ class FRPEngine:
 
         return (success_count > 0), logs
 
-    def remove_screen_lock_rooted(self) -> Tuple[bool, List[str]]:
+    def remove_screen_lock_rooted(self) -> tuple[bool, list[str]]:
         """
         Removes gesture.key, password.key, and locksettings database.
         Requires root or TWRP recovery shell.
@@ -76,7 +75,7 @@ class FRPEngine:
 
         return (cleared > 0), logs
 
-    def get_frp_methods_info(self) -> Dict[str, str]:
+    def get_frp_methods_info(self) -> dict[str, str]:
         return {
             "Samsung Test Mode (*#0*#)": (
                 "1. Power on device to Welcome screen.\n"

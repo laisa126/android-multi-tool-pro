@@ -4,16 +4,15 @@ Handles low-level and high-level ADB operations, device detection, diagnostics,
 reboot sequences, and package management.
 """
 
-import subprocess
 import os
-import sys
-import shutil
-import re
 import platform
-from typing import Dict, List, Optional, Tuple
+import re
+import shutil
+import subprocess
+
 
 class ADBEngine:
-    def __init__(self, custom_adb_path: Optional[str] = None):
+    def __init__(self, custom_adb_path: str | None = None):
         self.adb_path = custom_adb_path or self._find_adb()
         self.connected_device = None
         self._ensure_vendor_ids()
@@ -59,7 +58,7 @@ class ADBEngine:
         # Fallback default name
         return f"adb{ext}"
 
-    def run_cmd(self, args: List[str], timeout: int = 8) -> Tuple[int, str, str]:
+    def run_cmd(self, args: list[str], timeout: int = 8) -> tuple[int, str, str]:
         cmd = [self.adb_path]
         if self.connected_device and args and args[0] not in ["devices", "start-server", "kill-server", "version"]:
             cmd.extend(["-s", self.connected_device])
@@ -82,7 +81,7 @@ class ADBEngine:
         except Exception as e:
             return -3, "", str(e)
 
-    def get_devices(self) -> List[Dict[str, str]]:
+    def get_devices(self) -> list[dict[str, str]]:
         code, out, _ = self.run_cmd(["devices", "-l"])
         devices = []
         if code == 0:
@@ -111,7 +110,7 @@ class ADBEngine:
 
         return devices
 
-    def get_hardware_usb_devices(self) -> List[Dict[str, str]]:
+    def get_hardware_usb_devices(self) -> list[dict[str, str]]:
         """
         Direct USB physical bus inspection.
         Captures serial numbers for Android 16+ devices even when ADB daemon
@@ -244,7 +243,7 @@ class ADBEngine:
     def set_active_device(self, serial: str):
         self.connected_device = serial
 
-    def get_device_info(self) -> Dict[str, str]:
+    def get_device_info(self) -> dict[str, str]:
         """Fetch comprehensive device hardware and OS parameters."""
         info = {
             "model": "Unknown",
@@ -293,7 +292,7 @@ class ADBEngine:
 
         return info
 
-    def reboot(self, target_mode: str = "") -> Tuple[bool, str]:
+    def reboot(self, target_mode: str = "") -> tuple[bool, str]:
         """Reboot device into normal, recovery, bootloader, edl, or download mode."""
         valid_modes = ["", "recovery", "bootloader", "fastboot", "edl", "download", "sideload"]
         target = target_mode.lower().strip()
@@ -311,7 +310,7 @@ class ADBEngine:
         else:
             return False, f"Reboot failed: {err or out}"
 
-    def install_apk(self, apk_path: str, grant_permissions: bool = True) -> Tuple[bool, str]:
+    def install_apk(self, apk_path: str, grant_permissions: bool = True) -> tuple[bool, str]:
         if not os.path.isfile(apk_path):
             return False, f"File not found: {apk_path}"
 
@@ -325,7 +324,7 @@ class ADBEngine:
             return True, "APK successfully installed."
         return False, f"Install failed: {out or err}"
 
-    def uninstall_package(self, package_name: str, keep_data: bool = False) -> Tuple[bool, str]:
+    def uninstall_package(self, package_name: str, keep_data: bool = False) -> tuple[bool, str]:
         args = ["uninstall"]
         if keep_data:
             args.append("-k")
@@ -336,13 +335,13 @@ class ADBEngine:
             return True, f"Package {package_name} uninstalled."
         return False, f"Failed: {out or err}"
 
-    def disable_package(self, package_name: str) -> Tuple[bool, str]:
+    def disable_package(self, package_name: str) -> tuple[bool, str]:
         code, out, err = self.run_cmd(["shell", "pm", "disable-user", "--user", "0", package_name])
         if "disabled" in out.lower() or "state" in out.lower():
             return True, f"Disabled {package_name}"
         return False, f"Could not disable: {out or err}"
 
-    def take_screenshot(self, destination_path: str) -> Tuple[bool, str]:
+    def take_screenshot(self, destination_path: str) -> tuple[bool, str]:
         remote_tmp = "/sdcard/amt_screenshot.png"
         code, _, err = self.run_cmd(["shell", "screencap", "-p", remote_tmp])
         if code != 0:

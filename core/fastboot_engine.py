@@ -4,14 +4,14 @@ Handles low-level Fastboot partition flashing, bootloader unlocking/locking,
 and bootloader variables inspection.
 """
 
-import subprocess
 import os
-import shutil
 import platform
-from typing import Dict, List, Optional, Tuple
+import shutil
+import subprocess
+
 
 class FastbootEngine:
-    def __init__(self, custom_fastboot_path: Optional[str] = None):
+    def __init__(self, custom_fastboot_path: str | None = None):
         self.fastboot_path = custom_fastboot_path or self._find_fastboot()
         self.connected_device = None
 
@@ -28,7 +28,7 @@ class FastbootEngine:
 
         return f"fastboot{ext}"
 
-    def run_cmd(self, args: List[str], timeout: int = 60) -> Tuple[int, str, str]:
+    def run_cmd(self, args: list[str], timeout: int = 60) -> tuple[int, str, str]:
         cmd = [self.fastboot_path]
         if self.connected_device and args and args[0] != "devices":
             cmd.extend(["-s", self.connected_device])
@@ -53,7 +53,7 @@ class FastbootEngine:
         except Exception as e:
             return -3, "", str(e)
 
-    def get_devices(self) -> List[Dict[str, str]]:
+    def get_devices(self) -> list[dict[str, str]]:
         code, out, err = self.run_cmd(["devices"])
         devices = []
         combined = (out + "\n" + err).strip()
@@ -72,7 +72,7 @@ class FastbootEngine:
     def set_active_device(self, serial: str):
         self.connected_device = serial
 
-    def get_device_vars(self) -> Dict[str, str]:
+    def get_device_vars(self) -> dict[str, str]:
         code, out, err = self.run_cmd(["getvar", "all"], timeout=15)
         raw = out + "\n" + err
         vars_dict = {}
@@ -85,7 +85,7 @@ class FastbootEngine:
                 vars_dict[k.strip()] = v.strip()
         return vars_dict
 
-    def flash_partition(self, partition: str, image_path: str) -> Tuple[bool, str]:
+    def flash_partition(self, partition: str, image_path: str) -> tuple[bool, str]:
         if not os.path.isfile(image_path):
             return False, f"Image file not found: {image_path}"
 
@@ -95,14 +95,14 @@ class FastbootEngine:
             return True, f"Successfully flashed {partition} with {os.path.basename(image_path)}"
         return False, f"Flashing {partition} failed: {output}"
 
-    def erase_partition(self, partition: str) -> Tuple[bool, str]:
+    def erase_partition(self, partition: str) -> tuple[bool, str]:
         code, out, err = self.run_cmd(["erase", partition], timeout=60)
         output = f"{out}\n{err}".strip()
         if "OKAY" in output:
             return True, f"Successfully erased {partition}"
         return False, f"Erase failed: {output}"
 
-    def unlock_bootloader(self) -> Tuple[bool, str]:
+    def unlock_bootloader(self) -> tuple[bool, str]:
         # Try modern Android standard first
         code, out, err = self.run_cmd(["flashing", "unlock"], timeout=30)
         output = f"{out}\n{err}".strip()
@@ -117,7 +117,7 @@ class FastbootEngine:
 
         return False, f"Bootloader unlock failed: {output2 or output}"
 
-    def lock_bootloader(self) -> Tuple[bool, str]:
+    def lock_bootloader(self) -> tuple[bool, str]:
         code, out, err = self.run_cmd(["flashing", "lock"], timeout=30)
         output = f"{out}\n{err}".strip()
         if "OKAY" in output:
@@ -130,7 +130,7 @@ class FastbootEngine:
 
         return False, f"Lock failed: {output2 or output}"
 
-    def reboot(self, target: str = "") -> Tuple[bool, str]:
+    def reboot(self, target: str = "") -> tuple[bool, str]:
         args = ["reboot"]
         if target:
             args.append(target)

@@ -9,20 +9,19 @@ Replicates Oumse META operations but offline, no credits:
 All via local META COM port (Vol Up + USB or adb reboot meta), no server.
 """
 
-from typing import List, Dict, Tuple
-import time
+
 
 class MetaEngine:
     """Offline META protocol handler - local USB COM, no internet."""
 
-    def get_supported_socs(self) -> List[Dict[str, str]]:
+    def get_supported_socs(self) -> list[dict[str, str]]:
         return [
             {"soc": "MT6878", "name": "Dimensity 7400 Ultimate", "mode": "META"},
             {"soc": "MT6789", "name": "Helio G99 Ultimate", "mode": "META"},
             {"soc": "MT6895", "name": "Dimensity 8200", "mode": "META"},
         ]
 
-    def _meta_handshake_logs(self, soc="MT6878") -> List[str]:
+    def _meta_handshake_logs(self, soc="MT6878") -> list[str]:
         return [
             f"[META] Connecting via MediaTek META mode on {soc}...",
             "[META] Handshake 0xA0 0x0A 0x50 0x05 -> META confirmed [0x5F 0xF5 0xAF 0xFA]",
@@ -30,7 +29,7 @@ class MetaEngine:
             "[META] Device authenticated locally, secure boot bypassed in SRAM",
         ]
 
-    def device_info_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def device_info_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] Reading device info via META GetInfo...",
@@ -43,7 +42,7 @@ class MetaEngine:
         ]
         return True, logs
 
-    def read_partitions_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def read_partitions_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] Enumerating partitions via META ReadPartition...",
@@ -54,7 +53,7 @@ class MetaEngine:
         ]
         return True, logs
 
-    def reset_frp_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def reset_frp_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] Reset FRP via META ErasePartition 'frp'...",
@@ -64,7 +63,7 @@ class MetaEngine:
         ]
         return True, logs
 
-    def factory_reset_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def factory_reset_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] Factory Reset via META Format userdata...",
@@ -74,10 +73,10 @@ class MetaEngine:
         ]
         return True, logs
 
-    def erase_userdata_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def erase_userdata_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         return self.factory_reset_meta(soc)
 
-    def patch_mdm_mtk_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def patch_mdm_mtk_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] Patch MDM MTK via META Write proinfo...",
@@ -87,7 +86,7 @@ class MetaEngine:
         ]
         return True, logs
 
-    def mdm_remove_direct_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def mdm_remove_direct_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] MDM Remove Direct META (MTK)...",
@@ -98,7 +97,7 @@ class MetaEngine:
         ]
         return True, logs
 
-    def mdm_permanent_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def mdm_permanent_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] MDM Permanent META (MTK) — definitive patch...",
@@ -109,7 +108,7 @@ class MetaEngine:
         ]
         return True, logs
 
-    def lk_unlock_direct_meta(self, soc="MT6878") -> Tuple[bool, List[str]]:
+    def lk_unlock_direct_meta(self, soc="MT6878") -> tuple[bool, list[str]]:
         logs = self._meta_handshake_logs(soc)
         logs += [
             "[META] LK Bootloader Unlock Direct META...",
@@ -120,7 +119,7 @@ class MetaEngine:
         ]
         return True, logs
 
-    def get_all_meta_ops(self) -> List[Dict[str, str]]:
+    def get_all_meta_ops(self) -> list[dict[str, str]]:
         return [
             {"id": "device_info", "name": "Device Info META", "cost": "Free"},
             {"id": "read_partitions", "name": "Lecture partitions META", "cost": "1 credit (FREE offline)"},

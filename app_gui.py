@@ -5,31 +5,30 @@ Engineered for Tecno Camon 50 Pro (Dimensity 7400 Ultimate / MT6878 / HiOS 16) &
 """
 
 import os
-import sys
-import time
+import platform
 import threading
-import subprocess
+import time
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import filedialog, messagebox, ttk
 
 # Import core modules
 from core.adb_engine import ADBEngine
-from core.fastboot_engine import FastbootEngine
-from core.frp_engine import FRPEngine
-from core.mtk_engine import MTKEngine
-from core.samsung_modem import SamsungModemEngine
-from core.root_engine import RootEngine
-from core.efs_engine import EFSEngine
-from core.payload_extractor import PayloadExtractor
-from core.scatter_flasher import ScatterFlasher
-from core.transsion_mdm import TranssionMDMEngine
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
 from core.downloader import ensure_binaries, verify_offline_ready
-from core.spd_engine import SPDEngine
-from core.proinfo_engine import ProinfoEngine
-from core.meta_engine import MetaEngine
+from core.efs_engine import EFSEngine
+from core.fastboot_engine import FastbootEngine
+from core.frp_engine import FRPEngine
 from core.lk_patcher import LKPatcher
+from core.meta_engine import MetaEngine
+from core.mtk_engine import MTKEngine
+from core.payload_extractor import PayloadExtractor
+from core.proinfo_engine import ProinfoEngine
 from core.rom_maker import RomMaker
+from core.root_engine import RootEngine
+from core.samsung_modem import SamsungModemEngine
+from core.scatter_flasher import ScatterFlasher
+from core.spd_engine import SPDEngine
+from core.transsion_mdm import TranssionMDMEngine
 
 APP_NAME = "Android Multi-Tool Pro"
 APP_VERSION = "v2.5.0 (Monochrome Tecno Camon 50 Edition)"
@@ -1122,9 +1121,9 @@ class AndroidMultiToolApp:
             if self.simulated_mode.get():
                 time.sleep(1)
                 self.log(f"[OK] dpm remove-active-admin {pkg}/.AdminReceiver", "success")
-                self.log(f"[OK] Revoked AppOps SYSTEM_ALERT_WINDOW (Lockscreen overlay killed)", "success")
-                self.log(f"[OK] Revoked AppOps RUN_IN_BACKGROUND & START_FOREGROUND", "success")
-                self.log(f"[OK] Revoked AppOps BIND_ACCESSIBILITY_SERVICE", "success")
+                self.log("[OK] Revoked AppOps SYSTEM_ALERT_WINDOW (Lockscreen overlay killed)", "success")
+                self.log("[OK] Revoked AppOps RUN_IN_BACKGROUND & START_FOREGROUND", "success")
+                self.log("[OK] Revoked AppOps BIND_ACCESSIBILITY_SERVICE", "success")
                 self.log(f"[OK] Terminated running process 'am force-stop {pkg}'", "success")
                 self.log(f"[OK] Cleared package credentials & local cache via 'pm clear {pkg}'", "success")
                 self.log(f"[OK] Package disabled for user 0: {pkg}", "success")
@@ -1162,7 +1161,7 @@ class AndroidMultiToolApp:
             return
 
         def task():
-            self.log(f"Connecting to MediaTek MT6878 (Dimensity 7400) Preloader port...", "info")
+            self.log("Connecting to MediaTek MT6878 (Dimensity 7400) Preloader port...", "info")
             time.sleep(0.8)
             self.log("Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]", "info")
             self.log("Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...", "warning")
@@ -1258,11 +1257,11 @@ class AndroidMultiToolApp:
                 if out == path:
                     out = path + "_patched.img"
                 ok, msg = self.proinfo.patch_proinfo_file_offline(path, out)
-                self.log(f"[OFFLINE] MTK Proinfo FILE mode patching...", "warning")
+                self.log("[OFFLINE] MTK Proinfo FILE mode patching...", "warning")
                 time.sleep(0.4)
                 self.log(msg, "success" if ok else "warning")
                 if ok:
-                    self.log(f"Patches: 0x100 (16B zone -> 00), 0x800 (32B carrier -> FF), 0x1000 (64B MDM -> 00)", "info")
+                    self.log("Patches: 0x100 (16B zone -> 00), 0x800 (32B carrier -> FF), 0x1000 (64B MDM -> 00)", "info")
                     self.log(f"Next: fastboot flash proinfo {out}  OR  flash via SP Flash Tool. 100% offline.", "success")
                 else:
                     self.log("Patch failed - check file permissions.", "warning")
@@ -1288,7 +1287,6 @@ class AndroidMultiToolApp:
 
     def check_offline(self):
         def task():
-            from core.downloader import verify_offline_ready
             r = verify_offline_ready()
             self.log(f"OFFLINE CHECK: Ready={r['ready']} ADB={r['adb_bundled']} Fastboot={r['fastboot_bundled']} Drivers={r['drivers_bundled']}", "success" if r['ready'] else "warning")
             for e in r['engines']:
@@ -1435,7 +1433,7 @@ class AndroidMultiToolApp:
                 ok, msg = self.fastboot.reboot(target)
             self.log(msg, "success" if ok else "error")
 
-        self._run_threaded(task, f"Reboot Device -> {target or normal}")
+        self._run_threaded(task, f"Reboot Device -> {target or 'normal'}")
 
     # ================= FRP OPERATIONS =================
 

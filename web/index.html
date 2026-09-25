@@ -912,8 +912,47 @@
       </div>
     </div>
 
-    <!-- TAB 1: Diagnostics -->
+    <!-- TAB 1: Diagnostics — Easy Mode -->
     <div id="tab-diagnostics" class="tab-content">
+      <!-- EASY MODE 3-STEP WIZARD (makes tool easy for beginners) -->
+      <div class="card" style="border:2px solid #22c55e; background:#0f1410; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:#22c55e;color:#000;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;">⚡</div>
+          <div>
+            <div style="font-size:13px;font-weight:900;color:#fff;letter-spacing:0.5px;">EASY MODE — 3 Clicks for Tecno Camon 50 Pro</div>
+            <div style="font-size:10px;color:#22c55e;font-weight:700;">No drivers? No internet? Follow the 3 steps → tool does the rest</div>
+          </div>
+          <span style="margin-left:auto;background:#22c55e;color:#000;font-size:8px;font-weight:900;padding:3px 8px;border-radius:4px;">BEGINNER FRIENDLY</span>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+          <div style="background:#161616;border:1px solid #222;border-radius:8px;padding:12px;text-align:center;">
+            <div style="width:28px;height:28px;background:#fff;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin:0 auto 8px;">1</div>
+            <div style="font-size:11px;font-weight:800;color:#fff;">Plug & Scan</div>
+            <div style="font-size:9px;color:#888;margin:4px 0 8px;line-height:1.4;">Power off phone → Hold Vol Up+Down → Plug USB 2.0 → Click Scan</div>
+            <button class="btn-white" onclick="scanDevices(); showToast('Step 1: Scanning… Plug phone now!')" style="width:100%;justify-content:center;">① Scan USB</button>
+            <div style="font-size:8px;color:#666;margin-top:4px;">DEMO ON = simulated if no phone</div>
+          </div>
+          <div style="background:#161616;border:1px solid #222;border-radius:8px;padding:12px;text-align:center;">
+            <div style="width:28px;height:28px;background:#fff;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin:0 auto 8px;">2</div>
+            <div style="font-size:11px;font-weight:800;color:#fff;">Pick Operation</div>
+            <div style="font-size:9px;color:#888;margin:4px 0 8px;line-height:1.4;">Choose what you need: FRP, MDM, Unlock, ROM</div>
+            <button class="btn-dark" onclick="switchTab('tab-oumse', document.querySelector('.nav-item')); showToast('Step 2: Pick ★ OUMSE 21 OPS')" style="width:100%;justify-content:center;">② ★ OUMSE 21 OPS</button>
+            <button class="btn-dark" onclick="switchTab('tab-frp', null)" style="width:100%;justify-content:center;margin-top:6px;font-size:9px;">FRP & MDM</button>
+          </div>
+          <div style="background:#161616;border:1px solid #22c55e;border-radius:8px;padding:12px;text-align:center;">
+            <div style="width:28px;height:28px;background:#22c55e;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin:0 auto 8px;">3</div>
+            <div style="font-size:11px;font-weight:800;color:#22c55e;">Run Offline</div>
+            <div style="font-size:9px;color:#888;margin:4px 0 8px;line-height:1.4;">Click operation → 100% offline, no credits, no server</div>
+            <button class="btn-green" onclick="autoRunEasyMode()" style="width:100%;justify-content:center;">③ One-Click Run</button>
+            <div style="font-size:8px;color:#22c55e;margin-top:4px;">● Logs appear below</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;background:#161616;border:1px dashed #333;border-radius:6px;padding:8px;display:flex;gap:8px;align-items:center;">
+          <span style="font-size:14px;">💡</span>
+          <span style="font-size:10px;color:#aaa;line-height:1.4;"><b style="color:#fff;">Tip:</b> Untick <b>DEMO</b> to see real hardware only. If Scan shows empty → try another USB cable / USB 2.0 port / reinstall drivers via <b>Install Setup → Drivers</b>. <span style="color:#22c55e;">Windows 11: use USB 2.0 on AMD.</span></span>
+          <button class="btn-dark" onclick="checkOfflineStatus()" style="margin-left:auto;flex-shrink:0;font-size:9px;">Verify OFFLINE</button>
+        </div>
+      </div>
       <div class="grid-2">
         <div class="card">
           <div class="card-title">Connected Device Parameters</div>
@@ -2544,6 +2583,33 @@ build.bat</div>
     }
     // Auto-apply on load
     document.addEventListener('DOMContentLoaded', ()=> setTimeout(()=> setLanguage(currentLang), 50));
+
+    
+    // ===== Easy Mode one-click helper =====
+    async function autoRunEasyMode(){
+      const sel = document.querySelector('.nav-item.active');
+      const tab = document.querySelector('.tab-content.active');
+      logLine(">> EASY MODE: One-Click requested — checking device...", "log-white");
+      showToast("Easy Mode: Scanning...");
+      try{ await scanDevices(); }catch(e){}
+      setTimeout(()=>{
+        if(tab && tab.id==='tab-oumse'){
+          // auto pick first OUMSE op for demo
+          const btn = document.querySelector('#oumseTable button');
+          if(btn){ btn.click(); logLine(">> EASY MODE: Triggered first OUMSE operation for you.", "log-green"); }
+          else { logLine(">> EASY MODE: Pick an operation in ★ OUMSE 21 OPS table above, then click Run again.", "log-white"); showToast("Pick operation in OUMSE table"); }
+        } else {
+          logLine(">> EASY MODE: Switched to ★ OUMSE 21 OPS — pick your operation there.", "log-white");
+          switchTab('tab-oumse', document.querySelector('.nav-item'));
+        }
+      }, 800);
+    }
+    // Add tooltips to all cards for ease
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.querySelectorAll('.card-title').forEach(el=>{
+        if(!el.title) el.title = "Click buttons inside to run operation 100% offline";
+      });
+    });
 
     function showBuildInfo() {
       document.getElementById("buildModal").style.display = "flex";

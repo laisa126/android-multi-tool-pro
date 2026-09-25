@@ -4,8 +4,8 @@ Implements Qualcomm Sahara Protocol (Mode 0x01/0x02) and Firehose XML Command Pr
 used for emergency flashing and partition manipulation without bootloader unlocking.
 """
 
-from typing import Dict, List, Tuple
 import xml.etree.ElementTree as ET
+
 
 class QualcommEDLEngine:
     """
@@ -49,7 +49,7 @@ class QualcommEDLEngine:
         ET.SubElement(root, "power", {"value": mode})
         return ET.tostring(root, encoding="utf-8").decode("utf-8")
 
-    def get_supported_snapdragons(self) -> List[Dict[str, str]]:
+    def get_supported_snapdragons(self) -> list[dict[str, str]]:
         return [
             {"chip": "SDM660", "name": "Snapdragon 660", "loader": "prog_emmc_firehose_sdm660.mbn"},
             {"chip": "SM6125", "name": "Snapdragon 665", "loader": "prog_firehose_lite_sm6125.elf"},

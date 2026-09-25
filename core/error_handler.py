@@ -5,7 +5,6 @@ Handles Core Isolation (HVCI), Driver Signature Enforcement, USB 3.0 AMD dropout
 and device connection errors across ADB, Fastboot, MTK, and Qualcomm.
 """
 
-from typing import Dict, List, Optional, Tuple
 
 WINDOWS_11_ERROR_SOLUTIONS = {
     "DEVICE_UNAUTHORIZED": {
@@ -112,7 +111,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
 
 class Windows11Diagnostics:
     @staticmethod
-    def analyze_error(command_output: str, exit_code: int) -> Optional[Dict[str, str]]:
+    def analyze_error(command_output: str, exit_code: int) -> dict[str, str] | None:
         """Scans terminal output for common Windows 11 technician errors and returns structured troubleshooting."""
         text = command_output.lower()
 

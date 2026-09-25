@@ -5,10 +5,9 @@ Oumse-like GSM tools require internet + credits. This tool is PERMANENTLY OFFLIN
 """
 
 import os
-import sys
 import platform
-import zipfile
 import shutil
+import zipfile
 
 PLATFORM_TOOLS_URLS = {
     "Windows": "https://dl.google.com/android/repository/platform-tools-latest-windows.zip",

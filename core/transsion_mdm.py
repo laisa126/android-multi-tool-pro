@@ -6,7 +6,7 @@ Tecno Camon 50 Pro (HiOS 14/15/16 / MT6878).
 """
 
 import re
-from typing import List, Tuple, Dict
+
 
 class TranssionMDMEngine:
     def __init__(self, adb_engine):
@@ -48,7 +48,7 @@ class TranssionMDMEngine:
         "com.transsion.phonemaster/.admin.DeviceAdminReceiver"
     ]
 
-    def list_active_device_admins(self) -> List[str]:
+    def list_active_device_admins(self) -> list[str]:
         """Queries the device policy manager for active admin receivers."""
         admins = []
         code, out, _ = self.adb.run_cmd(["shell", "dpm", "list-active-admins"])
@@ -68,14 +68,14 @@ class TranssionMDMEngine:
                         admins.append(m)
         return admins
 
-    def remove_device_admin(self, component: str) -> Tuple[bool, str]:
+    def remove_device_admin(self, component: str) -> tuple[bool, str]:
         """Attempts to unregister an active device administrator."""
         code, out, err = self.adb.run_cmd(["shell", "dpm", "remove-active-admin", component])
         if code == 0:
             return True, f"Device admin component '{component}' successfully deactivated."
         return False, f"Failed to deactivate '{component}': {err or out}"
 
-    def neutralize_admin_security_plugin(self, package: str) -> List[str]:
+    def neutralize_admin_security_plugin(self, package: str) -> list[str]:
         """
         Strips permissions, overlay rights, background execution, and uninstalls/disables
         the admin app security plugin even when standard uninstall fails.
@@ -120,7 +120,7 @@ class TranssionMDMEngine:
         # 5. Clear application storage data & cache
         code, _, _ = self.adb.run_cmd(["shell", "pm", "clear", package])
         if code == 0:
-            logs.append(f"[OK] Cleared package cache and local credentials database")
+            logs.append("[OK] Cleared package cache and local credentials database")
 
         # 6. Disable application for user 0
         code, _, err = self.adb.run_cmd(["shell", "pm", "disable-user", "--user", "0", package])
@@ -136,7 +136,7 @@ class TranssionMDMEngine:
 
         return logs
 
-    def remove_device_owner_rooted(self) -> List[str]:
+    def remove_device_owner_rooted(self) -> list[str]:
         """
         Removes device_owner_2.xml and device_policies.xml via root access.
         Completely strips all Device Owner & Admin restrictions permanently.
@@ -156,7 +156,7 @@ class TranssionMDMEngine:
                 logs.append(f"[FAIL] Could not delete {f}: {err} (Requires root access)")
         return logs
 
-    def disable_mdm_services(self) -> List[Tuple[str, bool, str]]:
+    def disable_mdm_services(self) -> list[tuple[str, bool, str]]:
         results = []
         for pkg, desc in self.TRANSSION_MDM_TARGETS:
             code, out, err = self.adb.run_cmd(["shell", "pm", "disable-user", "--user", "0", pkg])
@@ -170,7 +170,7 @@ class TranssionMDMEngine:
                     results.append((pkg, False, f"Not present or protected ({desc})"))
         return results
 
-    def freeze_provisioning_intents(self) -> List[str]:
+    def freeze_provisioning_intents(self) -> list[str]:
         logs = []
         commands = [
             ("settings put global device_provisioned 1", "Force global device_provisioned = 1"),

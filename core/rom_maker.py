@@ -7,10 +7,9 @@ Creates debloated ROM package locally by stripping HiOS bloat then repacking to 
 No server.
 """
 
-from typing import List, Dict, Tuple
 import os
 import zipfile
-import shutil
+
 
 class RomMaker:
     """Offline ROM maker - debloat + pack .ogt locally."""
@@ -21,7 +20,7 @@ class RomMaker:
         "com.transsion.boomplayer", "com.transsion.tecnospot", "com.transsion.smartpanel",
     ]
 
-    def make_ogt_offline(self, input_rom_path: str, output_ogt_path: str, debloat=True) -> Tuple[bool, str]:
+    def make_ogt_offline(self, input_rom_path: str, output_ogt_path: str, debloat=True) -> tuple[bool, str]:
         # input_rom_path can be a folder of dumped images or a zip
         # For offline demo, we create a minimal ogt zip with debloat manifest
         try:
@@ -44,7 +43,7 @@ class RomMaker:
         except Exception as e:
             return False, str(e)
 
-    def flash_ogt_fastboot_logs(self, ogt_path: str) -> List[str]:
+    def flash_ogt_fastboot_logs(self, ogt_path: str) -> list[str]:
         return [
             f"[FASTBOOT OGT] Flashing debloated OGT: {ogt_path} (offline, no server)",
             "[FASTBOOT] Sending super (0x40000000) -> OKAY [2.1s]",
@@ -54,7 +53,7 @@ class RomMaker:
             "[OK] Fastboot OGT Flasher done OFFLINE",
         ]
 
-    def get_rom_ops(self) -> List[Dict[str, str]]:
+    def get_rom_ops(self) -> list[dict[str, str]]:
         return [
             {"id": "rom_maker", "name": "Transsion Rom Maker (debloat -> .ogt)", "cost": "3 credits (FREE offline)"},
             {"id": "ogt_flasher", "name": "Fastboot OGT Flasher", "cost": "Free (offline)"},

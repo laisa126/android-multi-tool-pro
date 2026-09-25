@@ -4,7 +4,6 @@ Guides technicians through the exact next steps after any operation completes
 (USB Connection, Admin Security Plugin Removal, Factory Reset, FRP Reset, Bootloader Unlock, Rooting).
 """
 
-from typing import Dict, List
 
 # GUIDED STEP-BY-STEP WIZARD FOR USB PLUG-IN & ADMIN PLUGIN REMOVAL
 USB_PLUGGED_WIZARD = {

@@ -7,14 +7,13 @@ prodnv / regional MDM zone lock removal via direct file patch.
 Oumse SPD = online server + credits. This = offline local prodnv.img patch.
 """
 
-from typing import List, Dict, Tuple
 import os
-import struct
+
 
 class SPDEngine:
     """Offline Unisoc SPD prodnv patcher - no server required."""
 
-    def get_supported_socs(self) -> List[Dict[str, str]]:
+    def get_supported_socs(self) -> list[dict[str, str]]:
         return [
             {"soc": "T612", "name": "Unisoc Tiger T612 (Tecno Spark 20C, Infinix Hot 40i)", "vuln": "offline prodnv patch"},
             {"soc": "T616", "name": "Unisoc Tiger T616 (Tecno Spark 20, Infinix Note 30)", "vuln": "offline prodnv patch"},
@@ -24,7 +23,7 @@ class SPDEngine:
             {"soc": "T700", "name": "Unisoc Tiger T700 (Tecno Pova Neo 2)", "vuln": "offline prodnv patch"},
         ]
 
-    def build_prodnv_variants(self, original_bytes: bytes = None) -> List[Dict[str, any]]:
+    def build_prodnv_variants(self, original_bytes: bytes = None) -> list[dict[str, any]]:
         """
         Generates two optimized prodnv patch variants (Oumse-style) but 100% OFFLINE.
         Variant A: Nullifies regional lock flag at offset 0x1000
@@ -49,7 +48,7 @@ class SPDEngine:
         ]
         return variants
 
-    def format_prodnv_plan(self) -> Dict[str, any]:
+    def format_prodnv_plan(self) -> dict[str, any]:
         return {
             "partition": "prodnv",
             "address": 0x0,
@@ -57,7 +56,7 @@ class SPDEngine:
             "variants": self.build_prodnv_variants()
         }
 
-    def format_prodnv_plan_json_safe(self) -> Dict[str, any]:
+    def format_prodnv_plan_json_safe(self) -> dict[str, any]:
         plan = self.format_prodnv_plan()
         safe = []
         for v in plan["variants"]:
@@ -72,7 +71,7 @@ class SPDEngine:
         return {"partition": plan["partition"], "address": plan["address"], "length": plan["length"], "variants": safe}
 
 
-    def patch_prodnv_file_offline(self, input_path: str, output_path: str, variant: str = "A") -> Tuple[bool, str]:
+    def patch_prodnv_file_offline(self, input_path: str, output_path: str, variant: str = "A") -> tuple[bool, str]:
         """
         Offline file patcher for prodnv.img dumped via SPD tool.
         No internet needed - pure binary patch.
@@ -96,7 +95,7 @@ class SPDEngine:
         except Exception as e:
             return False, str(e)
 
-    def partition_manager_spd(self, soc="T612", op="read", partition="prodnv") -> List[str]:
+    def partition_manager_spd(self, soc="T612", op="read", partition="prodnv") -> list[str]:
         return [
             f"[SPD] Partition Manager SPD/Unisoc for {soc} ({op} {partition}) offline, 1 credit saved",
             f"[SPD] SPD COM port handshake 921600 baud -> {partition} {op} OKAY",
@@ -104,13 +103,13 @@ class SPDEngine:
             "[OK] SPD Partition Manager done offline",
         ]
 
-    def reset_spd(self, soc="T612", mode="frp") -> List[str]:
+    def reset_spd(self, soc="T612", mode="frp") -> list[str]:
         if mode == "frp":
             return [f"[SPD] Reset SPD FRP for {soc} offline, 1 credit saved", "[SPD] Erasing prodnv frp flag -> OKAY", "[OK] SPD FRP reset offline"]
         else:
             return [f"[SPD] Factory Reset SPD for {soc} offline, 1 credit saved", "[SPD] Formatting userdata -> OKAY", "[OK] SPD Factory Reset offline"]
 
-    def mdm_permanent_spd(self, soc="T612", variant="A") -> List[str]:
+    def mdm_permanent_spd(self, soc="T612", variant="A") -> list[str]:
         plan = self.format_prodnv_plan()
         var = next((v for v in plan["variants"] if v["variant"] == variant), plan["variants"][0])
         return [
@@ -120,7 +119,7 @@ class SPDEngine:
             "[OK] MDM SPD Permanent done offline - definitive",
         ]
 
-    def get_all_spd_ops(self) -> List[Dict[str, str]]:
+    def get_all_spd_ops(self) -> list[dict[str, str]]:
         return [
             {"id": "partition_manager", "name": "Partition Manager SPD/Unisoc (Read/Write/Erase)", "cost": "1 (FREE offline)"},
             {"id": "reset_frp", "name": "Reset SPD FRP", "cost": "1 (FREE offline)"},
@@ -129,7 +128,7 @@ class SPDEngine:
             {"id": "mdm_permanent", "name": "MDM SPD Permanent - Patch Prodnv definitif", "cost": "3->2 (FREE offline)"},
         ]
 
-    def get_offline_workflow(self) -> List[Dict[str, str]]:
+    def get_offline_workflow(self) -> list[dict[str, str]]:
         """Returns technician steps for 100% offline SPD servicing."""
         return [
             {"step": 1, "title": "Power off phone, hold Vol Down, connect USB", "detail": "PC will show 'Spreadtrum / Unisoc COM Port' (no driver download needed - bundled in bin/drivers)"},

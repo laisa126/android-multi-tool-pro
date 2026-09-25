@@ -1,9 +1,9 @@
-import os
-import sys
 import json
-import time
+import os
 import platform
 import subprocess
+import sys
+import time
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -11,26 +11,26 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parent_dir)
 
 from core.adb_engine import ADBEngine
-from core.fastboot_engine import FastbootEngine
-from core.frp_engine import FRPEngine
-from core.mtk_engine import MTKEngine
-from core.qualcomm_engine import QualcommEDLEngine
-from core.samsung_modem import SamsungModemEngine
-from core.root_engine import RootEngine
-from core.efs_engine import EFSEngine
-from core.error_handler import WINDOWS_11_ERROR_SOLUTIONS
 from core.device_matrix import SUPPORTED_DEVICE_CATALOG, find_device_matches
 from core.device_profiles import BLOATWARE_PRESETS, TEST_POINT_DATABASE
-from core.workflow_guide import WORKFLOW_TUTORIALS, USB_PLUGGED_WIZARD
-from core.payload_extractor import PayloadExtractor
-from core.scatter_flasher import ScatterFlasher
-from core.transsion_mdm import TranssionMDMEngine
-from core.spd_engine import SPDEngine
-from core.proinfo_engine import ProinfoEngine
-from core.meta_engine import MetaEngine
-from core.lk_patcher import LKPatcher
-from core.rom_maker import RomMaker
 from core.downloader import verify_offline_ready
+from core.efs_engine import EFSEngine
+from core.error_handler import WINDOWS_11_ERROR_SOLUTIONS
+from core.fastboot_engine import FastbootEngine
+from core.frp_engine import FRPEngine
+from core.lk_patcher import LKPatcher
+from core.meta_engine import MetaEngine
+from core.mtk_engine import MTKEngine
+from core.payload_extractor import PayloadExtractor
+from core.proinfo_engine import ProinfoEngine
+from core.qualcomm_engine import QualcommEDLEngine
+from core.rom_maker import RomMaker
+from core.root_engine import RootEngine
+from core.samsung_modem import SamsungModemEngine
+from core.scatter_flasher import ScatterFlasher
+from core.spd_engine import SPDEngine
+from core.transsion_mdm import TranssionMDMEngine
+from core.workflow_guide import USB_PLUGGED_WIZARD, WORKFLOW_TUTORIALS
 
 adb = ADBEngine()
 fastboot = FastbootEngine()
@@ -209,7 +209,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                             if any(k in line.lower() for k in ["mediatek", "mtk", "preloader", "vcom", "qdloader", "9008"]):
                                 devices.append(f"{line} (COM PORT)")
                                 real_count += 1
-                except Exception:
+                except (OSError, ValueError):
                     pass
 
             simulated_used = False
@@ -293,13 +293,13 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             plan = mtk.format_partition_plan(part)
             wf = "FACTORY_RESET_COMPLETE" if part == "userdata" else "FRP_BYPASS_COMPLETE"
             logs = [
-                f"Connecting to MediaTek BROM / Preloader on Windows 11...",
-                f"Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]",
+                "Connecting to MediaTek BROM / Preloader on Windows 11...",
+                "Sync sequence 0xA0 0x0A 0x50 0x05 -> Handshake confirmed [0x5F 0xF5 0xAF 0xFA]",
                 f"Hardware Chipset: MediaTek {soc} (Dimensity 7400 Ultimate / Helio G200)",
-                f"Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...",
-                f"Authorization BYPASSED! Direct memory channel opened.",
+                "Transsion Security Handshake: Bypassing Preloader DAA/SLA in SRAM...",
+                "Authorization BYPASSED! Direct memory channel opened.",
                 f"Formatting partition '{part}' at offset 0x{plan['address']:X} (Length: 0x{plan['length']:X})...",
-                f"Writing zero blocks to UFS storage... OKAY [0.15s]",
+                "Writing zero blocks to UFS storage... OKAY [0.15s]",
                 f"Partition '{part}' successfully erased on Tecno Camon 50 Pro!"
             ]
             time.sleep(0.15)
@@ -345,10 +345,10 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     f"Detecting Admin App Security Plugin: '{pkg}'...",
                     f"[OK] Querying active device admin receivers: {pkg}/.AdminReceiver found",
                     f"[OK] Attempting dpm remove-active-admin {pkg}/.AdminReceiver",
-                    f"[OK] Revoked AppOps SYSTEM_ALERT_WINDOW (Overlay lockscreen neutralized)",
-                    f"[OK] Revoked AppOps RUN_IN_BACKGROUND & START_FOREGROUND",
-                    f"[OK] Revoked AppOps BIND_ACCESSIBILITY_SERVICE (UI hijacking disabled)",
-                    f"[OK] Revoked permissions: RECEIVE_BOOT_COMPLETED, POST_NOTIFICATIONS, INTERNET",
+                    "[OK] Revoked AppOps SYSTEM_ALERT_WINDOW (Overlay lockscreen neutralized)",
+                    "[OK] Revoked AppOps RUN_IN_BACKGROUND & START_FOREGROUND",
+                    "[OK] Revoked AppOps BIND_ACCESSIBILITY_SERVICE (UI hijacking disabled)",
+                    "[OK] Revoked permissions: RECEIVE_BOOT_COMPLETED, POST_NOTIFICATIONS, INTERNET",
                     f"[OK] Terminated background process via 'am force-stop {pkg}'",
                     f"[OK] Cleared package credentials & local cache via 'pm clear {pkg}'",
                     f"[OK] Package disabled for user 0: {pkg}",
@@ -399,8 +399,8 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "logs": [
                     f"Checking Transsion / MTK baseband partition '{part}'...",
                     f"Reading partition block from /dev/block/by-name/{part}...",
-                    f"Dumping 8192 KB raw image to PC...",
-                    f"Integrity check SHA256: 4e9a2b1f... OKAY",
+                    "Dumping 8192 KB raw image to PC...",
+                    "Integrity check SHA256: 4e9a2b1f... OKAY",
                     f"Tecno Camon 50 Pro modem calibration '{part}' backed up to PC!",
                     f"File saved: C:\\AndroidMultiTool\\Backups\\Tecno_Camon50Pro_{part}.img"
                 ]
@@ -430,7 +430,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     "success": True,
                     "workflow": "ROOT_FLASH_COMPLETE",
                     "logs": [
-                        f"Target: Android 15/16 Generic Kernel Image (GKI)",
+                        "Target: Android 15/16 Generic Kernel Image (GKI)",
                         f"Sending '{part}' (33554432 bytes)... OKAY [0.72s]",
                         f"Writing '{part}' to Tecno Camon 50 Pro active slot... OKAY [0.28s]",
                         f"Flashing Magisk-patched {part}.img completed successfully!",
@@ -462,7 +462,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "logs": [
                     f"Sending '{part}' (32768 KB)... OKAY [0.652s]",
                     f"Writing '{part}'... OKAY [0.241s]",
-                    f"Finished. Total time: 0.893s"
+                    "Finished. Total time: 0.893s"
                 ]
             })
 
@@ -506,8 +506,8 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     f"[OFFLINE] SPD Unisoc prodnv variant {variant} patch prepared 100% locally",
                     f"[OFFLINE] Partition: {info['partition']} | Offset: 0x{var['offset']:X} | Length: {len(var['patch']):X}",
                     f"[OK] {var['description']}",
-                    f"[OFFLINE] Write back via SPD Upgrade Tool (local COM, no internet)",
-                    f"SPD regional Zone lock patched OFFLINE - no credits, no server!"
+                    "[OFFLINE] Write back via SPD Upgrade Tool (local COM, no internet)",
+                    "SPD regional Zone lock patched OFFLINE - no credits, no server!"
                 ]
             })
 
@@ -523,9 +523,9 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "logs": [
                     f"[OFFLINE] MTK proinfo patch mode: {mode} - 100% local, no server",
                     f"[OFFLINE] File: {plan['file']} | Size: {plan['size']}",
-                    f"[OK] Patch at 0x100 (zone flag 16B -> 00), 0x800 (carrier 32B -> FF), 0x1000 (MDM 64B -> 00)",
+                    "[OK] Patch at 0x100 (zone flag 16B -> 00), 0x800 (carrier 32B -> FF), 0x1000 (MDM 64B -> 00)",
                     f"[OFFLINE] META alternative: {meta_plan['protocol']} on local COM",
-                    f"MTK regional lock patched OFFLINE - permanent, no relock, no credits!"
+                    "MTK regional lock patched OFFLINE - permanent, no relock, no credits!"
                 ]
             })
 

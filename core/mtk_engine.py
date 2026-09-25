@@ -5,9 +5,6 @@ SLA/DAA security bypass, and partition erasing directly over USB COM port.
 Includes explicit support for Tecno Camon 50 Pro (Dimensity 7400 Ultimate / Helio G200).
 """
 
-import time
-import struct
-from typing import Tuple, Optional, List, Dict
 
 class MTKEngine:
     """
@@ -17,11 +14,11 @@ class MTKEngine:
     HANDSHAKE_START = b"\xa0\x0a\x50\x05"
     HANDSHAKE_REPLY = b"\x5f\xf5\xaf\xfa"
 
-    def __init__(self, port: Optional[str] = None):
+    def __init__(self, port: str | None = None):
         self.port = port
         self.baudrate = 115200
 
-    def get_supported_socs(self) -> List[Dict[str, str]]:
+    def get_supported_socs(self) -> list[dict[str, str]]:
         return [
             {"soc": "MT6878", "name": "Dimensity 7400 Ultimate (Tecno Camon 50 Pro 5G)", "vuln": "preloader-auth-skip / daa-bypass"},
             {"soc": "MT6789", "name": "Helio G99 / Helio G200 (Tecno Camon 50 / Camon 30)", "vuln": "preloader vcom handshake"},
@@ -33,7 +30,7 @@ class MTKEngine:
             {"soc": "MT6761", "name": "Helio A22 (Infinix Smart 5, itel Vision)", "vuln": "wdt exploit"}
         ]
 
-    def build_handshake_sequence(self) -> List[bytes]:
+    def build_handshake_sequence(self) -> list[bytes]:
         return [
             b"\xa0",
             b"\x0a",
@@ -50,7 +47,7 @@ class MTKEngine:
         )
         return shellcode
 
-    def format_partition_plan(self, partition_name: str) -> Dict[str, any]:
+    def format_partition_plan(self, partition_name: str) -> dict[str, any]:
         common_offsets = {
             "frp": {"address": 0x5a00000, "length": 0x100000},
             "userdata": {"address": 0xd000000, "length": 0x40000000},
@@ -65,12 +62,12 @@ class MTKEngine:
 
     # =============== OUMSE-EXACT BROM/PRELOADER OPERATIONS 100% OFFLINE ===============
 
-    def partition_manager_brom(self, soc="MT6878", op="read", partition="frp") -> List[str]:
+    def partition_manager_brom(self, soc="MT6878", op="read", partition="frp") -> list[str]:
         plan = self.format_partition_plan(partition)
         base = [
             f"[BROM] Partition Manager BROM mode for {soc} (offline, 1 credit saved)",
-            f"[BROM] Handshake 0xA0 0x0A 0x50 0x05 -> BROM confirmed [0x5F 0xF5 0xAF 0xFA]",
-            f"[BROM] DAA/SLA bypassed in SRAM, direct memory channel open",
+            "[BROM] Handshake 0xA0 0x0A 0x50 0x05 -> BROM confirmed [0x5F 0xF5 0xAF 0xFA]",
+            "[BROM] DAA/SLA bypassed in SRAM, direct memory channel open",
         ]
         if op == "read":
             base += [f"[BROM] Reading {partition} @0x{plan['address']:X} len 0x{plan['length']:X} -> OKAY", "[OK] Partition read to PC offline"]
@@ -80,7 +77,7 @@ class MTKEngine:
             base += [f"[BROM] Erasing {partition} @0x{plan['address']:X} -> OKAY", "[OK] Partition erased offline"]
         return base
 
-    def bypass_direct_brom(self, soc="MT6878") -> List[str]:
+    def bypass_direct_brom(self, soc="MT6878") -> list[str]:
         return [
             f"[BROM] Bypass Direct BROM for {soc} (offline, 2 credits saved)",
             "[BROM] Handshake -> BROM",
@@ -89,7 +86,7 @@ class MTKEngine:
             "[OK] Bypass Direct BROM done offline",
         ]
 
-    def mdm_permanent_brom(self, soc="MT6878") -> List[str]:
+    def mdm_permanent_brom(self, soc="MT6878") -> list[str]:
         return [
             f"[BROM] MDM Permanent BROM (MTK) for {soc} (offline, 3 credits -> 2 saved)",
             "[BROM] Permanent patch: proinfo 0x100/0x800/0x1000 + lock bit clear via BROM Write",
@@ -97,7 +94,7 @@ class MTKEngine:
             "[OK] MDM Permanent BROM done offline - no relock",
         ]
 
-    def partition_manager_preloader(self, soc="MT6878", op="read", partition="proinfo") -> List[str]:
+    def partition_manager_preloader(self, soc="MT6878", op="read", partition="proinfo") -> list[str]:
         # PRELOADER mode - Oumse marks Inactive, we make it ACTIVE offline
         plan = self.format_partition_plan(partition)
         return [
@@ -107,7 +104,7 @@ class MTKEngine:
             "[OK] PRELOADER operation done offline (Oumse inactive -> we made it work)",
         ]
 
-    def bypass_direct_preloader(self, soc="MT6878") -> List[str]:
+    def bypass_direct_preloader(self, soc="MT6878") -> list[str]:
         return [
             f"[PRELOADER] Bypass Direct PRELOADER for {soc} (now ACTIVE offline, 4 credits saved)",
             "[PRELOADER] Direct Preloader DA bypass via USB VCOM (local payload)",
@@ -115,7 +112,7 @@ class MTKEngine:
             "[OK] Bypass Direct PRELOADER done offline",
         ]
 
-    def get_all_brom_ops(self) -> List[Dict[str, str]]:
+    def get_all_brom_ops(self) -> list[dict[str, str]]:
         return [
             {"id": "partition_manager_brom", "name": "Partition Manager BROM mode", "cost": "1 (FREE offline)"},
             {"id": "bypass_brom", "name": "Bypass Direct BROM", "cost": "2 (FREE offline)"},

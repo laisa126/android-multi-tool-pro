@@ -7,13 +7,13 @@ Patches lk_a / lk_b partition to allow unlocked bootloader.
 No server, no credits.
 """
 
-from typing import List, Dict, Tuple
 import os
+
 
 class LKPatcher:
     """Offline LK patcher for Tecno/Infinix MTK."""
 
-    def patch_lk_file_offline(self, input_path: str, output_path: str) -> Tuple[bool, str]:
+    def patch_lk_file_offline(self, input_path: str, output_path: str) -> tuple[bool, str]:
         if not os.path.isfile(input_path):
             return False, f"LK file not found: {input_path}. Dump: dd if=/dev/block/by-name/lk_a of=/sdcard/lk_a.img"
         try:
@@ -33,13 +33,13 @@ class LKPatcher:
         except Exception as e:
             return False, str(e)
 
-    def get_lk_ops(self) -> List[Dict[str, str]]:
+    def get_lk_ops(self) -> list[dict[str, str]]:
         return [
             {"id": "lk_file", "name": "LK Bootloader Unlock - Patch fichier (Tecno/Infinix)", "cost": "2 credits (FREE offline)", "offline": True},
             {"id": "lk_meta", "name": "LK Bootloader Unlock Direct META (Tecno/Infinix)", "cost": "2 credits (FREE offline)", "offline": True},
         ]
 
-    def lk_direct_meta_logs(self, soc="MT6878") -> List[str]:
+    def lk_direct_meta_logs(self, soc="MT6878") -> list[str]:
         return [
             f"[META] LK Unlock Direct for {soc} via local META...",
             "[META] Reading lk_a (0x200000) via META ReadPartition",

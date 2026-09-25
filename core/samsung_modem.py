@@ -4,7 +4,6 @@ Communicates over virtual COM ports to trigger the USB Debugging authorization
 dialog directly from the Samsung *#0*# Emergency Test menu.
 """
 
-from typing import List, Tuple, Optional
 
 class SamsungModemEngine:
     """
@@ -23,7 +22,7 @@ class SamsungModemEngine:
         "AT+ACTIVATE=0,0,0\r\n"
     ]
 
-    def build_test_mode_sequence(self) -> List[Tuple[str, str]]:
+    def build_test_mode_sequence(self) -> list[tuple[str, str]]:
         """Returns sequence of commands with descriptions."""
         return [
             ("AT", "Ping Modem Interface"),

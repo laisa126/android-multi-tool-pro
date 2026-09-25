@@ -4,9 +4,9 @@ Compiles the application into a standalone Windows .exe with bundled ADB & Fastb
 """
 
 import os
-import sys
 import subprocess
-import shutil
+import sys
+
 
 def build():
     base_dir = os.path.dirname(os.path.abspath(__file__))

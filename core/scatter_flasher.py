@@ -6,17 +6,17 @@ Parses scatter.txt, maps UFS partition offsets, and orchestrates multi-partition
 
 import os
 import re
-from typing import Dict, List, Tuple, Optional
+
 
 class ScatterFlasher:
     """
     Parses MediaTek XML / TXT scatter configuration files and maps
     partition flash targets for Tecno Camon 50 Pro.
     """
-    def __init__(self, scatter_file_path: Optional[str] = None):
+    def __init__(self, scatter_file_path: str | None = None):
         self.scatter_path = scatter_file_path
 
-    def parse_scatter(self, path: str) -> Tuple[bool, List[Dict[str, any]], str]:
+    def parse_scatter(self, path: str) -> tuple[bool, list[dict[str, any]], str]:
         if not os.path.isfile(path):
             return False, [], f"Scatter file not found: {path}"
 
@@ -48,7 +48,7 @@ class ScatterFlasher:
         except Exception as e:
             return False, [], f"Scatter parse error: {e}"
 
-    def build_tecno_camon50_partition_map(self) -> List[Dict[str, str]]:
+    def build_tecno_camon50_partition_map(self) -> list[dict[str, str]]:
         """Default hardware partition map for Tecno Camon 50 Pro (TECNO CN5c - UFS Storage)."""
         return [
             {"partition": "preloader", "file": "preloader_tecno_cn5c.bin", "target": "UFS Boot1"},

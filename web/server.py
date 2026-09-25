@@ -148,15 +148,30 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 mock_state["selected_device"] = device_presets[key]["model"]
             self.send_json_response({"success": True, "current": mock_state["selected_device"]})
 
+        elif action == "set_simulated":
+            val = req.get("enabled", True)
+            # Accept bool, string, int
+            if isinstance(val, str):
+                val = val.lower() in ("true","1","on","yes")
+            mock_state["simulated"] = bool(val)
+            self.send_json_response({"success": True, "simulated": mock_state["simulated"]})
+            return
+
         elif action == "scan":
             adb_devs = adb.get_devices()
             fb_devs = fastboot.get_devices()
             devices = []
+            real_count = 0
             for d in adb_devs:
                 tag = d.get("state", "device")
-                devices.append(f"{d['serial']} ({tag})")
+                # Tag hardware bus detections clearly
+                is_hw = "HW" in tag or "Hardware" in d.get("details","")
+                label = f"{d['serial']} ({tag})"
+                devices.append(label)
+                real_count += 1
             for d in fb_devs:
                 devices.append(f"{d['serial']} (FASTBOOT - {d['mode']})")
+                real_count += 1
 
             # Check COM ports for MTK Preloader / BROM on Windows
             if platform.system() == "Windows":
@@ -173,18 +188,21 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                             line = line.strip()
                             if any(k in line.lower() for k in ["mediatek", "mtk", "preloader", "vcom", "qdloader", "9008"]):
                                 devices.append(f"{line} (COM PORT)")
+                                real_count += 1
                 except Exception:
                     pass
 
+            simulated_used = False
             if not devices and mock_state["simulated"]:
                 devices = [
-                    "0834212450001234 (TECNO-CN5c Android 16+ USB HW)",
-                    "TECNO_CAMON_50_PRO_5G (MTK Preloader Port COM5)",
-                    "SM-S908B_SIMULATED (Samsung Galaxy S22 Ultra - ADB)",
-                    "REDMI_NOTE_11_SIMULATED (Xiaomi Redmi Note 11 - FASTBOOT)"
+                    "0834212450001234 (TECNO-CN5c Android 16+ USB HW) [DEMO]",
+                    "TECNO_CAMON_50_PRO_5G (MTK Preloader Port COM5) [DEMO]",
+                    "SM-S908B_SIMULATED (Samsung Galaxy S22 Ultra - ADB) [DEMO]",
+                    "REDMI_NOTE_11_SIMULATED (Xiaomi Redmi Note 11 - FASTBOOT) [DEMO]"
                 ]
+                simulated_used = True
 
-            self.send_json_response({"devices": devices, "count": len(devices)})
+            self.send_json_response({"devices": devices, "count": len(devices), "real_count": real_count, "simulated": mock_state["simulated"], "simulated_used": simulated_used, "adb_path": adb.adb_path})
 
         elif action == "read_info":
             if mock_state["simulated"]:

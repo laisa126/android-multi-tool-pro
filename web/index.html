@@ -563,7 +563,7 @@
 
     <div class="conn-section">
       <div class="status-pill">
-        <div class="status-dot"></div>
+        <div class="status-dot" id="statusDot"></div>
         <span id="connState">Tecno Camon 50 Pro 5G</span>
       </div>
       <select id="deviceSelect" onchange="onDeviceChanged()">
@@ -572,6 +572,10 @@
         <option value="xiaomi">Xiaomi Redmi Note 11 (Fastboot)</option>
       </select>
       <button class="btn-white" onclick="scanDevices()">Scan USB</button>
+      <label style="display:flex; align-items:center; gap:6px; background:#222; border:1px solid #333; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:10px; font-weight:700; color:#fff; margin-left:4px;" title="When ON: shows demo devices if no real phone is connected. When OFF: shows only real hardware.">
+        <input type="checkbox" id="chkSimulated" checked onchange="toggleSimulated()" style="accent-color:#fff; width:13px; height:13px;">
+        DEMO
+      </label>
       <button class="btn-white" onclick="showInstallModal()">Install as PC App</button>
       <button class="btn-dark" onclick="showBuildInfo()">Build .EXE</button>
     </div>
@@ -1926,6 +1930,38 @@ build.bat</div>
       document.getElementById("buildModal").style.display = "none";
     }
 
+    async function toggleSimulated() {
+      const chk = document.getElementById("chkSimulated");
+      const enabled = chk.checked;
+      try {
+        const res = await fetch("/api/set_simulated", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({enabled}) });
+        const data = await res.json();
+        const dot = document.getElementById("statusDot");
+        if (data.simulated) {
+          logLine("DEMO mode ON: Tool will show simulated Tecno Camon 50 Pro if no real device is connected. Uncheck DEMO to see REAL hardware only.", "log-white");
+          if(dot) dot.style.background = "#888";
+        } else {
+          logLine("DEMO mode OFF: Now showing REAL hardware only. If list is empty, Windows did NOT detect any USB device (check cable/port).", "log-white");
+          if(dot) dot.style.background = "#22c55e";
+        }
+        // Auto re-scan after toggle
+        scanDevices();
+      } catch(e) { logLine("Toggle failed: "+e, "log-red"); }
+    }
+
+    async function initSimulatedState() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+        const chk = document.getElementById("chkSimulated");
+        if(chk) chk.checked = !!data.simulated;
+        const dot = document.getElementById("statusDot");
+        if(dot) dot.style.background = data.simulated ? "#888" : "#22c55e";
+        const st = document.getElementById("connState");
+        if(st) st.textContent = data.simulated ? "DEMO Mode - No real device" : "REAL Hardware Mode";
+      } catch(e) {}
+    }
+
     async function scanDevices() {
       logLine("Scanning USB bus for connected Android devices...", "log-white");
       try {
@@ -1933,12 +1969,29 @@ build.bat</div>
         const data = await res.json();
         const sel = document.getElementById("deviceSelect");
         sel.innerHTML = "";
-        data.devices.forEach(d => {
+        if (data.devices.length === 0) {
           const opt = document.createElement("option");
-          opt.textContent = d;
+          opt.textContent = "No device found — check cable/USB mode";
           sel.appendChild(opt);
-        });
-        logLine(`Scan completed: ${data.count} device(s) detected.`, "log-green");
+          logLine("No devices detected on USB bus. REAL hardware count: 0. If phone only charges with NO Windows sound, it is a CABLE/PORT problem — not a software bug. Use rear USB 2.0 port + DATA cable.", "log-red");
+          showToast("No device found — check cable & USB mode", "error");
+          document.getElementById("connState").textContent = "No device";
+        } else {
+          data.devices.forEach(d => {
+            const opt = document.createElement("option");
+            opt.textContent = d;
+            sel.appendChild(opt);
+          });
+          if (data.simulated_used) {
+            logLine(`Scan completed: ${data.count} device(s) — DEMO/SIMULATED devices shown (no real USB device detected). Real count: ${data.real_count}. Uncheck DEMO to test real hardware.`, "log-white");
+            showToast("DEMO devices shown — no real phone detected", "info");
+            document.getElementById("connState").textContent = "DEMO Mode";
+          } else {
+            logLine(`Scan completed: ${data.count} REAL device(s) detected! Real count: ${data.real_count}.`, "log-green");
+            showToast(`${data.count} REAL device(s) detected!`, "success");
+            document.getElementById("connState").textContent = `${data.count} Device(s) READY`;
+          }
+        }
       } catch (err) {
         logLine("Error scanning devices: " + err, "log-red");
       }
@@ -2482,6 +2535,7 @@ build.bat</div>
     window.addEventListener("DOMContentLoaded", () => {
       logLine("Android Multi-Tool Pro Monochrome Edition initialized.", "log-white");
       logLine("Device Profile: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
+      initSimulatedState();
       loadCatalog();
       loadWorkflows();
       loadWin11Errors();

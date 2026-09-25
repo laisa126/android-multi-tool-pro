@@ -47,10 +47,17 @@ jobs:
           }
 
       - name: Install Inno Setup 6 (for Setup.exe where it installs)
+        shell: pwsh
         run: |
-          choco install innosetup --yes --no-progress
+          if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
+            Write-Host "Inno Setup 6 already installed, skipping choco"
+          } else {
+            choco install innosetup --yes --no-progress --force
+            if ($LASTEXITCODE -ne 0) { Write-Host "choco exit $LASTEXITCODE but continuing" }
+          }
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /?
-          Write-Host "Inno Setup 6 installed"
+          Write-Host "Inno Setup 6 ready"
+
 
       - name: Compile Windows Setup.exe (like Oumse — installs to Program Files)
         run: |

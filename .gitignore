@@ -23,3 +23,9 @@ env/
 
 # Runtime session / audit logs
 logs/
+
+# Release placeholder (generated, not needed in repo — real Setup built via iscc)
+release/
+
+# Deduplicated web/assets (kept in ../assets, served via web/server.py /assets route)
+web/assets/

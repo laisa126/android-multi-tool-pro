@@ -100,6 +100,29 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        # Serve /assets/* from parent ../assets (deduplicated, not web/assets)
+        if parsed.path.startswith("/assets/"):
+            # Map to ../assets directory
+            assets_dir = os.path.join(parent_dir, "assets")
+            file_path = os.path.join(assets_dir, parsed.path[len("/assets/"):])
+            # Security: prevent path traversal
+            if os.path.commonpath([os.path.abspath(assets_dir), os.path.abspath(file_path)]) != os.path.abspath(assets_dir):
+                self.send_error(403, "Forbidden")
+                return
+            if os.path.isfile(file_path):
+                # Guess mime
+                import mimetypes
+                ctype, _ = mimetypes.guess_type(file_path)
+                self.send_response(200)
+                self.send_header("Content-type", ctype or "application/octet-stream")
+                self.send_header("Content-Length", str(os.path.getsize(file_path)))
+                self.end_headers()
+                with open(file_path, "rb") as f:
+                    self.wfile.write(f.read())
+                return
+            else:
+                self.send_error(404, "Asset not found")
+                return
         if parsed.path == "/api/status":
             self.send_json_response({
                 "status": "online",

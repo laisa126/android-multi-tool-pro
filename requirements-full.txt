@@ -1,0 +1,17 @@
+# Android Multi-Tool Pro — full runtime requirements (for running from source)
+#
+# The Windows EXE bundles adb/fastboot, the MediaTek DA files, scatter
+# templates and driver INFs automatically, and the app self-installs
+# pyserial + mtkclient at runtime via "Install Tools & Drivers".
+# Use this file if you run the tool directly from source (python app_gui.py).
+
+# Build / packaging (needed to compile the .exe)
+pyinstaller>=6.0.0
+
+# Serial-port detection (MTK BROM / Samsung modem channels)
+pyserial>=3.5
+
+# The real MediaTek exploit engine backing every MTK operation
+# (backup / flash / FRP wipe / seccfg unlock / IMEI-source dump).
+# The app auto-installs this when you click "Install Tools & Drivers".
+mtkclient>=2.0.1

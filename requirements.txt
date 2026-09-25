@@ -1,1 +1,5 @@
+# Build requirements for compiling the Windows EXE (CI + local builds).
+# Runtime dependencies (pyserial, mtkclient) are self-installed by the app;
+# for running from source, use requirements-full.txt instead.
 pyinstaller>=6.0.0
+pyserial>=3.5

@@ -75,7 +75,7 @@ TEST_POINT_DATABASE = [
         "model": "Camon 50 Pro 5G (TECNO CN5c)",
         "chipset": "MediaTek Dimensity 7400 Ultimate / Helio G200",
         "mode": "MTK Preloader / BROM VCOM",
-        "instructions": "NO DISASSEMBLY REQUIRED. Power off phone completely (hold Power + Vol Down for 10s if screen is locked). Press and hold Volume Up + Volume Down simultaneously. Connect high-quality Type-C cable to Windows 11 PC. The tool catches the MTK Preloader USB VCOM Port within 1.5 seconds, bypasses auth, and executes FRP wipe or userdata format."
+        "instructions": "NO DISASSEMBLY REQUIRED. Power off phone completely (hold Power + Vol Down for 10s if screen is locked). Start the tool, then connect the Type-C cable with NO buttons pressed (Preloader mode) — the tool crashes it into BROM. Do NOT hold Vol Up + Vol Down: that boots Recovery, not BROM. The tool catches the MTK Preloader USB VCOM Port within 1.5 seconds and executes the FRP wipe or userdata format."
     },
     {
         "brand": "Tecno",

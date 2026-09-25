@@ -30,7 +30,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "2. Look for 'Android' or 'Unknown Device' with a yellow warning triangle.\n"
             "3. Right-click -> Update driver -> 'Browse my computer for drivers' -> 'Let me pick from a list of available drivers'.\n"
             "4. Select 'Android Device' -> choose 'Android Composite ADB Interface'.\n"
-            "5. If Windows 11 blocks it: Run 'install_drivers.bat' as Administrator to register official Google signed drivers."
+            "5. If Windows 11 blocks it: use the app's 'Install Tools & Drivers' (auto-installs the drivers) or 'Force-Install VCOM (Test Mode)'."
         )
     },
     "TECNO_TRANSSION_NOT_DETECTED": {
@@ -52,13 +52,14 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "IF PHONE IS LOCKED (CANNOT ENABLE ADB):\n"
             "- Do not use ADB. Use MediaTek BROM mode instead!\n"
             "- Power off CN5c completely (hold Power + Vol Down 10s if screen is frozen).\n"
-            "- Hold Volume Up + Volume Down together and connect USB cable.\n"
+            "- Start the tool FIRST, then plug USB with NO buttons (Preloader mode) - the tool crashes it into BROM.\n"
+            "- Do NOT hold Vol Up + Vol Down: that boots RECOVERY, not BROM.\n"
             "- Tool will detect MediaTek Preloader COM Port and format userdata/frp directly.\n\n"
             "IF PHONE CAN BE UNLOCKED (ADB MODE):\n"
             "- Swipe down notification shade -> tap 'Charging this device via USB' -> change to 'File Transfer (MTP)'.\n"
             "- Go to Settings -> Developer options -> tap 'Revoke USB debugging authorizations' -> toggle 'USB Debugging' OFF and ON.\n\n"
             "ON PC (TRANSSION DRIVER FIX):\n"
-            "- Run install_drivers.bat as Administrator (auto-adds 0x2e04 and restarts ADB).\n"
+            "- Click 'Install Tools & Drivers' in the app (auto-adds 0x2e04, installs VCOM/ADB drivers, restarts ADB).\n"
             "- In Device Manager -> check 'TECNO-CN5c' -> update driver to 'Android Composite ADB Interface'."
         )
     },
@@ -81,7 +82,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
             "1. Click Start -> Search 'Core Isolation'.\n"
             "2. Temporarily toggle 'Memory Integrity' to OFF.\n"
             "3. Restart Windows 11.\n"
-            "4. Run 'install_drivers.bat' as Administrator.\n"
+            "4. Click 'Install Tools & Drivers' in the app (auto-installs VCOM/ADB).\n"
             "5. After servicing is complete, you can toggle Memory Integrity back ON."
         )
     },
@@ -102,7 +103,7 @@ WINDOWS_11_ERROR_SOLUTIONS = {
         "cause": "Missing LibUSB-Win32 filter driver or Watchdog Timer reset triggered.",
         "win11_fix": (
             "1. Open Device Manager on Windows 11.\n"
-            "2. Hold Vol Up + Vol Down and connect USB.\n"
+            "2. Power the phone OFF, start the tool, then plug USB with NO buttons (Preloader).\n"
             "3. As soon as 'MediaTek USB Port' appears under Ports (COM & LPT), ensure driver says 'MediaTek Inc.'.\n"
             "4. Use a high-quality USB-C data cable (not a charge-only cable)."
         )

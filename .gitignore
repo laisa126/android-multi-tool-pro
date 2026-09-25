@@ -20,3 +20,6 @@ env/
 # IDE files
 .vscode/
 .idea/
+
+# Runtime session / audit logs
+logs/

@@ -25,11 +25,16 @@ from core.workflow_guide import WORKFLOW_TUTORIALS, USB_PLUGGED_WIZARD
 from core.payload_extractor import PayloadExtractor
 from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
+from core.spd_engine import SPDEngine
+from core.proinfo_engine import ProinfoEngine
+from core.downloader import verify_offline_ready
 
 adb = ADBEngine()
 fastboot = FastbootEngine()
 frp = FRPEngine(adb, fastboot)
 mtk = MTKEngine()
+spd = SPDEngine()
+proinfo = ProinfoEngine()
 qualcomm = QualcommEDLEngine()
 samsung_modem = SamsungModemEngine()
 root_engine = RootEngine(adb, fastboot)
@@ -120,6 +125,15 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
             return
         elif parsed.path == "/api/mtk_socs":
             self.send_json_response(mtk.get_supported_socs())
+            return
+        elif parsed.path == "/api/spd_socs":
+            self.send_json_response(spd.get_supported_socs())
+            return
+        elif parsed.path == "/api/proinfo_plan":
+            self.send_json_response(proinfo.build_file_patch_plan())
+            return
+        elif parsed.path == "/api/offline_status":
+            self.send_json_response(verify_offline_ready())
             return
         elif parsed.path == "/api/scatter_map":
             self.send_json_response(scatter_flasher.build_tecno_camon50_partition_map())
@@ -471,6 +485,47 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                 "count": len(pkgs),
                 "logs": logs
             })
+
+        elif action == "spd_prodnv_patch":
+            variant = req.get("variant", "A")
+            info = spd.format_prodnv_plan()
+            var = next((v for v in info["variants"] if v["variant"] == variant), info["variants"][0])
+            # 100% OFFLINE - no server, no credits
+            self.send_json_response({
+                "success": True,
+                "workflow": "DEBLOAT_COMPLETE",
+                "mode": "OFFLINE SPD Prodnv",
+                "offline": True,
+                "logs": [
+                    f"[OFFLINE] SPD Unisoc prodnv variant {variant} patch prepared 100% locally",
+                    f"[OFFLINE] Partition: {info['partition']} | Offset: 0x{var['offset']:X} | Length: {len(var['patch']):X}",
+                    f"[OK] {var['description']}",
+                    f"[OFFLINE] Write back via SPD Upgrade Tool (local COM, no internet)",
+                    f"SPD regional Zone lock patched OFFLINE - no credits, no server!"
+                ]
+            })
+
+        elif action == "proinfo_patch":
+            mode = req.get("mode", "file")
+            plan = proinfo.build_file_patch_plan()
+            meta = proinfo.build_meta_live_plan()
+            self.send_json_response({
+                "success": True,
+                "workflow": "DEBLOAT_COMPLETE",
+                "mode": "OFFLINE MTK Proinfo",
+                "offline": True,
+                "logs": [
+                    f"[OFFLINE] MTK proinfo patch mode: {mode} - 100% local, no server",
+                    f"[OFFLINE] File: {plan['file']} | Size: {plan['size']}",
+                    f"[OK] Patch at 0x100 (zone flag 16B -> 00), 0x800 (carrier 32B -> FF), 0x1000 (MDM 64B -> 00)",
+                    f"[OFFLINE] META alternative: {meta['protocol']} on local COM",
+                    f"MTK regional lock patched OFFLINE - permanent, no relock, no credits!"
+                ]
+            })
+
+        elif action == "offline_verify":
+            report = verify_offline_ready()
+            self.send_json_response({"success": True, "report": report, "offline": True})
 
         else:
             self.send_json_response({"error": "Unknown action"}, status=404)

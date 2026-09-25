@@ -46,7 +46,9 @@ a = Analysis(
         'core.workflow_guide',
         'core.payload_extractor',
         'core.scatter_flasher',
-        'core.transsion_mdm'
+        'core.transsion_mdm',
+        'core.spd_engine',
+        'core.proinfo_engine'
     ],
     hookspath=[],
     hooksconfig={},

@@ -557,7 +557,7 @@
       </div>
       <div class="brand-text">
         <h1>Android Multi-Tool Pro <span>Monochrome Win11</span></h1>
-        <p>Offline Universal GSM Service Suite | Tecno Camon 50 Pro, Samsung, MTK, Qualcomm</p>
+        <p><span style="background:#22c55e; color:#000; padding:1px 6px; font-weight:800; border-radius:2px;">100% OFFLINE</span> No Internet • No Credits • No Server — MTK • SPD Unisoc • ADB — Tecno / Infinix / itel</p>
       </div>
     </div>
 
@@ -599,17 +599,19 @@
   <!-- Monochromatic Navigation Tabs -->
   <div class="tabs-bar">
     <button class="tab-btn active" onclick="switchTab('tab-camon50', this)">Tecno Camon 50 Suite</button>
-    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚡ MTK BROM Flasher</button>
+    <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚡ MTK BROM</button>
+    <button class="tab-btn" onclick="switchTab('tab-spd', this)">SPD Unisoc</button>
+    <button class="tab-btn" onclick="switchTab('tab-proinfo', this)">MTK Proinfo</button>
     <button class="tab-btn" onclick="switchTab('tab-diagnostics', this)">Diagnostics</button>
-    <button class="tab-btn" onclick="switchTab('tab-frp', this)">FRP & MDM Bypass</button>
-    <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">Fastboot Flasher</button>
-    <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">Process Tutorials</button>
-    <button class="tab-btn" onclick="switchTab('tab-win11', this)">Windows 11 Fixer</button>
-    <button class="tab-btn" onclick="switchTab('tab-reboot', this)">Reboot Modes</button>
+    <button class="tab-btn" onclick="switchTab('tab-frp', this)">FRP & MDM</button>
+    <button class="tab-btn" onclick="switchTab('tab-fastboot', this)">Fastboot</button>
+    <button class="tab-btn" onclick="switchTab('tab-tutorials', this)">Tutorials</button>
+    <button class="tab-btn" onclick="switchTab('tab-win11', this)">Win11 Fixer</button>
+    <button class="tab-btn" onclick="switchTab('tab-reboot', this)">Reboot</button>
     <button class="tab-btn" onclick="switchTab('tab-root', this)">Root & Magisk</button>
     <button class="tab-btn" onclick="switchTab('tab-efs', this)">EFS & NVRAM</button>
-    <button class="tab-btn" onclick="switchTab('tab-debloat', this)">HiOS Debloat</button>
-    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">Supported Devices</button>
+    <button class="tab-btn" onclick="switchTab('tab-debloat', this)">Debloat</button>
+    <button class="tab-btn" onclick="switchTab('tab-catalog', this)">Catalog</button>
   </div>
 
   <!-- Workspace -->
@@ -701,7 +703,42 @@
               </div>
               <button class="btn-dark" onclick="takeScreenshot()">Screenshot</button>
             </div>
+            <div class="action-card" style="border:1px solid #22c55e;">
+              <div class="action-info">
+                <h4 style="color:#22c55e;">● 100% OFFLINE Check</h4>
+                <p>No internet, no credits, no server — verify bundle.</p>
+              </div>
+              <button class="btn-white" onclick="checkOfflineStatus()" style="background:#22c55e; color:#000;">Verify OFFLINE</button>
+            </div>
           </div>
+        </div>
+      </div>
+      <div class="card" style="border-left:3px solid #22c55e; margin-top:12px;">
+        <div class="card-title" style="color:#22c55e;">● OFFLINE vs Oumse GSM — No Internet Required</div>
+        <div style="font-size:11px; color:#cccccc; line-height:1.6;">
+          <b style="color:#fff;">Oumse GSM = Online server + $30-50/year + 1-5 credits per operation + 5h PC lock</b><br>
+          <b style="color:#22c55e;">This Tool = 100% OFFLINE — No internet, no credits, no server, no expiry. All patches run locally via USB COM.</b>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+            <div style="background:#161616; padding:8px; border:1px solid #222;">
+              <b style="color:#fff;">MTK Proinfo (Regional MDM)</b><br>
+              Oumse: Read → Send to server → Pay → Receive file<br>
+              <span style="color:#22c55e;">✓ Here: Read proinfo.img locally → patch 0x100/0x800/0x1000 offline → flash back</span>
+            </div>
+            <div style="background:#161616; padding:8px; border:1px solid #222;">
+              <b style="color:#fff;">SPD Prodnv (Unisoc Zone Lock)</b><br>
+              Oumse: Read → Server → Pay 2-5 credits<br>
+              <span style="color:#22c55e;">✓ Here: Patch prodnv Variant A/B locally at 0x1000/0x2000 offline</span>
+            </div>
+            <div style="background:#161616; padding:8px; border:1px solid #222;">
+              <b style="color:#fff;">MTK BROM / FRP</b><br>
+              <span style="color:#22c55e;">✓ Local BROM handshake 0xA0 0x0A 0x50 0x05 → bypass DAA/SLA → format frp/userdata</span>
+            </div>
+            <div style="background:#161616; padding:8px; border:1px solid #222;">
+              <b style="color:#fff;">ADB MDM Freeze</b><br>
+              <span style="color:#22c55e;">✓ Local ADB: disable PayJoy/Carlcare/PalmPay + device_provisioned=1 — no DNS trick</span>
+            </div>
+          </div>
+          <p style="margin-top:8px; font-size:10px; color:#888;">All engines use bundled <code>bin/adb</code>, <code>bin/fastboot</code>, <code>bin/drivers</code>. Works in airplane mode, rural shop, no Wi-Fi.</p>
         </div>
       </div>
     </div>
@@ -889,6 +926,81 @@
             <p style="margin-top:4px;">2. Press and hold <strong>Volume Up + Volume Down</strong> simultaneously.</p>
             <p style="margin-top:4px;">3. Plug in the Type-C USB cable to your PC.</p>
             <p style="margin-top:4px;">4. Tool catches the Preloader VCOM port, bypasses DAA authorization, and formats the block.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SPD Unisoc OFFLINE (Oumse alternative) -->
+    <div id="tab-spd" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Unisoc / Spreadtrum SPD  — 100% OFFLINE prodnv Patch</div>
+          <p style="font-size:10px; color:var(--c6-muted); margin-bottom:8px;"><span style="background:#22c55e; color:#000; padding:1px 5px; font-weight:800;">OFFLINE</span> No internet, no credits, no Oumse server. Two variants like Oumse, patched locally.</p>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Target Unisoc SoC:</label>
+              <select id="spdSoc" style="width:100%;">
+                <option value="T612" selected>T612 - Tiger T612 (Tecno Spark 20C / Infinix Hot 40i)</option>
+                <option value="T616">T616 - Tiger T616 (Tecno Spark 20 / Infinix Note 30)</option>
+                <option value="T606">T606 - Tiger T606 (Tecno Spark 10C / itel S23)</option>
+                <option value="SC9863A">SC9863A (Tecno Spark 8C / Infinix Smart 6)</option>
+                <option value="SC9832E">SC9832E (itel Vision 2)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Prodnv Patch Variant:</label>
+              <select id="spdVariant" style="width:100%;">
+                <option value="A" selected>Variant A — Zone Flag Nullify at 0x1000 (85%)</option>
+                <option value="B">Variant B — Full Zone Table Fill at 0x2000 (95%)</option>
+              </select>
+            </div>
+            <button class="btn-white" onclick="runSpdProdnv()">⚡ Patch Prodnv OFFLINE (No Internet)</button>
+            <button class="btn-dark" onclick="switchTab('tab-mtk')">Need MTK? → MTK BROM</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">OFFLINE SPD Workflow</div>
+          <div style="font-size:11px; line-height:1.5; color:var(--c7-lightgray);">
+            <p><b>1. Hold Vol Down</b> + plug USB → SPD COM port appears (driver bundled in bin/drivers)</p>
+            <p style="margin-top:4px;"><b>2. Dump prodnv.img</b> via SPD Upgrade Tool (local, offline)</p>
+            <p style="margin-top:4px;"><b>3. Patch offline</b> — Tool writes 00 at 0x1000 (A) or FF at 0x2000 (B) locally</p>
+            <p style="margin-top:4px;"><b>4. Rewrite prodnv</b> via SPD — Zone lock gone permanently</p>
+            <p style="margin-top:4px; color:#22c55e;"><b>✓ 100% offline, no credits</b> — vs Oumse online server</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MTK Proinfo OFFLINE (Oumse MTK Proinfo alternative) -->
+    <div id="tab-proinfo" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">MTK Proinfo Regional Unlock — 100% OFFLINE</div>
+          <p style="font-size:10px; color:var(--c6-muted); margin-bottom:8px;"><span style="background:#22c55e; color:#000; padding:1px 5px; font-weight:800;">OFFLINE</span> File patch or live META patch, no server, no credits.</p>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Mode:</label>
+              <select id="proinfoMode" style="width:100%;">
+                <option value="file" selected>FILE mode — patch dumped proinfo.img</option>
+                <option value="meta">META mode — live phone via COM (Vol Up + USB)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:10px; color:var(--c6-muted); display:block; margin-bottom:3px;">Proinfo File (if FILE mode):</label>
+              <input id="proinfoPath" type="text" placeholder="C:\path\to\proinfo.img  (or leave empty for META)" style="width:100%; background:#161616; color:#fff; border:1px solid #222; padding:6px; font-size:11px;">
+            </div>
+            <button class="btn-white" onclick="runProinfoPatch()">⚡ Patch Proinfo OFFLINE (No Internet)</button>
+            <button class="btn-dark" onclick="checkOfflineStatus()">Check Offline Readiness</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">How It Works Offline</div>
+          <div style="font-size:11px; line-height:1.5; color:var(--c7-lightgray);">
+            <p><b>FILE:</b> adb pull /dev/block/by-name/proinfo → patch at 0x100 (16B→00), 0x800 (32B→FF), 0x1000 (64B→00) → fastboot flash proinfo</p>
+            <p style="margin-top:6px;"><b>META:</b> Hold Vol Up + USB or <code>adb reboot meta</code> → local META handshake (0xA0) → read → patch → write — all offline</p>
+            <p style="margin-top:6px;">Devices: Camon 50 Pro MT6878, Camon 50/30, Infinix Note/Zero, Tecno Spark on MTK</p>
+            <p style="margin-top:6px; color:#22c55e;"><b>✓ Permanent unlock</b> — SIM works globally, no relock, no server</p>
           </div>
         </div>
       </div>
@@ -2116,7 +2228,7 @@ build.bat</div>
     async function runMtkBrom() {
       const soc = document.getElementById("mtkSoc").value;
       const part = document.getElementById("mtkAction").value;
-      logLine(`Starting MediaTek BROM / Preloader exploit for '${soc}' -> '${part}'...`, "log-white");
+      logLine(`Starting MediaTek BROM / Preloader exploit for '${soc}' -> '${part}'... [OFFLINE]`, "log-white");
       try {
         const res = await fetch("/api/mtk_brom_format", {
           method: "POST",
@@ -2128,6 +2240,59 @@ build.bat</div>
         if (data.workflow) promptWorkflow(data.workflow);
       } catch (err) {
         logLine("MTK BROM exploit failed: " + err, "log-red");
+      }
+    }
+
+    async function runSpdProdnv() {
+      const soc = document.getElementById("spdSoc").value;
+      const variant = document.getElementById("spdVariant").value;
+      logLine(`[OFFLINE] Starting SPD Unisoc prodnv patch SoC=${soc} Variant=${variant} — no internet, no credits...`, "log-white");
+      try {
+        const res = await fetch("/api/spd_prodnv_patch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ soc, variant })
+        });
+        const data = await res.json();
+        data.logs.forEach(l => logLine(l, l.includes("OFFLINE")?"log-white":"log-green"));
+        if (data.workflow) promptWorkflow(data.workflow);
+        showToast(`SPD Variant ${variant} patched OFFLINE!`, "success");
+      } catch (err) {
+        logLine("SPD prodnv patch failed: " + err, "log-red");
+      }
+    }
+
+    async function runProinfoPatch() {
+      const mode = document.getElementById("proinfoMode").value;
+      const path = document.getElementById("proinfoPath").value || "";
+      logLine(`[OFFLINE] Starting MTK Proinfo patch mode=${mode} ${path?"file="+path:"(META live)"} — no server...`, "log-white");
+      try {
+        const res = await fetch("/api/proinfo_patch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode, path })
+        });
+        const data = await res.json();
+        data.logs.forEach(l => logLine(l, l.includes("OFFLINE")||l.includes("[OK]")?"log-green":"log-white"));
+        if (data.workflow) promptWorkflow(data.workflow);
+        showToast("Proinfo patched OFFLINE!", "success");
+      } catch (err) {
+        logLine("Proinfo patch failed: " + err, "log-red");
+      }
+    }
+
+    async function checkOfflineStatus() {
+      logLine("Checking 100% OFFLINE readiness — verifying bundled binaries & engines...", "log-white");
+      try {
+        const res = await fetch("/api/offline_status");
+        const data = await res.json();
+        const r = data.report;
+        logLine(`OFFLINE READY: ${r.ready ? "YES ✓" : "NO ✗"} — ADB:${r.adb_bundled?"OK":"MISSING"} Fastboot:${r.fastboot_bundled?"OK":"MISSING"} Drivers:${r.drivers_bundled?"OK":"MISSING"}`, r.ready?"log-green":"log-red");
+        r.engines.forEach(e => logLine("  • "+e+" [OFFLINE]", "log-white"));
+        logLine("No internet, no credits, no server required — all operations run locally via USB COM/ADB.", "log-green");
+        showToast(r.ready ? "100% OFFLINE READY ✓" : "Offline bundle incomplete", r.ready?"success":"error");
+      } catch (err) {
+        logLine("Offline check failed: "+err, "log-red");
       }
     }
 

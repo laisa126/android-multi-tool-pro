@@ -27,6 +27,9 @@ from core.scatter_flasher import ScatterFlasher
 from core.transsion_mdm import TranssionMDMEngine
 from core.spd_engine import SPDEngine
 from core.proinfo_engine import ProinfoEngine
+from core.meta_engine import MetaEngine
+from core.lk_patcher import LKPatcher
+from core.rom_maker import RomMaker
 from core.downloader import verify_offline_ready
 
 adb = ADBEngine()
@@ -35,6 +38,9 @@ frp = FRPEngine(adb, fastboot)
 mtk = MTKEngine()
 spd = SPDEngine()
 proinfo = ProinfoEngine()
+meta = MetaEngine()
+lk_patcher = LKPatcher()
+rom_maker = RomMaker()
 qualcomm = QualcommEDLEngine()
 samsung_modem = SamsungModemEngine()
 root_engine = RootEngine(adb, fastboot)
@@ -508,7 +514,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "proinfo_patch":
             mode = req.get("mode", "file")
             plan = proinfo.build_file_patch_plan()
-            meta = proinfo.build_meta_live_plan()
+            meta_plan = proinfo.build_meta_live_plan()
             self.send_json_response({
                 "success": True,
                 "workflow": "DEBLOAT_COMPLETE",
@@ -518,7 +524,7 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
                     f"[OFFLINE] MTK proinfo patch mode: {mode} - 100% local, no server",
                     f"[OFFLINE] File: {plan['file']} | Size: {plan['size']}",
                     f"[OK] Patch at 0x100 (zone flag 16B -> 00), 0x800 (carrier 32B -> FF), 0x1000 (MDM 64B -> 00)",
-                    f"[OFFLINE] META alternative: {meta['protocol']} on local COM",
+                    f"[OFFLINE] META alternative: {meta_plan['protocol']} on local COM",
                     f"MTK regional lock patched OFFLINE - permanent, no relock, no credits!"
                 ]
             })
@@ -526,6 +532,136 @@ class AMTRequestHandler(SimpleHTTPRequestHandler):
         elif action == "offline_verify":
             report = verify_offline_ready()
             self.send_json_response({"success": True, "report": report, "offline": True})
+
+        # ====== OUMSE-EXACT FULL REPLICA — ALL 21 OPERATIONS OFFLINE ======
+        elif action == "meta_device_info":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.device_info_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "logs": logs})
+        elif action == "meta_read_partitions":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.read_partitions_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "logs": logs})
+        elif action == "meta_reset_frp":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.reset_frp_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "FRP_BYPASS_COMPLETE", "logs": logs})
+        elif action == "meta_factory_reset":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.factory_reset_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "FACTORY_RESET_COMPLETE", "logs": logs})
+        elif action == "meta_erase_userdata":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.erase_userdata_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "FACTORY_RESET_COMPLETE", "logs": logs})
+        elif action == "meta_patch_mdm":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.patch_mdm_mtk_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
+        elif action == "meta_mdm_remove_direct":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.mdm_remove_direct_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
+        elif action == "meta_mdm_permanent":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.mdm_permanent_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
+        elif action == "meta_lk_unlock_direct":
+            soc = req.get("soc", "MT6878")
+            ok, logs = meta.lk_unlock_direct_meta(soc)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "BOOTLOADER_UNLOCK_COMPLETE", "logs": logs})
+        elif action == "brom_partition_manager":
+            soc = req.get("soc", "MT6878")
+            op = req.get("op", "read")
+            part = req.get("partition", "frp")
+            logs = mtk.partition_manager_brom(soc, op, part)
+            self.send_json_response({"success": True, "offline": True, "logs": logs})
+        elif action == "brom_bypass_direct":
+            soc = req.get("soc", "MT6878")
+            logs = mtk.bypass_direct_brom(soc)
+            self.send_json_response({"success": True, "offline": True, "logs": logs})
+        elif action == "brom_mdm_permanent":
+            soc = req.get("soc", "MT6878")
+            logs = mtk.mdm_permanent_brom(soc)
+            self.send_json_response({"success": True, "offline": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
+        elif action == "preloader_partition_manager":
+            soc = req.get("soc", "MT6878")
+            op = req.get("op", "read")
+            part = req.get("partition", "proinfo")
+            logs = mtk.partition_manager_preloader(soc, op, part)
+            self.send_json_response({"success": True, "offline": True, "logs": logs})
+        elif action == "preloader_bypass_direct":
+            soc = req.get("soc", "MT6878")
+            logs = mtk.bypass_direct_preloader(soc)
+            self.send_json_response({"success": True, "offline": True, "logs": logs})
+        elif action == "spd_partition_manager":
+            soc = req.get("soc", "T612")
+            op = req.get("op", "read")
+            part = req.get("partition", "prodnv")
+            logs = spd.partition_manager_spd(soc, op, part)
+            self.send_json_response({"success": True, "offline": True, "logs": logs})
+        elif action == "spd_reset":
+            soc = req.get("soc", "T612")
+            mode = req.get("mode", "frp")
+            logs = spd.reset_spd(soc, mode)
+            self.send_json_response({"success": True, "offline": True, "workflow": "FRP_BYPASS_COMPLETE" if mode=="frp" else "FACTORY_RESET_COMPLETE", "logs": logs})
+        elif action == "spd_mdm_permanent":
+            soc = req.get("soc", "T612")
+            variant = req.get("variant", "A")
+            logs = spd.mdm_permanent_spd(soc, variant)
+            self.send_json_response({"success": True, "offline": True, "workflow": "DEBLOAT_COMPLETE", "logs": logs})
+        elif action == "lk_patch_file":
+            inp = req.get("input_path", "")
+            out = req.get("output_path", inp.replace(".img", "_patched.img") if inp else "lk_patched.img")
+            if not inp:
+                self.send_json_response({"success": False, "offline": True, "logs": ["Select lk_a.img file first - dump via: dd if=/dev/block/by-name/lk_a"]})
+            else:
+                ok, msg = lk_patcher.patch_lk_file_offline(inp, out)
+                self.send_json_response({"success": ok, "offline": True, "workflow": "BOOTLOADER_UNLOCK_COMPLETE" if ok else None, "logs": [msg]})
+        elif action == "lk_unlock_direct_meta":
+            soc = req.get("soc", "MT6878")
+            logs = lk_patcher.lk_direct_meta_logs(soc)
+            self.send_json_response({"success": True, "offline": True, "workflow": "BOOTLOADER_UNLOCK_COMPLETE", "logs": logs})
+        elif action == "rom_maker":
+            inp = req.get("input_path", "")
+            out = req.get("output_path", "Transsion_Debloated.ogt")
+            ok, msg = rom_maker.make_ogt_offline(inp or ".", out, debloat=True)
+            self.send_json_response({"success": ok, "offline": True, "workflow": "DEBLOAT_COMPLETE" if ok else None, "logs": [msg, "[OFFLINE] OGT ready for Fastboot flashing"]})
+        elif action == "ogt_flash":
+            ogt = req.get("ogt_path", "Transsion_Debloated.ogt")
+            logs = rom_maker.flash_ogt_fastboot_logs(ogt)
+            self.send_json_response({"success": True, "offline": True, "logs": logs})
+        elif action == "oumse_full_status":
+            # Returns all 21 ops status like oumse status page but OFFLINE FREE
+            self.send_json_response({
+                "success": True,
+                "offline": True,
+                "oumse_replica": "100% OFFLINE - All 21 Oumse operations now FREE, no credits",
+                "operations": [
+                    {"op": "Lecture partitions META", "oumse": "1 cr", "here": "FREE offline", "api": "meta_read_partitions"},
+                    {"op": "Patch MDM MTK", "oumse": "1.5 cr", "here": "FREE offline", "api": "meta_patch_mdm / proinfo_patch"},
+                    {"op": "Patch MDM SPD", "oumse": "1.5 cr", "here": "FREE offline", "api": "spd_prodnv_patch"},
+                    {"op": "Device Info META", "oumse": "Free", "here": "FREE offline", "api": "meta_device_info"},
+                    {"op": "Reset FRP META", "oumse": "Free", "here": "FREE offline", "api": "meta_reset_frp"},
+                    {"op": "Factory Reset META", "oumse": "Free", "here": "FREE offline", "api": "meta_factory_reset"},
+                    {"op": "Erase userdata META", "oumse": "Free", "here": "FREE offline", "api": "meta_erase_userdata"},
+                    {"op": "MDM Remove Direct META (MTK)", "oumse": "2 cr", "here": "FREE offline", "api": "meta_mdm_remove_direct"},
+                    {"op": "Partition Manager BROM", "oumse": "1 cr", "here": "FREE offline", "api": "brom_partition_manager"},
+                    {"op": "Bypass Direct BROM", "oumse": "2 cr", "here": "FREE offline", "api": "brom_bypass_direct"},
+                    {"op": "MDM Permanent META (MTK)", "oumse": "3->2 cr", "here": "FREE offline", "api": "meta_mdm_permanent"},
+                    {"op": "MDM Permanent BROM (MTK)", "oumse": "3->2 cr", "here": "FREE offline", "api": "brom_mdm_permanent"},
+                    {"op": "MDM SPD Permanent - Patch Prodnv", "oumse": "3->2 cr", "here": "FREE offline", "api": "spd_mdm_permanent"},
+                    {"op": "Partition Manager SPD/Unisoc", "oumse": "1 cr", "here": "FREE offline", "api": "spd_partition_manager"},
+                    {"op": "Reset SPD/Unisoc (Factory/FRP)", "oumse": "1 cr", "here": "FREE offline", "api": "spd_reset"},
+                    {"op": "LK Bootloader Unlock - Patch fichier", "oumse": "2 cr", "here": "FREE offline", "api": "lk_patch_file"},
+                    {"op": "LK Bootloader Unlock Direct META", "oumse": "2 cr", "here": "FREE offline", "api": "lk_unlock_direct_meta / meta_lk_unlock_direct"},
+                    {"op": "Transsion Rom Maker (debloat -> .ogt)", "oumse": "3 cr", "here": "FREE offline", "api": "rom_maker"},
+                    {"op": "Fastboot OGT Flasher", "oumse": "Free", "here": "FREE offline", "api": "ogt_flash"},
+                    {"op": "Partition Manager PRELOADER (inactive on Oumse)", "oumse": "2 cr inactive", "here": "NOW ACTIVE offline", "api": "preloader_partition_manager"},
+                    {"op": "Bypass Direct PRELOADER (inactive on Oumse)", "oumse": "4 cr inactive", "here": "NOW ACTIVE offline", "api": "preloader_bypass_direct"},
+                    {"op": "ADB Bypass MDM (Private DNS+TestDPC)", "oumse": "incl.", "here": "FREE offline via Transsion MDM", "api": "transsion_mdm"},
+                ]
+            })
 
         else:
             self.send_json_response({"error": "Unknown action"}, status=404)

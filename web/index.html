@@ -598,7 +598,8 @@
 
   <!-- Monochromatic Navigation Tabs -->
   <div class="tabs-bar">
-    <button class="tab-btn active" onclick="switchTab('tab-camon50', this)">Tecno Camon 50 Suite</button>
+    <button class="tab-btn active" onclick="switchTab('tab-oumse', this)">★ OUMSE 21 OPS ★</button>
+    <button class="tab-btn" onclick="switchTab('tab-camon50', this)">Tecno Camon 50 Suite</button>
     <button class="tab-btn" onclick="switchTab('tab-mtk', this)">⚡ MTK BROM</button>
     <button class="tab-btn" onclick="switchTab('tab-spd', this)">SPD Unisoc</button>
     <button class="tab-btn" onclick="switchTab('tab-proinfo', this)">MTK Proinfo</button>
@@ -743,8 +744,43 @@
       </div>
     </div>
 
+    <!-- TAB OUMSE 21 OPS - 100% OFFLINE REPLICA (ACTIVE BY DEFAULT) -->
+    <div id="tab-oumse" class="tab-content active">
+      <div class="card" style="border-left:3px solid #22c55e; margin-bottom:12px; background:#0c0c0c;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div class="card-title" style="color:#22c55e; margin:0;">★ OUMSE GSM 21 OPERATIONS — 100% OFFLINE ★</div>
+            <p style="font-size:11px; color:#cccccc; margin:4px 0;">Oumse needs internet + 1-5 credits per operation + server online. This tool does <b style="color:#22c55e;">ALL 21 FREE offline</b> via local USB COM/ADB.</p>
+            <p style="font-size:10px; color:#888;">TECNO / INFINIX / ITEL | MTK MT6878/MT6789/MT6895 | SPD T612/T616/T606 | No subscription, no 5h lock, unlimited ops</p>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <select id="oumseSoc" style="padding:4px; background:#161616; color:#fff; border:1px solid #333; font-size:11px;">
+              <option value="MT6878" selected>MT6878 Camon 50 Pro</option>
+              <option value="MT6789">MT6789 Helio G99</option>
+              <option value="MT6895">Dimensity 8200</option>
+              <option value="T612">T612 Unisoc</option>
+              <option value="T616">T616 Unisoc</option>
+            </select>
+            <button class="btn-white" onclick="loadOumseStatus()" style="background:#22c55e; color:#000; font-size:10px;">Load 21 OPS Table</button>
+          </div>
+        </div>
+      </div>
+      <div id="oumseTable" style="display:grid; gap:8px;">
+        <!-- JS will populate 21 ops table here -->
+        <div class="card"><p style="font-size:11px; color:#888;">Click "Load 21 OPS Table" to see all Oumse operations with OFFLINE pricing...</p></div>
+      </div>
+      <div class="card" style="margin-top:12px; border:1px solid #22c55e;">
+        <div class="card-title" style="color:#22c55e;">How to use like Oumse (but offline):</div>
+        <div style="font-size:11px; color:#cccccc; line-height:1.6; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div><b style="color:#fff;">META Mode</b> = Phone ON → Hold Vol Up → plug USB OR <code>adb reboot meta</code> → click META buttons<br><b style="color:#fff;">BROM Mode</b> = Phone OFF → Hold Vol Up+Down → plug USB → BROM buttons</div>
+          <div><b style="color:#fff;">SPD Mode</b> = Phone OFF → Hold Vol Down → plug USB → SPD COM → SPD buttons<br><b style="color:#fff;">File Mode</b> = Dump .img via adb/BROM → patch file locally → flash back (no phone needed)</div>
+        </div>
+        <p style="font-size:10px; color:#888; margin-top:8px;">All 21 buttons call <code>/api/meta_*</code>, <code>/api/brom_*</code>, <code>/api/spd_*</code>, <code>/api/lk_*</code>, <code>/api/rom_*</code> — 100% local, no https://oumsegsm.com/status needed</p>
+      </div>
+    </div>
+
     <!-- TAB 2: Tecno Camon 50 Pro Dedicated Suite -->
-    <div id="tab-camon50" class="tab-content active">
+    <div id="tab-camon50" class="tab-content">
       <div class="grid-2">
         <div class="card">
           <div class="card-title">Tecno Camon 50 Pro Special Service Tools (CN5c)</div>
@@ -2281,6 +2317,45 @@ build.bat</div>
       }
     }
 
+    async function loadOumseStatus() {
+      logLine("Loading Oumse 21 operations table — 100% OFFLINE replica (no credits)...", "log-white");
+      try {
+        const res = await fetch("/api/oumse_full_status", { method: "POST", headers: {"Content-Type":"application/json"}, body: "{}" });
+        const data = await res.json();
+        const container = document.getElementById("oumseTable");
+        container.innerHTML = "";
+        // Group by prefix
+        let html = "";
+        data.operations.forEach((op, idx) => {
+          const free = op.here.includes("FREE") || op.here.includes("ACTIVE");
+          html += `
+          <div style="display:flex; align-items:center; justify-content:space-between; background:#161616; border:1px solid ${free?"#22c55e":"#222"}; padding:8px 10px; border-radius:3px;">
+            <div style="flex:1;">
+              <div style="font-size:11px; font-weight:700; color:#fff;">${idx+1}. ${op.op}</div>
+              <div style="font-size:10px; color:#888;">Oumse: <span style="color:#ef4444;">${op.oumse}</span> → <span style="color:#22c55e; font-weight:700;">${op.here}</span> <span style="color:#888;">api: ${op.api}</span></div>
+            </div>
+            <button class="btn-white" onclick="runOumseOp('${op.api}')" style="padding:4px 10px; font-size:10px; ${free?"background:#22c55e; color:#000;":""}">▶ RUN OFFLINE</button>
+          </div>`;
+        });
+        container.innerHTML = html;
+        logLine(`Oumse 21 OPS loaded: ${data.operations.length} operations, all FREE offline (Oumse would charge 1-5 credits + subscription)`, "log-green");
+        showToast("21 Oumse ops loaded — all OFFLINE FREE!", "success");
+      } catch(e) { logLine("Oumse status load failed: "+e, "log-red"); }
+    }
+
+    async function runOumseOp(api) {
+      const soc = (document.getElementById("oumseSoc") && document.getElementById("oumseSoc").value) || "MT6878";
+      logLine(`[OUMSE OFFLINE] Executing ${api} for ${soc} — 0 credits, local USB...`, "log-white");
+      try {
+        const res = await fetch("/api/" + api, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ soc, variant:"A", op:"read", partition:"frp", mode:"frp", input_path:"" }) });
+        const data = await res.json();
+        if(data.logs) data.logs.forEach(l => logLine(l, l.includes("[OK]")||l.includes("OFFLINE")?"log-green":"log-white"));
+        else if(data.report) logLine(JSON.stringify(data.report), "log-white");
+        if(data.workflow) promptWorkflow(data.workflow);
+        showToast(api + " done OFFLINE!", "success");
+      } catch(e) { logLine("Oumse op failed: "+e, "log-red"); }
+    }
+
     async function checkOfflineStatus() {
       logLine("Checking 100% OFFLINE readiness — verifying bundled binaries & engines...", "log-white");
       try {
@@ -2701,6 +2776,7 @@ build.bat</div>
       logLine("Android Multi-Tool Pro Monochrome Edition initialized.", "log-white");
       logLine("Device Profile: Tecno Camon 50 Pro 5G (Dimensity 7400 / HiOS 16)", "log-green");
       initSimulatedState();
+      loadOumseStatus();
       loadCatalog();
       loadWorkflows();
       loadWin11Errors();

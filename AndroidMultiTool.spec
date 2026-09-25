@@ -48,7 +48,10 @@ a = Analysis(
         'core.scatter_flasher',
         'core.transsion_mdm',
         'core.spd_engine',
-        'core.proinfo_engine'
+        'core.proinfo_engine',
+        'core.meta_engine',
+        'core.lk_patcher',
+        'core.rom_maker'
     ],
     hookspath=[],
     hooksconfig={},

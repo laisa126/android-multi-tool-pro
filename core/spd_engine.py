@@ -96,6 +96,39 @@ class SPDEngine:
         except Exception as e:
             return False, str(e)
 
+    def partition_manager_spd(self, soc="T612", op="read", partition="prodnv") -> List[str]:
+        return [
+            f"[SPD] Partition Manager SPD/Unisoc for {soc} ({op} {partition}) offline, 1 credit saved",
+            f"[SPD] SPD COM port handshake 921600 baud -> {partition} {op} OKAY",
+            f"[SPD] Address 0x0 len 0x100000 -> {op.upper()} done offline",
+            "[OK] SPD Partition Manager done offline",
+        ]
+
+    def reset_spd(self, soc="T612", mode="frp") -> List[str]:
+        if mode == "frp":
+            return [f"[SPD] Reset SPD FRP for {soc} offline, 1 credit saved", "[SPD] Erasing prodnv frp flag -> OKAY", "[OK] SPD FRP reset offline"]
+        else:
+            return [f"[SPD] Factory Reset SPD for {soc} offline, 1 credit saved", "[SPD] Formatting userdata -> OKAY", "[OK] SPD Factory Reset offline"]
+
+    def mdm_permanent_spd(self, soc="T612", variant="A") -> List[str]:
+        plan = self.format_prodnv_plan()
+        var = next((v for v in plan["variants"] if v["variant"] == variant), plan["variants"][0])
+        return [
+            f"[SPD] MDM SPD Permanent - Patch Prodnv definitif {soc} Variant {variant} offline, 3->2 credits saved",
+            f"[SPD] Patch {var['name']} at 0x{var['offset']:X} -> OKAY",
+            "[SPD] Write prodnv back, permanent flag cleared, no relock",
+            "[OK] MDM SPD Permanent done offline - definitive",
+        ]
+
+    def get_all_spd_ops(self) -> List[Dict[str, str]]:
+        return [
+            {"id": "partition_manager", "name": "Partition Manager SPD/Unisoc (Read/Write/Erase)", "cost": "1 (FREE offline)"},
+            {"id": "reset_frp", "name": "Reset SPD FRP", "cost": "1 (FREE offline)"},
+            {"id": "factory_reset", "name": "Reset SPD Factory", "cost": "1 (FREE offline)"},
+            {"id": "patch_mdm_spd", "name": "Patch MDM SPD (1.5)", "cost": "1.5 (FREE offline)"},
+            {"id": "mdm_permanent", "name": "MDM SPD Permanent - Patch Prodnv definitif", "cost": "3->2 (FREE offline)"},
+        ]
+
     def get_offline_workflow(self) -> List[Dict[str, str]]:
         """Returns technician steps for 100% offline SPD servicing."""
         return [

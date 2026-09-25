@@ -5,6 +5,8 @@ dialog directly from the Samsung *#0*# Emergency Test menu.
 """
 
 
+from typing import List, Tuple
+
 try:
     import serial
 except Exception:

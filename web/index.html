@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Android Multi-Tool Pro - Monochrome Edition (Windows 11)</title>
   <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
   <meta name="theme-color" content="#0c0c0c">
+  <meta name="description" content="GSM Hardware & Firmware Suite - Tecno Camon 50 Pro 5G CN5c 100% OFFLINE, no credits — MTK BROM/META, SPD Unisoc, ADB — like Oumse">
+  <meta name="author" content="GSM Technician Solutions">
   <style>
     /* STRICT 10-COLOR MONOCHROME PALETTE */
     :root {
@@ -201,6 +206,20 @@
       gap: 12px;
     }
 
+    .lang-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #888;
+      padding: 3px 6px;
+      font-size: 9px;
+      font-weight: 800;
+      border-radius: 3px;
+      cursor: pointer;
+      min-width: 28px;
+    }
+    .lang-btn:hover { background:#161616; color:#fff; border-color:#333; }
+    .lang-btn.active { background:#fff; color:#000; border-color:#fff; }
+    .lang-switch { flex-shrink: 0; }
     /* Hide old tabs-bar on desktop (sidebar replaces it) */
     @media (min-width: 900px) {
       .tabs-bar { display: none !important; }
@@ -726,35 +745,35 @@
           AMT PRO
           <span style="font-size:7px;background:#22c55e;color:#000;padding:1px 4px;border-radius:3px;margin-left:4px;">OUMSE</span>
         </h2>
-        <small>TECNO • INFINIX • ITEL</small>
-        <div class="offline-badge">● 100% OFFLINE • NO CREDITS</div>
-        <div style="font-size:8px;color:#888;margin-top:6px;letter-spacing:0.5px;">MTK • SPD • ADB</div>
+        <small data-i18n="brandSub">TECNO • INFINIX • ITEL</small>
+        <div class="offline-badge">● <span data-i18n="offlineBadge">100% OFFLINE • NO CREDITS</span></div>
+        <div style="font-size:8px;color:#888;margin-top:6px;letter-spacing:0.5px;"><span data-i18n="chipList">MTK • SPD • ADB</span></div>
       </div>
       <nav class="sidebar-nav">
-        <div class="nav-group">Oumse Replica</div>
-        <button class="nav-item active" onclick="switchTab('tab-oumse', this)"><span class="nav-icon">★</span> OUMSE 21 OPS</button>
+        <div class="nav-group" data-i18n="gOumse">Oumse Replica</div>
+        <button class="nav-item active" onclick="switchTab('tab-oumse', this)"><span class="nav-icon">★</span> <span data-i18n="navOumse">OUMSE 21 OPS</span></button>
 
-        <div class="nav-group">MediaTek MTK</div>
-        <button class="nav-item" onclick="switchTab('tab-mtk', this)"><span class="nav-icon">⚡</span> MTK BROM</button>
-        <button class="nav-item" onclick="switchTab('tab-proinfo', this)"><span class="nav-icon">⬡</span> MTK Proinfo</button>
+        <div class="nav-group" data-i18n="gMtk">MediaTek MTK</div>
+        <button class="nav-item" onclick="switchTab('tab-mtk', this)"><span class="nav-icon">⚡</span> <span data-i18n="navMtk">MTK BROM</span></button>
+        <button class="nav-item" onclick="switchTab('tab-proinfo', this)"><span class="nav-icon">⬡</span> <span data-i18n="navProinfo">MTK Proinfo</span></button>
 
-        <div class="nav-group">Unisoc SPD</div>
-        <button class="nav-item" onclick="switchTab('tab-spd', this)"><span class="nav-icon">▣</span> SPD Unisoc</button>
+        <div class="nav-group" data-i18n="gSpd">Unisoc SPD</div>
+        <button class="nav-item" onclick="switchTab('tab-spd', this)"><span class="nav-icon">▣</span> <span data-i18n="navSpd">SPD Unisoc</span></button>
 
-        <div class="nav-group">System</div>
-        <button class="nav-item" onclick="switchTab('tab-camon50', this)"><span class="nav-icon">◆</span> Tecno Camon 50</button>
-        <button class="nav-item" onclick="switchTab('tab-diagnostics', this)"><span class="nav-icon">◉</span> Diagnostics</button>
-        <button class="nav-item" onclick="switchTab('tab-frp', this)"><span class="nav-icon">🔓</span> FRP &amp; MDM</button>
-        <button class="nav-item" onclick="switchTab('tab-fastboot', this)"><span class="nav-icon">⬢</span> Fastboot</button>
-        <button class="nav-item" onclick="switchTab('tab-root', this)"><span class="nav-icon">⚙</span> Root &amp; Magisk</button>
-        <button class="nav-item" onclick="switchTab('tab-efs', this)"><span class="nav-icon">⬣</span> EFS &amp; NVRAM</button>
-        <button class="nav-item" onclick="switchTab('tab-debloat', this)"><span class="nav-icon">♻</span> Debloat</button>
+        <div class="nav-group" data-i18n="gSystem">System</div>
+        <button class="nav-item" onclick="switchTab('tab-camon50', this)"><span class="nav-icon">◆</span> <span data-i18n="navCamon">Tecno Camon 50</span></button>
+        <button class="nav-item" onclick="switchTab('tab-diagnostics', this)"><span class="nav-icon">◉</span> <span data-i18n="navDiag">Diagnostics</span></button>
+        <button class="nav-item" onclick="switchTab('tab-frp', this)"><span class="nav-icon">🔓</span> <span data-i18n="navFrp">FRP & MDM</span></button>
+        <button class="nav-item" onclick="switchTab('tab-fastboot', this)"><span class="nav-icon">⬢</span> <span data-i18n="navFastboot">Fastboot</span></button>
+        <button class="nav-item" onclick="switchTab('tab-root', this)"><span class="nav-icon">⚙</span> <span data-i18n="navRoot">Root & Magisk</span></button>
+        <button class="nav-item" onclick="switchTab('tab-efs', this)"><span class="nav-icon">⬣</span> <span data-i18n="navEfs">EFS & NVRAM</span></button>
+        <button class="nav-item" onclick="switchTab('tab-debloat', this)"><span class="nav-icon">♻</span> <span data-i18n="navDebloat">Debloat</span></button>
 
-        <div class="nav-group">Support</div>
-        <button class="nav-item" onclick="switchTab('tab-tutorials', this)"><span class="nav-icon">▤</span> Tutorials</button>
-        <button class="nav-item" onclick="switchTab('tab-win11', this)"><span class="nav-icon">▦</span> Win11 Fixer</button>
-        <button class="nav-item" onclick="switchTab('tab-reboot', this)"><span class="nav-icon">↻</span> Reboot</button>
-        <button class="nav-item" onclick="switchTab('tab-catalog', this)"><span class="nav-icon">≡</span> Catalog</button>
+        <div class="nav-group" data-i18n="gSupport">Support</div>
+        <button class="nav-item" onclick="switchTab('tab-tutorials', this)"><span class="nav-icon">▤</span> <span data-i18n="navTut">Tutorials</span></button>
+        <button class="nav-item" onclick="switchTab('tab-win11', this)"><span class="nav-icon">▦</span> <span data-i18n="navWin11">Win11 Fixer</span></button>
+        <button class="nav-item" onclick="switchTab('tab-reboot', this)"><span class="nav-icon">↻</span> <span data-i18n="navReboot">Reboot</span></button>
+        <button class="nav-item" onclick="switchTab('tab-catalog', this)"><span class="nav-icon">≡</span> <span data-i18n="navCatalog">Catalog</span></button>
       </nav>
       <div class="sidebar-footer">
         <div class="install-card">
@@ -804,20 +823,26 @@
         <option value="samsung">Samsung Galaxy S22 Ultra (ADB)</option>
         <option value="xiaomi">Xiaomi Redmi Note 11 (Fastboot)</option>
       </select>
-      <button class="btn-white" onclick="scanDevices()">Scan USB</button>
+      <button class="btn-white" onclick="scanDevices()" data-i18n="scanUsb">Scan USB</button>
       <label style="display:flex; align-items:center; gap:6px; background:#222; border:1px solid #333; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:10px; font-weight:700; color:#fff; margin-left:4px;" title="When ON: shows demo devices if no real phone is connected. When OFF: shows only real hardware.">
         <input type="checkbox" id="chkSimulated" checked onchange="toggleSimulated()" style="accent-color:#fff; width:13px; height:13px;">
         DEMO
       </label>
-      <button class="btn-white" onclick="showInstallModal()">Install as PC App</button>
+      <button class="btn-white" onclick="showInstallModal()" data-i18n="installApp">Install as PC App</button>
       <button class="btn-dark" onclick="showBuildInfo()">Build .EXE</button>
+      <div class="lang-switch" style="display:flex; gap:2px; margin-left:6px; background:#0a0a0a; border:1px solid #222; border-radius:4px; padding:2px;">
+        <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')" title="English">EN</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')" title="Français">FR</button>
+        <button class="lang-btn" data-lang="ar" onclick="setLanguage('ar')" title="العربية">AR</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')" title="Português">PT</button>
+      </div>
     </div>
   </div>
 
   <!-- Hardware Diagnostics & Quick Mode Strip -->
   <div class="hardware-strip">
-    <div class="hw-item"><span class="hw-label">TARGET SOC:</span> <span class="hw-val">MT6878 (Dimensity 7400 Ultimate)</span></div>
-    <div class="hw-item"><span class="hw-label">DEVICE:</span> <span class="hw-val">TECNO-CN5c (Camon 50 Pro 5G)</span></div>
+    <div class="hw-item"><span class="hw-label"><span data-i18n="hwSoc">TARGET SOC:</span></span> <span class="hw-val">MT6878 (Dimensity 7400 Ultimate)</span></div>
+    <div class="hw-item"><span class="hw-label"><span data-i18n="hwDevice">DEVICE:</span> <span class="hw-val">TECNO-CN5c (Camon 50 Pro 5G)</span></div>
     <div class="hw-item"><span class="hw-label">STORAGE:</span> <span class="hw-val">UFS 3.1 (FRP: 0x5A00000)</span></div>
     <div class="hw-item"><span class="hw-label">OS:</span> <span class="hw-val">Android 16 (HiOS 16 / API 36)</span></div>
     <div class="hw-item"><span class="hw-label">SECURITY:</span> <span class="hw-val">AVB 2.0 Enforcing</span></div>
@@ -2369,6 +2394,156 @@ build.bat</div>
         alert("To install as a PC desktop app:\n\n1. In Chrome/Edge, click the 'Install App' icon on the right side of the address bar (or click Menu -> 'Install Android Multi-Tool Pro').\n\n2. Or download the standalone Windows ZIP and run 'install_app_on_pc.bat'!");
       }
     }
+
+    
+    // ===== i18n FR/EN/AR/PT like Oumse =====
+    const i18n = {
+      en: {
+        brandSub: "TECNO • INFINIX • ITEL",
+        offlineBadge: "100% OFFLINE • NO CREDITS",
+        chipList: "MTK • SPD • ADB",
+        gOumse: "Oumse Replica",
+        gMtk: "MediaTek MTK",
+        gSpd: "Unisoc SPD",
+        gSystem: "System",
+        gSupport: "Support",
+        navOumse: "OUMSE 21 OPS",
+        navMtk: "MTK BROM",
+        navProinfo: "MTK Proinfo",
+        navSpd: "SPD Unisoc",
+        navCamon: "Tecno Camon 50",
+        navDiag: "Diagnostics",
+        navFrp: "FRP & MDM",
+        navFastboot: "Fastboot",
+        navRoot: "Root & Magisk",
+        navEfs: "EFS & NVRAM",
+        navDebloat: "Debloat",
+        navTut: "Tutorials",
+        navWin11: "Win11 Fixer",
+        navReboot: "Reboot",
+        navCatalog: "Catalog",
+        installApp: "Install as PC App",
+        hwSoc: "TARGET SOC:",
+        hwDevice: "DEVICE:",
+        scanUsb: "Scan USB",
+        offline: "100% OFFLINE"
+      },
+      fr: {
+        brandSub: "TECNO • INFINIX • ITEL",
+        offlineBadge: "100% HORS LIGNE • SANS CRÉDITS",
+        chipList: "MTK • SPD • ADB",
+        gOumse: "Réplique Oumse",
+        gMtk: "MediaTek MTK",
+        gSpd: "Unisoc SPD",
+        gSystem: "Système",
+        gSupport: "Support",
+        navOumse: "OUMSE 21 OPS",
+        navMtk: "MTK BROM",
+        navProinfo: "MTK Proinfo",
+        navSpd: "SPD Unisoc",
+        navCamon: "Tecno Camon 50",
+        navDiag: "Diagnostics",
+        navFrp: "FRP & MDM",
+        navFastboot: "Fastboot",
+        navRoot: "Root & Magisk",
+        navEfs: "EFS & NVRAM",
+        navDebloat: "Debloat",
+        navTut: "Tutoriels",
+        navWin11: "Correctif Win11",
+        navReboot: "Redémarrer",
+        navCatalog: "Catalogue",
+        installApp: "Installer sur PC",
+        hwSoc: "SOC CIBLE:",
+        hwDevice: "APPAREIL:",
+        scanUsb: "Scanner USB",
+        offline: "100% HORS LIGNE"
+      },
+      ar: {
+        brandSub: "تكنو • إنفنيكس • آيتل",
+        offlineBadge: "100% دون اتصال • بدون رصيد",
+        chipList: "MTK • SPD • ADB",
+        gOumse: "نسخة Oumse",
+        gMtk: "ميدياتك MTK",
+        gSpd: "يونيسوك SPD",
+        gSystem: "النظام",
+        gSupport: "الدعم",
+        navOumse: "OUMSE 21 عملية",
+        navMtk: "MTK BROM",
+        navProinfo: "MTK Proinfo",
+        navSpd: "SPD Unisoc",
+        navCamon: "تكنو كامون 50",
+        navDiag: "التشخيص",
+        navFrp: "FRP & MDM",
+        navFastboot: "فاست بوت",
+        navRoot: "روت & Magisk",
+        navEfs: "EFS & NVRAM",
+        navDebloat: "إزالة البرامج",
+        navTut: "الدروس",
+        navWin11: "إصلاح Win11",
+        navReboot: "إعادة التشغيل",
+        navCatalog: "الفهرس",
+        installApp: "تثبيت على الحاسوب",
+        hwSoc: "المعالج المستهدف:",
+        hwDevice: "الجهاز:",
+        scanUsb: "فحص USB",
+        offline: "100% دون اتصال"
+      },
+      pt: {
+        brandSub: "TECNO • INFINIX • ITEL",
+        offlineBadge: "100% OFFLINE • SEM CRÉDITOS",
+        chipList: "MTK • SPD • ADB",
+        gOumse: "Réplica Oumse",
+        gMtk: "MediaTek MTK",
+        gSpd: "Unisoc SPD",
+        gSystem: "Sistema",
+        gSupport: "Suporte",
+        navOumse: "OUMSE 21 OPS",
+        navMtk: "MTK BROM",
+        navProinfo: "MTK Proinfo",
+        navSpd: "SPD Unisoc",
+        navCamon: "Tecno Camon 50",
+        navDiag: "Diagnóstico",
+        navFrp: "FRP & MDM",
+        navFastboot: "Fastboot",
+        navRoot: "Root & Magisk",
+        navEfs: "EFS & NVRAM",
+        navDebloat: "Debloat",
+        navTut: "Tutoriais",
+        navWin11: "Correção Win11",
+        navReboot: "Reiniciar",
+        navCatalog: "Catálogo",
+        installApp: "Instalar no PC",
+        hwSoc: "SOC ALVO:",
+        hwDevice: "DISPOSITIVO:",
+        scanUsb: "Escanear USB",
+        offline: "100% OFFLINE"
+      }
+    };
+    let currentLang = localStorage.getItem('amt_lang') || 'en';
+    function setLanguage(lang){
+      currentLang = lang;
+      localStorage.setItem('amt_lang', lang);
+      document.querySelectorAll('[data-i18n]').forEach(el=>{
+        const k = el.getAttribute('data-i18n');
+        const v = i18n[lang] && i18n[lang][k];
+        if(v) el.textContent = v;
+      });
+      document.querySelectorAll('.lang-btn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
+      document.documentElement.lang = lang;
+      document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
+      // Adjust sidebar for RTL
+      if(lang==='ar'){
+        document.querySelector('.sidebar')?.style.setProperty('border-right','none');
+        document.querySelector('.sidebar')?.style.setProperty('border-left','1px solid var(--c5-border)');
+      } else {
+        document.querySelector('.sidebar')?.style.setProperty('border-left','none');
+        document.querySelector('.sidebar')?.style.setProperty('border-right','1px solid var(--c5-border)');
+      }
+      logLine(`>> Language switched to [${lang.toUpperCase()}]`, "log-white");
+      if(typeof showToast==="function") showToast(`Language: ${lang.toUpperCase()}`);
+    }
+    // Auto-apply on load
+    document.addEventListener('DOMContentLoaded', ()=> setTimeout(()=> setLanguage(currentLang), 50));
 
     function showBuildInfo() {
       document.getElementById("buildModal").style.display = "flex";

@@ -51,3 +51,28 @@ OFFLINE — NO CREDITS
 --------------------
 All 21 Oumse operations (META / BROM / SPD / LK / ROM) run 100% offline via local USB.
 No https://oumsegsm.com, no credits, no Telegram, no internet.
+
+---
+### Code Signing (like Oumse Signed)
+- Oumse v2.1.0 is signed `OumseGsm225`. Our `AndroidMultiTool_Setup_v2.5.exe` is **unsigned** until you sign it:
+  ```
+  signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a dist\installer\AndroidMultiTool_Setup_v2.5.exe
+  ```
+  Without signing, Windows SmartScreen will show “Unknown publisher — Run anyway”.
+
+### Icons (new, clean monochrome like Oumse)
+- `assets/icon.ico` (16/24/32/48/64/128/256) — chip + green bar + AMT PRO
+- `assets/wizard.bmp` 164x314 + `wizard-small.bmp` 55x58 for Inno Setup wizard
+- EXE icon set via `AndroidMultiTool.spec: icon='assets/icon.ico'`
+
+### Build on GitHub Actions (automatic Setup)
+- Workflow `.github/workflows/build-exe.yml` now:
+  1. Builds `dist/AndroidMultiTool.exe` (PyInstaller)
+  2. `choco install innosetup` → `iscc installer_setup.iss` → `dist/installer/AndroidMultiTool_Setup_v2.5.exe`
+  3. Uploads artifact `AndroidMultiTool-Windows-v2.5` with EXE + ZIP + Setup.exe
+
+### Multi-Language (FR/EN/AR/PT like Oumse)
+- Title bar EN/FR/AR/PT switcher (data-i18n) covers sidebar nav, hardware strip, install button.
+- Arabic flips to RTL (`dir=rtl`) and swaps sidebar border.
+- Persisted in `localStorage amt_lang`.
+

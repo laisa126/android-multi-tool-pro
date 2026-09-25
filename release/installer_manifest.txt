@@ -1,0 +1,11 @@
+Android Multi-Tool Pro Setup Manifest v2.5.0
+Built from: installer_setup.iss
+Output: AndroidMultiTool_Setup_v2.5.exe (placeholder, real built on windows-latest via choco innosetup)
+Size: ~55 MB real (2 MB placeholder here)
+Icons: assets/icon.ico, wizard.bmp, wizard-small.bmp
+Files: dist/AndroidMultiTool.exe + bin/* + assets/* + web/* + README.md
+Tasks: desktopicon, installdrivers (VID 0x2e04 Transsion / 0x0e8d MediaTek)
+Registry: HKLM\SOFTWARE\AndroidMultiToolPro
+Uninstall: Programs & Features
+Windows: 7/8/10/11 64-bit admin required
+Signing: unsigned — sign with signtool before release

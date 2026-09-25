@@ -19,6 +19,10 @@ if os.path.isfile('bin/fastboot'):
     added_files.append(('bin/fastboot', 'bin'))
 if os.path.isdir('bin/drivers'):
     added_files.append(('bin/drivers', 'bin/drivers'))
+if os.path.isdir('assets'):
+    added_files.append(('assets', 'assets'))
+if os.path.isdir('web'):
+    added_files.append(('web', 'web'))
 
 a = Analysis(
     ['app_gui.py'],
@@ -73,6 +77,7 @@ exe = EXE(
     a.datas,
     [],
     name='AndroidMultiTool',
+    icon='assets/icon.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

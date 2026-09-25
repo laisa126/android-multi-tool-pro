@@ -1,4 +1,4 @@
-name: Build Android Multi-Tool Windows EXE
+name: Build Android Multi-Tool Windows EXE + Setup
 
 on:
   push:
@@ -46,23 +46,50 @@ jobs:
             exit 1
           }
 
-      - name: Prepare Release Package (EXE + Driver Tools)
+      - name: Install Inno Setup 6 (for Setup.exe where it installs)
+        run: |
+          choco install innosetup --yes --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /?
+          Write-Host "Inno Setup 6 installed"
+
+      - name: Compile Windows Setup.exe (like Oumse — installs to Program Files)
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_setup.iss
+          if (Test-Path "dist\installer\AndroidMultiTool_Setup_v2.5.exe") {
+            Write-Host "SUCCESS: Setup compiled!"
+            Get-Item "dist\installer\AndroidMultiTool_Setup_v2.5.exe" | Select-Object Name, Length, LastWriteTime
+            Get-Content "dist\installer\installer_manifest.txt" | Select-Object -First 20
+          } else {
+            Write-Error "Setup build failed: dist\installer\AndroidMultiTool_Setup_v2.5.exe not found."
+            exit 1
+          }
+
+      - name: Prepare Release Package (EXE + Driver Tools + Setup)
         run: |
           New-Item -ItemType Directory -Force -Path "dist\package"
           Copy-Item "dist\AndroidMultiTool.exe" -Destination "dist\package\"
+          Copy-Item "dist\installer\AndroidMultiTool_Setup_v2.5.exe" -Destination "dist\package\" -ErrorAction SilentlyContinue
           Copy-Item "install_drivers.bat" -Destination "dist\package\"
           Copy-Item "install_app_on_pc.bat" -Destination "dist\package\"
+          Copy-Item "build_installer.bat" -Destination "dist\package\"
           Copy-Item "README.md" -Destination "dist\package\"
-          Compress-Archive -Path "dist\package\*" -DestinationPath "dist\AndroidMultiTool-v2.5-Windows.zip"
+          Copy-Item "assets\icon.ico" -Destination "dist\package\" -ErrorAction SilentlyContinue
+          Compress-Archive -Path "dist\package\*" -DestinationPath "dist\AndroidMultiTool-v2.5-Windows.zip" -Force
+          if (Test-Path "dist\installer\AndroidMultiTool_Setup_v2.5.exe") {
+            Copy-Item "dist\installer\AndroidMultiTool_Setup_v2.5.exe" -Destination "dist\AndroidMultiTool_Setup_v2.5.exe" -Force
+          }
 
-      - name: Upload Artifact (Downloadable EXE & ZIP)
+      - name: Upload Artifact — EXE + ZIP + Setup
         uses: actions/upload-artifact@v4
         with:
           name: AndroidMultiTool-Windows-v2.5
           path: |
             dist/AndroidMultiTool.exe
             dist/AndroidMultiTool-v2.5-Windows.zip
+            dist/installer/AndroidMultiTool_Setup_v2.5.exe
+            dist/AndroidMultiTool_Setup_v2.5.exe
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Create GitHub Release (On Tagged Push)
         if: startsWith(github.ref, 'refs/tags/')
@@ -71,6 +98,8 @@ jobs:
           files: |
             dist/AndroidMultiTool.exe
             dist/AndroidMultiTool-v2.5-Windows.zip
+            dist/installer/AndroidMultiTool_Setup_v2.5.exe
+            dist/AndroidMultiTool_Setup_v2.5.exe
           draft: false
           prerelease: false
           generate_release_notes: true

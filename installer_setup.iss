@@ -23,7 +23,9 @@ AllowNoIcons=yes
 LicenseFile=README.md
 OutputDir=dist\installer
 OutputBaseFilename=AndroidMultiTool_Setup_v2.5
-SetupIconFile=bin\adb.exe
+SetupIconFile=assets\icon.ico
+WizardImageFile=assets\wizard.bmp
+WizardSmallImageFile=assets\wizard-small.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -65,6 +67,8 @@ Source: "bin\drivers\*"; DestDir: "{app}\bin\drivers"; Flags: ignoreversion recu
 ; Docs
 Source: "README.md"; DestDir: "{app}"; Flags: isreadme ignoreversion
 Source: "web\*"; DestDir: "{app}\web"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Icons / wizard images
+Source: "assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion
 ; Keep installer artifacts for debugging
 Source: "installer_setup.iss"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build_installer.bat"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
